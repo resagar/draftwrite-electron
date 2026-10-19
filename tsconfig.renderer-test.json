@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.web.json",
+  "compilerOptions": {
+    "composite": false,
+    "module": "CommonJS",
+    "moduleResolution": "node10",
+    "jsx": "react-jsx",
+    "types": ["jest", "node"]
+  },
+  "include": ["src/renderer/src/**/*", "src/preload/*.d.ts"]
+}

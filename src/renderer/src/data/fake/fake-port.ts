@@ -1,0 +1,198 @@
+import { makeArticle, makeStory } from './factories'
+import type { DataPort, NewArticle, NewStory } from '../port'
+import type { Article, Story } from '../types'
+
+export type FakePortOptions = {
+  stories?: Story[]
+  articles?: Article[]
+  listStoriesFailures?: number
+  listArticlesFailures?: number
+  listStoriesGate?: Promise<void>
+  listArticlesGate?: Promise<void>
+  createStoryFailures?: number
+  updateStoryFailures?: number
+  updateStoryGate?: Promise<void>
+  createArticleFailures?: number
+  updateArticleFailures?: number
+  deleteStoryFailures?: number
+  deleteArticleFailures?: number
+}
+
+export type FakePort = {
+  port: DataPort
+  calls: {
+    listStories: number
+    listArticles: number
+    createStory: number
+    updateStory: number
+    createArticle: number
+    updateArticle: number
+    deleteStory: number
+    deleteArticle: number
+  }
+  createdStories: NewStory[]
+  updatedStories: Story[]
+  createdArticles: NewArticle[]
+  updatedArticles: Article[]
+  deletedStoryIds: string[]
+  deletedArticleIds: string[]
+}
+
+type Counter = { remaining: number }
+
+async function load<T>(source: () => T, counter: Counter, gate?: Promise<void>): Promise<T> {
+  if (gate) {
+    await gate
+  }
+
+  if (counter.remaining > 0) {
+    counter.remaining -= 1
+    throw new Error('service unavailable')
+  }
+
+  return source()
+}
+
+async function write<T>(produce: () => T, counter: Counter): Promise<T> {
+  if (counter.remaining > 0) {
+    counter.remaining -= 1
+    throw new Error('service unavailable')
+  }
+
+  return produce()
+}
+
+export function createFakePort(options: FakePortOptions = {}): FakePort {
+  const calls = {
+    listStories: 0,
+    listArticles: 0,
+    createStory: 0,
+    updateStory: 0,
+    createArticle: 0,
+    updateArticle: 0,
+    deleteStory: 0,
+    deleteArticle: 0
+  }
+
+  const stories = [...(options.stories ?? [])]
+  const articles = [...(options.articles ?? [])]
+  const createdStories: NewStory[] = []
+  const updatedStories: Story[] = []
+  const createdArticles: NewArticle[] = []
+  const updatedArticles: Article[] = []
+  const deletedStoryIds: string[] = []
+  const deletedArticleIds: string[] = []
+
+  const listStoryCounter = { remaining: options.listStoriesFailures ?? 0 }
+  const listArticleCounter = { remaining: options.listArticlesFailures ?? 0 }
+  const createStoryCounter = { remaining: options.createStoryFailures ?? 0 }
+  const updateStoryCounter = { remaining: options.updateStoryFailures ?? 0 }
+  const createArticleCounter = { remaining: options.createArticleFailures ?? 0 }
+  const updateArticleCounter = { remaining: options.updateArticleFailures ?? 0 }
+  const deleteStoryCounter = { remaining: options.deleteStoryFailures ?? 0 }
+  const deleteArticleCounter = { remaining: options.deleteArticleFailures ?? 0 }
+
+  return {
+    calls,
+    createdStories,
+    updatedStories,
+    createdArticles,
+    updatedArticles,
+    deletedStoryIds,
+    deletedArticleIds,
+    port: {
+      async listStories() {
+        calls.listStories += 1
+        return load(() => [...stories], listStoryCounter, options.listStoriesGate)
+      },
+      async listArticles() {
+        calls.listArticles += 1
+        return load(() => [...articles], listArticleCounter, options.listArticlesGate)
+      },
+      createStory(input) {
+        calls.createStory += 1
+        return write(() => {
+          createdStories.push(input)
+          const created = makeStory({
+            ID: `story-${stories.length + 1}`,
+            Topic: input.topic,
+            Titles: input.titles,
+            Tags: input.tags,
+            Text: input.text
+          })
+          stories.unshift(created)
+          return created
+        }, createStoryCounter)
+      },
+      createArticle(input) {
+        calls.createArticle += 1
+        return write(() => {
+          createdArticles.push(input)
+          const created = makeArticle({
+            ID: `article-${articles.length + 1}`,
+            StoryID: input.storyId,
+            Title: input.title,
+            Subtitle: input.subtitle,
+            Target: input.target,
+            Text: input.text
+          })
+          articles.unshift(created)
+          return created
+        }, createArticleCounter)
+      },
+      async updateStory(story) {
+        calls.updateStory += 1
+
+        if (options.updateStoryGate) {
+          await options.updateStoryGate
+        }
+
+        return write(() => {
+          updatedStories.push(story)
+          const index = stories.findIndex((current) => current.ID === story.ID)
+          if (index >= 0) {
+            stories[index] = story
+          }
+          return story
+        }, updateStoryCounter)
+      },
+      updateArticle(article) {
+        calls.updateArticle += 1
+        return write(() => {
+          updatedArticles.push(article)
+          const index = articles.findIndex((current) => current.ID === article.ID)
+          if (index >= 0) {
+            articles[index] = article
+          }
+          return article
+        }, updateArticleCounter)
+      },
+      deleteStory(id) {
+        calls.deleteStory += 1
+        return write(() => {
+          deletedStoryIds.push(id)
+          const index = stories.findIndex((story) => story.ID === id)
+          if (index >= 0) {
+            stories.splice(index, 1)
+          }
+
+          for (let position = articles.length - 1; position >= 0; position -= 1) {
+            if (articles[position].StoryID === id) {
+              articles.splice(position, 1)
+            }
+          }
+        }, deleteStoryCounter)
+      },
+      deleteArticle(id) {
+        calls.deleteArticle += 1
+        return write(() => {
+          deletedArticleIds.push(id)
+          const index = articles.findIndex((article) => article.ID === id)
+          if (index >= 0) {
+            articles.splice(index, 1)
+          }
+        }, deleteArticleCounter)
+      }
+    }
+  }
+}

@@ -18,7 +18,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - react-markdown -> [https://github.com/remarkjs/react-markdown](https://github.com/remarkjs/react-markdown) + remark-gfm -> [https://github.com/remarkjs/remark-gfm](https://github.com/remarkjs/remark-gfm)
 - iconos: lucide-react -> [https://lucide.dev/](https://lucide.dev/)
 - fuentes: `@fontsource/{inter,fira-code,newsreader}` -> [https://fontsource.org/](https://fontsource.org/)
-- CSS puro (sin Tailwind ni daisyUI)
+- Tailwind 4 + daisyUI 5 (tema dracula)
 - Jest (sin Vitest) -> [https://jestjs.io/](https://jestjs.io/) + @testing-library/react -> [https://testing-library.com/docs/react-testing-library/intro/](https://testing-library.com/docs/react-testing-library/intro/) + jsdom -> [https://github.com/jsdom/jsdom](https://github.com/jsdom/jsdom) - unit tests, tests de integración y mocks
 - IPC directo main↔renderer (`contextBridge` + `ipcRenderer.invoke`), sin servidor HTTP y sin red
 
@@ -59,6 +59,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - No usar mocks para sustituir comportamiento que pueda verificarse mediante integración real.
 - Todo bug corregido debe tener una prueba de regresión cuando sea razonable.
 - Los tests existentes son parte del contrato y no deben modificarse para hacer pasar una implementación.
+- El renderer se prueba con Jest + jsdom + Testing Library (proyecto `renderer` de `jest.config.js`); los tests viven junto al código en `src/renderer/src`.
 
 **Importante:** Si un test parece incorrecto, detenerse y solicitar revisión.
 

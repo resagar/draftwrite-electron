@@ -42,8 +42,8 @@ Ningún canal lanza excepciones: todos devuelven una envoltura `IpcResult<T>`.
   `{ code: 'errTopicRequired', message: 'story topic is required' }`).
 - Un fallo no previsto o un payload con forma inválida llega como `errUnexpected` y se registra en
   la consola del main; nunca cruza un throw crudo.
-- El preload transporta la envoltura tal cual. La re-hidratación (`{ code }` → `Error`) vive en
-  `src/renderer/src/data/ipc-port.ts`, en la fase de frontend.
+- El preload transporta la envoltura tal cual. La re-hidratación (`{ code }` → `IpcError`) vive en
+  `src/renderer/src/data/ipc-port.ts`.
 
 ## Tipos compartidos
 
