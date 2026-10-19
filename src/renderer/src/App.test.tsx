@@ -1098,6 +1098,47 @@ describe('keyboard shortcuts', () => {
     expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s1')
   })
 
+  it('leaves the story unselected when the open article story is gone', async () => {
+    const fake = createFakePort({
+      stories: [makeStory({ ID: 's2', Topic: 'Boring technology' })],
+      articles: [makeArticle({ ID: 'a1', StoryID: 'gone', Title: 'Orphan' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(await screen.findByRole('option', { name: /Boring technology/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /Orphan/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    fireEvent.keyDown(document.body, { key: 'n', ctrlKey: true })
+
+    await screen.findByRole('region', { name: 'Article editor' })
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('')
+  })
+
+  it('asks before discarding an unsaved story draft, and writes nothing', async () => {
+    const fake = createFakePort({ stories: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(
+      within(screen.getByRole('complementary', { name: 'Library' })).getByRole('button', {
+        name: /New Story/
+      })
+    )
+    await screen.findByRole('region', { name: 'Story editor' })
+
+    act(() => replaceEditorText('Some thoughts with no topic yet'))
+
+    await waitFor(() => expect(screen.getByText(/A topic is required/)).toBeTruthy())
+
+    fireEvent.keyDown(document.body, { key: 'n', ctrlKey: true })
+
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText(/discards them/)).toBeTruthy()
+    expect(fake.calls.createStory).toBe(0)
+    expect(fake.createdStories).toEqual([])
+  })
+
   it('consumes the key without creating anything when there is no story to write from', async () => {
     const fake = createFakePort({ stories: [], articles: [] })
 
