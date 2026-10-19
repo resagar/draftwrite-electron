@@ -4,11 +4,15 @@
 
 **Blocked by:** 01 (necesita el hook de derivación y la habilitación contextual)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `Ctrl/Cmd+N` en Stories crea una Story y abre el Story editor (regresión del comportamiento actual).
-- [ ] `Ctrl/Cmd+N` en Articles abre el Article editor y crea un Article con la misma Story preseleccionada que el botón.
-- [ ] Sin ninguna Story y con Articles activo, `Ctrl/Cmd+N` no abre editor ni escribe nada.
-- [ ] El atajo usa la misma fuente de tipo y habilitación que el botón; no duplica la derivación.
-- [ ] `Ctrl/Cmd+S` sigue forzando el guardado del Article abierto.
-- [ ] Tests de integración en el seam de App cubren Stories, Articles y el caso sin Story.
+- [x] `Ctrl/Cmd+N` en Stories crea una Story y abre el Story editor (regresión del comportamiento actual).
+- [x] `Ctrl/Cmd+N` en Articles abre el Article editor y crea un Article con la misma Story preseleccionada que el botón.
+- [x] Sin ninguna Story y con Articles activo, `Ctrl/Cmd+N` no abre editor ni escribe nada.
+- [x] El atajo usa la misma fuente de tipo y habilitación que el botón; no duplica la derivación.
+- [x] `Ctrl/Cmd+S` sigue forzando el guardado del Article abierto.
+- [x] Tests de integración en el seam de App cubren Stories, Articles y el caso sin Story.
+
+## Comments
+
+- **2026-10-19 — Implementado e integrado.** Implementación en `01ae8ff`; merge en `9b3e85d`. La cobertura adicional de los guards del atajo (draft inválido y Story de origen inexistente) quedó en `075964d`. Evidencia: suite completa 228 tests, typecheck y lint verdes.
