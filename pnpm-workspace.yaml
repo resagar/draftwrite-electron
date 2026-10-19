@@ -1,2 +1,5 @@
 allowBuilds:
   electron-winstaller: true
+  '@parcel/watcher': false
+  esbuild: false
+  unrs-resolver: false

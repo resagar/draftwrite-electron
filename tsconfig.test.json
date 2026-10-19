@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "composite": false,
+    "module": "CommonJS",
+    "moduleResolution": "node10"
+  },
+  "include": ["adapters/**/*", "src/main/**/*"]
+}
