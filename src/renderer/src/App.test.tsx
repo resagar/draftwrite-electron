@@ -1051,6 +1051,68 @@ describe('keyboard shortcuts', () => {
     expect(await screen.findByRole('region', { name: 'Story editor' })).toBeTruthy()
   })
 
+  it('starts a new article from the story in context when the articles library is open', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(await screen.findByRole('option', { name: /Calm software/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    await screen.findByText('No articles yet')
+
+    fireEvent.keyDown(document.body, { key: 'n', ctrlKey: true })
+
+    await screen.findByRole('region', { name: 'Article editor' })
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s1')
+
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'The architecture of calm' }
+    })
+
+    await waitFor(
+      () =>
+        expect(fake.createdArticles).toEqual([
+          { storyId: 's1', title: 'The architecture of calm', subtitle: '', target: '', text: '' }
+        ]),
+      { timeout: 3000 }
+    )
+  })
+
+  it('starts a new article from the open article story, like the sidebar button', async () => {
+    const fake = createFakePort({
+      stories: [
+        makeStory({ ID: 's1', Topic: 'Calm software' }),
+        makeStory({ ID: 's2', Topic: 'Boring technology' })
+      ],
+      articles: [makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(await screen.findByRole('option', { name: /Boring technology/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    fireEvent.keyDown(document.body, { key: 'n', ctrlKey: true })
+
+    await screen.findByRole('region', { name: 'Article editor' })
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s1')
+  })
+
+  it('consumes the key without creating anything when there is no story to write from', async () => {
+    const fake = createFakePort({ stories: [], articles: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    await screen.findByText('No articles yet')
+
+    expect(fireEvent.keyDown(document.body, { key: 'n', ctrlKey: true })).toBe(false)
+
+    expect(screen.queryByRole('region', { name: 'Article editor' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Story editor' })).toBeNull()
+    expect(fake.calls.createArticle).toBe(0)
+    expect(fake.calls.createStory).toBe(0)
+  })
+
   it('forces a save of the open article without waiting for the pause', async () => {
     const fake = createFakePort({ stories, articles })
 
