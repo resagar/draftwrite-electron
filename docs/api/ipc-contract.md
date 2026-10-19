@@ -11,7 +11,7 @@ El contrato viaja por una cadena de delegación, sin generación de código:
 ```
 src/renderer/src/data/ipc-port.ts (DataPort)
   → src/preload/index.ts (contextBridge → window.draftwrite)
-    → src/main/ipc/register.ts (ipcMain.handle)
+    → adapters/ipc/register.ts (ipcMain.handle)
       → adapters/ipc/ (wrappers, sin lógica)
         → src/main/<domain>/service.ts (servicios de aplicación)
           → adapters/persistence/sqlite/ (repositorios)
@@ -24,10 +24,26 @@ Los canales son 11: `story:create`, `story:get`, `story:list`, `story:update`, `
 El contrato se mantiene a mano en `adapters/ipc/contract.ts` (`StoryDTO`, `ArticleDTO` y las
 firmas); se verifica con `pnpm typecheck` y los tests.
 
-Los wrappers de `adapters/ipc/` no contienen lógica: delegan al servicio de aplicación
-(`src/main/<domain>/service.ts`), que a su vez delega al repositorio. Por eso las validaciones y
-los errores provienen del dominio (`src/main/<domain>/model.ts`), no del adapter. Esta guía pega
-el contrato a esa realidad.
+Los wrappers de `adapters/ipc/` no contienen reglas de negocio: validan la forma del payload en la
+frontera (`validate.ts`), envuelven el resultado (`errors.ts`) y delegan al servicio de aplicación
+(`src/main/<domain>/service.ts`), que a su vez delega al repositorio. Por eso las validaciones de
+negocio y los errores provienen del dominio (`src/main/<domain>/model.ts`), no del adapter. Esta
+guía pega el contrato a esa realidad.
+
+## Envoltura de resultados
+
+Ningún canal lanza excepciones: todos devuelven una envoltura `IpcResult<T>`.
+
+```
+{ ok: true; value: T } | { ok: false; error: { code: string; message: string } }
+```
+
+- Un error de dominio conserva su centinela y su mensaje (p. ej.
+  `{ code: 'errTopicRequired', message: 'story topic is required' }`).
+- Un fallo no previsto o un payload con forma inválida llega como `errUnexpected` y se registra en
+  la consola del main; nunca cruza un throw crudo.
+- El preload transporta la envoltura tal cual. La re-hidratación (`{ code }` → `Error`) vive en
+  `src/renderer/src/data/ipc-port.ts`, en la fase de frontend.
 
 ## Tipos compartidos
 
@@ -104,7 +120,7 @@ delete(id: string): Promise<void>
 
 - `id`: requerido.
 - Borra la story y, en cascada, sus articles.
-- Errores: `errNotFound` si no existe.
+- Silencioso: si el id no existe, no hay error (idempotente).
 
 ## articleService
 
@@ -124,7 +140,7 @@ create(article: ArticleDTO): Promise<ArticleDTO>
 - `target`: opcional, ≤ 255. Significado: el objetivo del artículo (ver GLOSSARY.md).
 - `text`: opcional; una cadena vacía es válida (ADR-0005).
 - Las entradas se recortan (`trim()`) antes de validar; los espacios en blanco cuentan como vacío.
-- Errores: `errStoryIDRequired | errTitleRequired | errStoryNotFound | errTitleTaken`.
+- Errores: `errStoryIDRequired | errTitleRequired | errTitleTooLong | errSubtitleTooLong | errTargetTooLong | errStoryNotFound | errTitleTaken`.
 - Retorno: `ArticleDTO` con `id` generado (UUID v4) e invariantes validadas.
 
 ### get
@@ -173,19 +189,20 @@ update(article: ArticleDTO): Promise<ArticleDTO>
 delete(id: string): Promise<void>
 ```
 
-- Errores: `errNotFound`.
+- Silencioso: si el id no existe, no hay error (idempotente).
 
 ## Pendientes / fuera de este contrato
 
 - El renderer consume este contrato a través de un único puerto (`src/renderer/src/data/ipc-port.ts`,
   interfaz `DataPort`).
 - Al cambiar la superficie: actualizar `adapters/ipc/contract.ts`, `src/preload/index.ts` y
-  `src/main/ipc/register.ts`; y actualizar este doc junto a `adapters/ipc/` y los tests
-  `src/main/<domain>/service.test.ts`.
+  `adapters/ipc/register.ts`; y actualizar este doc junto a `adapters/ipc/` y los tests
+  `src/main/<domain>/service.test.ts`, `adapters/ipc/register.test.ts`.
 
 ## Notas de migración
 
-- Los DTOs y el set exacto de códigos `{ code }` se confirmarán contra `adapters/ipc/contract.ts`
-  y los `model.ts` al implementarlos.
-- El data layer del renderer debe emitir y leer camelCase; `normalise.ts` se adaptará en su
-  momento.
+- Contrato implementado: los DTOs son las entidades del dominio (`Story`/`Article`), los canales
+  viven en `adapters/ipc/contract.ts` y el registro en `adapters/ipc/register.ts` (probado contra
+  un fake de `ipcMain`).
+- El data layer del renderer debe emitir y leer camelCase; `normalise.ts` se adaptará en la fase de
+  frontend.

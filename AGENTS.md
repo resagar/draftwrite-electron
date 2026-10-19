@@ -27,8 +27,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - `src/main/main.ts` - composition root: abre la BD, inyecta repositorios en servicios y registra los handlers IPC
 - `src/main/<domain>/` - feature/dominio: `model.ts` (entidades y value objects, dominio puro), `repository.ts` (puerto del repositorio), `service.ts` (puerto + implementación del servicio de aplicación), `fake.ts` (dobles de test). Dominios actuales: `story/`, `article/`
 - `src/main/platform/` - helpers de plataforma (p. ej. la ruta XDG de la BD), sin dependencias de Electron
-- `src/main/ipc/register.ts` - registra los handlers `ipcMain.handle` del contrato (delegación pura, sin lógica de negocio)
-- `adapters/ipc/` - adapter de entrada: `contract.ts` (DTOs del contrato IPC), `story-service.ts` y `article-service.ts` (wrappers de los servicios de aplicación)
+- `adapters/ipc/` - adapter de entrada (el equivalente de `adapters/wails/` del Go): `contract.ts` (DTOs, canales e `IpcResult`), `register.ts` (registro de los handlers `ipcMain.handle`), `story-service.ts` y `article-service.ts` (wrappers de los servicios de aplicación), `errors.ts` y `validate.ts` (frontera: errores y payloads)
 - `adapters/persistence/sqlite/` - adapter de salida: `schema.ts` Drizzle, `migrations/` de drizzle-kit y los repositorios
 - `src/preload/index.ts` - `contextBridge`: expone la API tipada al renderer
 - `src/renderer/` - app React; su único punto de acceso a datos es `src/renderer/src/data/ipc-port.ts`
@@ -115,7 +114,7 @@ type(scope): description
 
 - `pnpm test` - suite completa (Jest)
 - `pnpm test -- <ruta o patrón>` - un subconjunto de tests (p. ej. `pnpm test -- src/main/story`)
-- `pnpm test -- -t "<nombre>"` - un caso concreto
+- `pnpm test -t "<nombre>"` - un caso concreto
 
 **Migraciones (drizzle-kit)**
 

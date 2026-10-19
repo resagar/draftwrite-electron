@@ -1,22 +1,46 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { articleChannels, storyChannels } from '../../adapters/ipc/contract'
+import type { ArticleDTO, DraftwriteApi, IpcResult, StoryDTO } from '../../adapters/ipc/contract'
 
-// Custom APIs for renderer
-const api = {}
+/**
+ * Forwards a call to its channel and returns the envelope as is. The
+ * re-hydration of `{ code }` into domain errors lives in the renderer's
+ * `ipc-port` (frontend phase).
+ */
+function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
+  return ipcRenderer.invoke(channel, ...args)
+}
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+/** Typed data entry point of the renderer. */
+const draftwrite: DraftwriteApi = {
+  story: {
+    create: (story: StoryDTO) => invoke<StoryDTO>(storyChannels.create, story),
+    get: (id: string) => invoke<StoryDTO>(storyChannels.get, id),
+    list: () => invoke<StoryDTO[]>(storyChannels.list),
+    update: (story: StoryDTO) => invoke<StoryDTO>(storyChannels.update, story),
+    delete: (id: string) => invoke<void>(storyChannels.delete, id)
+  },
+  article: {
+    create: (article: ArticleDTO) => invoke<ArticleDTO>(articleChannels.create, article),
+    get: (id: string) => invoke<ArticleDTO>(articleChannels.get, id),
+    listByStory: (storyID: string) => invoke<ArticleDTO[]>(articleChannels.listByStory, storyID),
+    list: () => invoke<ArticleDTO[]>(articleChannels.list),
+    update: (article: ArticleDTO) => invoke<ArticleDTO>(articleChannels.update, article),
+    delete: (id: string) => invoke<void>(articleChannels.delete, id)
+  }
+}
+
+// Use `contextBridge` APIs to expose Electron APIs to the renderer only if
+// context isolation is enabled, otherwise add them to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('draftwrite', draftwrite)
   } catch (error) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
   window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  window.draftwrite = draftwrite
 }
