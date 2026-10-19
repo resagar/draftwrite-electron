@@ -1,6 +1,7 @@
 import { PlusCircle } from 'lucide-react'
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
+import { DISABLED_CREATE_BUTTON } from '../../lib/classes'
 import { useContextualCreate } from '../../state/use-contextual-create'
 import { usePlatformModifier } from '../../state/use-platform'
 import { useWorkspace } from '../../state/workspace-context'
@@ -46,7 +47,10 @@ export function Sidebar(): JSX.Element {
           title={actionLabel}
           disabled={create.disabled}
           onClick={create.start}
-          className="flex h-8 w-full items-center justify-center gap-2 rounded border border-line-strong bg-neutral text-xs font-medium text-base-content transition hover:bg-neutral/80 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn(
+            'flex h-8 w-full items-center justify-center gap-2 rounded border border-line-strong bg-neutral text-xs font-medium text-base-content transition hover:bg-neutral/80',
+            DISABLED_CREATE_BUTTON
+          )}
         >
           <PlusCircle aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary" />
           <span

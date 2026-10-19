@@ -1,6 +1,7 @@
 import { Inbox } from 'lucide-react'
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
+import { CREATE_LABELS } from '../../lib/create-labels'
 import { useLibrary } from '../../state/library-context'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
 import { useWorkspace } from '../../state/workspace-context'
@@ -63,7 +64,7 @@ export function StoryList(): JSX.Element {
               onClick={() => navigate({ type: 'create/start', kind: 'story' })}
               className="mt-1 rounded border border-line-strong bg-neutral px-2 py-1 text-xs font-medium text-base-content transition hover:bg-neutral/80"
             >
-              New Story
+              {CREATE_LABELS.story}
             </button>
           }
         />

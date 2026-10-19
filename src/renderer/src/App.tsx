@@ -10,20 +10,20 @@ import { LibraryProvider, useLibrary } from './state/library-context'
 import { requestSave } from './state/save-registry'
 import { useContextualCreate } from './state/use-contextual-create'
 import { useShortcuts } from './state/use-shortcuts'
+import { useStoryInContext } from './state/use-story-in-context'
 import { WorkspaceProvider, useWorkspace, useWorkspaceDispatch } from './state/workspace-context'
 import { ConfirmDialog } from './ui/ConfirmDialog/ConfirmDialog'
 import { Workspace } from './workspace/Workspace/Workspace'
 
 function AppLayout(): JSX.Element {
   const port = useDataPort()
-  const { library, dialog, pendingNavigation, selectedArticleId, selectedStoryId } = useWorkspace()
-  const { articleById, storyById, reloadStories, reloadArticles } = useLibrary()
+  const { library, dialog, pendingNavigation, selectedArticleId } = useWorkspace()
+  const { articleById, reloadStories, reloadArticles } = useLibrary()
   const dispatch = useWorkspaceDispatch()
   const [dialogError, setDialogError] = useState<string | null>(null)
 
   const selectedArticle = articleById(selectedArticleId)
-  const openStory =
-    selectedArticle === null ? storyById(selectedStoryId) : storyById(selectedArticle.StoryID)
+  const { story: openStory } = useStoryInContext()
 
   const closeDialog = (): void => {
     setDialogError(null)

@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import { useLibrary } from './library-context'
+import { CREATE_LABELS } from '../lib/create-labels'
+import { useStoryInContext } from './use-story-in-context'
 import { useWorkspaceNavigation } from './use-navigation'
 import { useWorkspace, type CreateKind } from './workspace-context'
 
@@ -14,22 +15,15 @@ export type ContextualCreate = {
 // Article — pre-selected with the Story in context — while Articles is. The
 // sidebar button and the global shortcut read the same derivation.
 export function useContextualCreate(): ContextualCreate {
-  const { library, selectedArticleId, selectedStoryId } = useWorkspace()
-  const { articleById, storiesTotal, storyById } = useLibrary()
+  const { library } = useWorkspace()
+  const { story, hasStories } = useStoryInContext()
   const navigate = useWorkspaceNavigation()
 
   const kind: CreateKind = library === 'stories' ? 'story' : 'article'
-  const label = kind === 'story' ? 'New Story' : 'New Article'
-
-  // The Story the writer is working on: the open one, or the source of the open
-  // article. It replicates the precedence the article list already uses.
-  const contextStory =
-    selectedArticleId === null
-      ? storyById(selectedStoryId)
-      : storyById(articleById(selectedArticleId)?.StoryID ?? null)
+  const label = CREATE_LABELS[kind]
 
   // An Article is born from a Story, so there is nothing to create until one exists.
-  const disabled = kind === 'article' && storiesTotal === 0
+  const disabled = kind === 'article' && !hasStories
 
   const start = useCallback((): void => {
     if (disabled) {
@@ -39,9 +33,9 @@ export function useContextualCreate(): ContextualCreate {
     navigate(
       kind === 'story'
         ? { type: 'create/start', kind: 'story' }
-        : { type: 'create/start', kind: 'article', storyId: contextStory?.ID }
+        : { type: 'create/start', kind: 'article', storyId: story?.ID }
     )
-  }, [contextStory?.ID, disabled, kind, navigate])
+  }, [story?.ID, disabled, kind, navigate])
 
   return { kind, label, disabled, start }
 }

@@ -1,7 +1,10 @@
 import { FileText, Plus } from 'lucide-react'
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
+import { DISABLED_CREATE_BUTTON } from '../../lib/classes'
+import { CREATE_LABELS } from '../../lib/create-labels'
 import { useLibrary } from '../../state/library-context'
+import { useStoryInContext } from '../../state/use-story-in-context'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { ErrorState } from '../../ui/ErrorState/ErrorState'
@@ -14,28 +17,12 @@ import { SortToggle } from '../SortToggle/SortToggle'
 import { useOptionList } from '../use-option-list'
 
 export function ArticleList(): JSX.Element {
-  const {
-    articles,
-    articlesTotal,
-    articlesStatus,
-    storiesTotal,
-    reloadArticles,
-    articleById,
-    storyById
-  } = useLibrary()
-  const { selectedArticleId, selectedStoryId, tagFilter } = useWorkspace()
+  const { articles, articlesTotal, articlesStatus, reloadArticles } = useLibrary()
+  const { selectedArticleId, tagFilter } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
 
-  // The Story the writer is working on: the open one, or the source of the open
-  // article. A new Article is pre-selected with it when it exists.
-  const openStory =
-    selectedArticleId === null
-      ? storyById(selectedStoryId)
-      : storyById(articleById(selectedArticleId)?.StoryID ?? null)
-
-  // An Article is born from a Story, so there is nothing to create until one exists.
-  const canCreate = storiesTotal > 0
+  const { story: openStory, hasStories: canCreate } = useStoryInContext()
 
   const list = useOptionList({
     count: articles.length,
@@ -52,9 +39,12 @@ export function ArticleList(): JSX.Element {
       type="button"
       disabled={!canCreate}
       onClick={startNew}
-      className="mt-1 rounded border border-line-strong bg-neutral px-2 py-1 text-xs font-medium text-base-content transition hover:bg-neutral/80 disabled:cursor-not-allowed disabled:opacity-40"
+      className={cn(
+        'mt-1 rounded border border-line-strong bg-neutral px-2 py-1 text-xs font-medium text-base-content transition hover:bg-neutral/80',
+        DISABLED_CREATE_BUTTON
+      )}
     >
-      New Article
+      {CREATE_LABELS.article}
     </button>
   )
 
@@ -109,7 +99,7 @@ export function ArticleList(): JSX.Element {
         <div className="flex items-center gap-1.5">
           <SortToggle />
           {canCreate ? null : <span className="text-2xs text-base-content/60">No story yet</span>}
-          <IconButton label="New Article" disabled={!canCreate} onClick={startNew}>
+          <IconButton label={CREATE_LABELS.article} disabled={!canCreate} onClick={startNew}>
             <Plus aria-hidden="true" className="h-3 w-3" />
           </IconButton>
         </div>
