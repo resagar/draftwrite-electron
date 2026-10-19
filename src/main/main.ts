@@ -64,7 +64,7 @@ if (!hasSingleInstanceLock) {
   // Some APIs can only be used after this event occurs.
   app.whenReady().then(() => {
     // Set app user model id for windows
-    electronApp.setAppUserModelId('com.electron')
+    electronApp.setAppUserModelId('com.resagar.draftwrite')
 
     // The writing app uses the dark theme regardless of the system theme.
     nativeTheme.themeSource = 'dark'

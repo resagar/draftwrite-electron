@@ -101,8 +101,8 @@ type(scope): description
 **Desarrollo (Electron)**
 
 - `pnpm dev` - levantar la app en modo desarrollo (HMR del renderer, rebuild de main/preload)
-- `pnpm build` - typecheck + build de producción (`electron-vite build`)
-- `pnpm dist` - empaquetar con electron-builder: Linux (AppImage, deb) + Windows (NSIS)
+- `pnpm build` - typecheck + build de producción (`electron-vite build`) y copia de las migraciones SQLite a `out/main`
+- `pnpm dist` - empaquetar con electron-builder para Linux (AppImage, deb). Windows (NSIS) se compila en Windows o CI; cross-build desde Linux requiere Wine
 
 **TypeScript**
 
@@ -110,7 +110,7 @@ type(scope): description
 - `pnpm lint` - análisis estático (ESLint)
 - `pnpm format` - formatear (Prettier)
 
-**Nota (plataforma):** el proyecto se desarrolla en Linux. `better-sqlite3` es un módulo nativo: si la app falla al abrir la BD por desajuste de ABI, reconstruirlo con `electron-builder install-app-deps` (ya está en `postinstall`). El paquete de Windows (NSIS) se genera desde Linux con `pnpm dist`.
+**Nota (plataforma):** el proyecto se desarrolla en Linux. `better-sqlite3` usa Node-API y el paquete incluye prebuilds para Linux, Windows y macOS, así que el módulo nativo no impide empaquetar para Windows. El NSIS cross-build desde Linux requiere Wine para las herramientas de Windows (`rcedit`); si no hay Wine, generar el instalador en Windows o en un CI con runner Windows. Si la app falla al abrir la BD por un desajuste de ABI, reconstruir con `electron-builder install-app-deps` (ya está en `postinstall`).
 
 **TDD (loop red-green con agentes)**
 

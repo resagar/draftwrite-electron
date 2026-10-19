@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: draftwrite-electron
+appId: com.resagar.draftwrite
+productName: draftwrite
 directories:
   buildResources: build
 files:
@@ -12,9 +12,9 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: draftwrite-electron
+  executableName: draftwrite
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: draftwrite-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
@@ -31,12 +31,17 @@ dmg:
 linux:
   target:
     - AppImage
-    - snap
     - deb
-  maintainer: electronjs.org
+  executableName: draftwrite
+  maintainer: 'Rene Garcia <rsamuelgarcia@gmail.com>'
   category: Utility
+  synopsis: Desktop app for writers
+  syncDesktopName: true
 appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: draftwrite-${version}-${arch}.${ext}
+deb:
+  packageName: draftwrite
+  artifactName: draftwrite-${version}-${arch}.${ext}
 npmRebuild: false
 publish:
   provider: generic
