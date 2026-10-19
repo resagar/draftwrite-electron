@@ -1,8 +1,8 @@
 import { PlusCircle } from 'lucide-react'
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
+import { useContextualCreate } from '../../state/use-contextual-create'
 import { usePlatformModifier } from '../../state/use-platform'
-import { useWorkspaceNavigation } from '../../state/use-navigation'
 import { useWorkspace } from '../../state/workspace-context'
 import { Kbd } from '../../ui/Kbd/Kbd'
 import { LibraryNav } from '../LibraryNav/LibraryNav'
@@ -10,8 +10,10 @@ import { TagList } from '../TagList/TagList'
 
 export function Sidebar(): JSX.Element {
   const { sidebarCollapsed } = useWorkspace()
-  const navigate = useWorkspaceNavigation()
   const modifier = usePlatformModifier()
+  const create = useContextualCreate()
+
+  const actionLabel = `${create.label} (${modifier} N)`
 
   return (
     <aside
@@ -40,16 +42,17 @@ export function Sidebar(): JSX.Element {
       <div className="border-t border-base-300 p-3">
         <button
           type="button"
-          aria-label={`New Story (${modifier} N)`}
-          title={`New Story (${modifier} N)`}
-          onClick={() => navigate({ type: 'create/start', kind: 'story' })}
-          className="flex h-8 w-full items-center justify-center gap-2 rounded border border-line-strong bg-neutral text-xs font-medium text-base-content transition hover:bg-neutral/80"
+          aria-label={actionLabel}
+          title={actionLabel}
+          disabled={create.disabled}
+          onClick={create.start}
+          className="flex h-8 w-full items-center justify-center gap-2 rounded border border-line-strong bg-neutral text-xs font-medium text-base-content transition hover:bg-neutral/80 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <PlusCircle aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary" />
           <span
             className={cn('items-center gap-2', sidebarCollapsed ? 'hidden' : 'hidden lg:flex')}
           >
-            New Story
+            {create.label}
             <Kbd>{`${modifier} N`}</Kbd>
           </span>
         </button>

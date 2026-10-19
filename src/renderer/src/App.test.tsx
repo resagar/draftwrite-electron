@@ -743,6 +743,172 @@ describe('creating an article', () => {
   })
 })
 
+describe('the sidebar new action', () => {
+  const stories = [
+    makeStory({ ID: 's1', Topic: 'Calm software' }),
+    makeStory({ ID: 's2', Topic: 'Boring technology' })
+  ]
+
+  const sidebarNewButton = (): HTMLElement =>
+    within(screen.getByRole('complementary', { name: 'Library' })).getByRole('button', {
+      name: /^New (Story|Article)/
+    })
+
+  const switchToArticles = async (): Promise<void> => {
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    await screen.findByText('No articles yet')
+  }
+
+  it('says New Article with the articles library and starts an article from the sidebar', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    renderApp(fake.port)
+    await switchToArticles()
+
+    const button = sidebarNewButton()
+
+    expect(within(button).getByText('New Article')).toBeTruthy()
+    expect(within(button).getByText('Ctrl N')).toBeTruthy()
+    expect(button.getAttribute('aria-label')).toBe('New Article (Ctrl N)')
+    expect(button.getAttribute('title')).toBe('New Article (Ctrl N)')
+
+    fireEvent.click(button)
+
+    await screen.findByRole('region', { name: 'Article editor' })
+  })
+
+  it('keeps New Story and its shortcut with the stories library', () => {
+    renderApp(createFakePort({ stories }).port)
+
+    const button = sidebarNewButton()
+
+    expect(within(button).getByText('New Story')).toBeTruthy()
+    expect(within(button).getByText('Ctrl N')).toBeTruthy()
+    expect(button.getAttribute('aria-label')).toBe('New Story (Ctrl N)')
+    expect(button.getAttribute('title')).toBe('New Story (Ctrl N)')
+  })
+
+  it('pre-selects the story selected in the library when no article is open', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(await screen.findByRole('option', { name: /Boring technology/ }))
+    await switchToArticles()
+
+    fireEvent.click(sidebarNewButton())
+
+    await screen.findByRole('region', { name: 'Article editor' })
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s2')
+  })
+
+  it('pre-selects the story of the open article over the selected story', async () => {
+    const fake = createFakePort({
+      stories,
+      articles: [makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(await screen.findByRole('option', { name: /Boring technology/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    fireEvent.click(sidebarNewButton())
+
+    await screen.findByRole('region', { name: 'Article editor' })
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s1')
+  })
+
+  it('opens with no pre-selection when the story of the open article is gone', async () => {
+    const fake = createFakePort({
+      stories: [makeStory({ ID: 's2', Topic: 'Boring technology' })],
+      articles: [makeArticle({ ID: 'a1', StoryID: 'gone', Title: 'Orphan' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(await screen.findByRole('option', { name: /Boring technology/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /Orphan/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    fireEvent.click(sidebarNewButton())
+
+    await screen.findByRole('region', { name: 'Article editor' })
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('')
+  })
+
+  it('is disabled with the articles library and no story, and starts nothing', async () => {
+    const fake = createFakePort({ stories: [], articles: [] })
+
+    renderApp(fake.port)
+    await switchToArticles()
+
+    const button = sidebarNewButton()
+
+    expect(button).toHaveProperty('disabled', true)
+
+    fireEvent.click(button)
+
+    expect(screen.queryByRole('region', { name: 'Article editor' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Story editor' })).toBeNull()
+    expect(fake.calls.createArticle).toBe(0)
+  })
+
+  it('enables the action when the stories arrive after the library switch', async () => {
+    const gate = createDeferred()
+    const fake = createFakePort({ stories, articles: [], listStoriesGate: gate.promise })
+
+    renderApp(fake.port)
+    await switchToArticles()
+
+    expect(sidebarNewButton()).toHaveProperty('disabled', true)
+
+    gate.resolve()
+
+    await waitFor(() => expect(sidebarNewButton()).toHaveProperty('disabled', false))
+  })
+
+  it('asks before discarding an unsaved draft, then creates the article', async () => {
+    const fake = createFakePort({
+      stories,
+      articles: [makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: '' } })
+
+    fireEvent.click(sidebarNewButton())
+
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText(/discards them/)).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Discard and leave' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s1')
+    expect(screen.getByLabelText<HTMLInputElement>('Title').value).toBe('')
+  })
+
+  it('keeps the contextual name and tooltip with the sidebar collapsed', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    renderApp(fake.port)
+    await switchToArticles()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }))
+
+    const button = sidebarNewButton()
+
+    expect(button.getAttribute('aria-label')).toBe('New Article (Ctrl N)')
+    expect(button.getAttribute('title')).toBe('New Article (Ctrl N)')
+  })
+})
+
 describe('the New Article button', () => {
   it('says a story is missing when there is none to write from', async () => {
     const fake = createFakePort({
