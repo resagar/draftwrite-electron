@@ -1,11 +1,14 @@
 import { useEffect } from 'react'
 
 type ShortcutHandlers = {
-  onNewStory: () => void
+  onNew: () => void
   onSave: () => void
 }
 
-export function useShortcuts({ onNewStory, onSave }: ShortcutHandlers): void {
+// The N shortcut creates whatever the active library offers. The caller passes
+// the same contextual action the sidebar button runs, so the two cannot
+// diverge; when that action is disabled, the key is still consumed.
+export function useShortcuts({ onNew, onSave }: ShortcutHandlers): void {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (!event.metaKey && !event.ctrlKey) {
@@ -16,7 +19,7 @@ export function useShortcuts({ onNewStory, onSave }: ShortcutHandlers): void {
 
       if (key === 'n') {
         event.preventDefault()
-        onNewStory()
+        onNew()
       } else if (key === 's') {
         event.preventDefault()
         onSave()
@@ -26,5 +29,5 @@ export function useShortcuts({ onNewStory, onSave }: ShortcutHandlers): void {
     window.addEventListener('keydown', handleKeyDown)
 
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onNewStory, onSave])
+  }, [onNew, onSave])
 }

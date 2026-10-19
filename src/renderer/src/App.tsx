@@ -8,7 +8,7 @@ import { describeError } from './data/errors'
 import { useDataPort } from './data/port-context'
 import { LibraryProvider, useLibrary } from './state/library-context'
 import { requestSave } from './state/save-registry'
-import { useWorkspaceNavigation } from './state/use-navigation'
+import { useContextualCreate } from './state/use-contextual-create'
 import { useShortcuts } from './state/use-shortcuts'
 import { WorkspaceProvider, useWorkspace, useWorkspaceDispatch } from './state/workspace-context'
 import { ConfirmDialog } from './ui/ConfirmDialog/ConfirmDialog'
@@ -19,7 +19,6 @@ function AppLayout(): JSX.Element {
   const { library, dialog, pendingNavigation, selectedArticleId, selectedStoryId } = useWorkspace()
   const { articleById, storyById, reloadStories, reloadArticles } = useLibrary()
   const dispatch = useWorkspaceDispatch()
-  const navigate = useWorkspaceNavigation()
   const [dialogError, setDialogError] = useState<string | null>(null)
 
   const selectedArticle = articleById(selectedArticleId)
@@ -31,8 +30,10 @@ function AppLayout(): JSX.Element {
     dispatch({ type: 'dialog/close' })
   }
 
+  const create = useContextualCreate()
+
   useShortcuts({
-    onNewStory: () => navigate({ type: 'create/start', kind: 'story' }),
+    onNew: create.start,
     onSave: () => void requestSave()
   })
 
