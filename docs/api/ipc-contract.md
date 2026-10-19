@@ -12,7 +12,7 @@ El contrato viaja por una cadena de delegación, sin generación de código:
 src/renderer/src/data/ipc-port.ts (DataPort)
   → src/preload/index.ts (contextBridge → window.draftwrite)
     → adapters/ipc/register.ts (ipcMain.handle)
-      → adapters/ipc/ (wrappers, sin lógica)
+      → adapters/ipc/{story-service,article-service}.ts (wrappers: validación y envoltura)
         → src/main/<domain>/service.ts (servicios de aplicación)
           → adapters/persistence/sqlite/ (repositorios)
 ```
