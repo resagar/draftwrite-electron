@@ -1,5 +1,5 @@
 import type { ElectronAPI } from '@electron-toolkit/preload'
-import type { DraftwriteApi } from '../../adapters/ipc/contract'
+import type { DraftwriteApi } from '../main/adapters/ipc/contract'
 
 declare global {
   interface Window {

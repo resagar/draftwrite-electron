@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs'
-import { newArticleRepository } from '../../adapters/persistence/sqlite/article-repository'
-import { newStoryRepository } from '../../adapters/persistence/sqlite/story-repository'
+import { newArticleRepository } from './adapters/persistence/sqlite/article-repository'
+import { newStoryRepository } from './adapters/persistence/sqlite/story-repository'
 import { newArticleService, type ArticleService } from './article/service'
 import { openDatabase, type AppDatabase } from './db'
 import { resolveDataDir, resolveDatabasePath, type DataDirOptions } from './platform/data-dir'

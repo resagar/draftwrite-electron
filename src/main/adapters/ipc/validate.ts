@@ -1,5 +1,5 @@
-import type { Article } from '../../src/main/article/model'
-import type { Story } from '../../src/main/story/model'
+import type { Article } from '../../article/model'
+import type { Story } from '../../story/model'
 
 /**
  * Runtime narrowing for the IPC boundary: TypeScript types do not validate

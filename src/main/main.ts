@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { registerIpcHandlers } from '../../adapters/ipc/register'
+import { registerIpcHandlers } from './adapters/ipc/register'
 import { bootstrap, closeDatabase, type Bootstrap } from './bootstrap'
 import type { AppDatabase } from './db'
 import icon from '../../resources/icon.png?asset'

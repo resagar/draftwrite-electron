@@ -28,8 +28,8 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - `src/main/bootstrap.ts` - resuelve el directorio de datos (modo 0700), abre la BD y construye repositorios y servicios; `main.ts` lo usa para el wiring
 - `src/main/<domain>/` - feature/dominio: `model.ts` (entidades y value objects, dominio puro), `repository.ts` (puerto del repositorio), `service.ts` (puerto + implementación del servicio de aplicación), `fake.ts` (dobles de test). Dominios actuales: `story/`, `article/`
 - `src/main/platform/` - helpers de plataforma (p. ej. la ruta XDG de la BD), sin dependencias de Electron
-- `adapters/ipc/` - adapter de entrada (el equivalente de `adapters/wails/` del Go): `contract.ts` (DTOs, canales e `IpcResult`), `register.ts` (registro de los handlers `ipcMain.handle`), `story-service.ts` y `article-service.ts` (wrappers de los servicios de aplicación), `errors.ts` y `validate.ts` (frontera: errores y payloads)
-- `adapters/persistence/sqlite/` - adapter de salida: `schema.ts` Drizzle, `migrations/` de drizzle-kit y los repositorios
+- `src/main/adapters/ipc/` - adapter de entrada (el equivalente de `adapters/wails/` del Go): `contract.ts` (DTOs, canales e `IpcResult`), `register.ts` (registro de los handlers `ipcMain.handle`), `story-service.ts` y `article-service.ts` (wrappers de los servicios de aplicación), `errors.ts` y `validate.ts` (frontera: errores y payloads)
+- `src/main/adapters/persistence/sqlite/` - adapter de salida: `schema.ts` Drizzle, `migrations/` de drizzle-kit y los repositorios
 - `src/preload/index.ts` - `contextBridge`: expone la API tipada al renderer
 - `src/renderer/` - app React; su único punto de acceso a datos es `src/renderer/src/data/ipc-port.ts`
 - `GLOSSARY.md` - glosario del dominio (vocabulario canónico), en el root del repo
@@ -39,7 +39,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 ## Architecture
 
 - Hexagonal, organizada por dominio/feature
-- Regla de dependencias hacia adentro: `adapters/*` importa al dominio (`src/main/<domain>/`), nunca al revés
+- Regla de dependencias hacia adentro: los adapters (`src/main/adapters/*`) importan al dominio (`src/main/<domain>/`), nunca al revés
 - El dominio no conoce Electron, ni Drizzle, ni better-sqlite3 (solo `node:crypto` para `randomUUID()`)
 - La app arranca sin red y sin servidor: IPC directo main↔renderer
 - El renderer nunca importa el dominio ni los adapters: solo consume `window.draftwrite` a través de la interfaz `DataPort`
@@ -48,7 +48,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - Invariantes en toda escritura: `update` re-valida las reglas del constructor con un método que no genere un ID nuevo
 - El `storyID` de un Article es inmutable: no se reasigna a otra Story tras la creación
 - `update` lee antes de escribir solo cuando una regla de negocio necesita el valor almacenado (`article` lo hace para `storyID`; `story` no lee — ver `docs/adr/0003-update-read-before-write.md`)
-- Las listas nunca son `null`/`undefined`: en el wire viajan siempre como `[]` (mapeo explícito en `adapters/ipc/contract.ts`)
+- Las listas nunca son `null`/`undefined`: en el wire viajan siempre como `[]` (mapeo explícito en `src/main/adapters/ipc/contract.ts`)
 - Los errores de dominio son centinelas exportados por cada `model` (`errTopicTaken`, `errNotFound`, …): cruzan el IPC como `{ code }` y se re-hidratan en `ipc-port.ts`
 
 ## Testing
@@ -119,7 +119,7 @@ type(scope): description
 
 **Migraciones (drizzle-kit)**
 
-- `drizzle-kit generate` - generar el SQL de migración a partir del schema (`adapters/persistence/sqlite/schema.ts`)
+- `drizzle-kit generate` - generar el SQL de migración a partir del schema (`src/main/adapters/persistence/sqlite/schema.ts`)
 - `drizzle-kit migrate` - aplicar las migraciones pendientes a la BD
 
 ## Agent skills

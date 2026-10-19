@@ -11,20 +11,20 @@ El contrato viaja por una cadena de delegación, sin generación de código:
 ```
 src/renderer/src/data/ipc-port.ts (DataPort)
   → src/preload/index.ts (contextBridge → window.draftwrite)
-    → adapters/ipc/register.ts (ipcMain.handle)
-      → adapters/ipc/{story-service,article-service}.ts (wrappers: validación y envoltura)
+    → src/main/adapters/ipc/register.ts (ipcMain.handle)
+      → src/main/adapters/ipc/{story-service,article-service}.ts (wrappers: validación y envoltura)
         → src/main/<domain>/service.ts (servicios de aplicación)
-          → adapters/persistence/sqlite/ (repositorios)
+          → src/main/adapters/persistence/sqlite/ (repositorios)
 ```
 
 Los canales son 11: `story:create`, `story:get`, `story:list`, `story:update`, `story:delete`,
 `article:create`, `article:get`, `article:listByStory`, `article:list`, `article:update` y
 `article:delete`.
 
-El contrato se mantiene a mano en `adapters/ipc/contract.ts` (`StoryDTO`, `ArticleDTO` y las
+El contrato se mantiene a mano en `src/main/adapters/ipc/contract.ts` (`StoryDTO`, `ArticleDTO` y las
 firmas); se verifica con `pnpm typecheck` y los tests.
 
-Los wrappers de `adapters/ipc/` no contienen reglas de negocio: validan la forma del payload en la
+Los wrappers de `src/main/adapters/ipc/` no contienen reglas de negocio: validan la forma del payload en la
 frontera (`validate.ts`), envuelven el resultado (`errors.ts`) y delegan al servicio de aplicación
 (`src/main/<domain>/service.ts`), que a su vez delega al repositorio. Por eso las validaciones de
 negocio y los errores provienen del dominio (`src/main/<domain>/model.ts`), no del adapter. Esta
@@ -195,14 +195,14 @@ delete(id: string): Promise<void>
 
 - El renderer consume este contrato a través de un único puerto (`src/renderer/src/data/ipc-port.ts`,
   interfaz `DataPort`).
-- Al cambiar la superficie: actualizar `adapters/ipc/contract.ts`, `src/preload/index.ts` y
-  `adapters/ipc/register.ts`; y actualizar este doc junto a `adapters/ipc/` y los tests
-  `src/main/<domain>/service.test.ts`, `adapters/ipc/register.test.ts`.
+- Al cambiar la superficie: actualizar `src/main/adapters/ipc/contract.ts`, `src/preload/index.ts` y
+  `src/main/adapters/ipc/register.ts`; y actualizar este doc junto a `src/main/adapters/ipc/` y los tests
+  `src/main/<domain>/service.test.ts`, `src/main/adapters/ipc/register.test.ts`.
 
 ## Notas de migración
 
 - Contrato implementado: los DTOs son las entidades del dominio (`Story`/`Article`), los canales
-  viven en `adapters/ipc/contract.ts` y el registro en `adapters/ipc/register.ts` (probado contra
+  viven en `src/main/adapters/ipc/contract.ts` y el registro en `src/main/adapters/ipc/register.ts` (probado contra
   un fake de `ipcMain`).
 - El data layer del renderer debe emitir y leer camelCase; `normalise.ts` se adaptará en la fase de
   frontend.

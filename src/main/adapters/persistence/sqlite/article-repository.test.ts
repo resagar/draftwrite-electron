@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals'
-import { openDatabase, type AppDatabase } from '../../../src/main/db'
-import { newArticle } from '../../../src/main/article/model'
-import { errNotFound, errTitleTaken } from '../../../src/main/article/repository'
-import { newStory, type Story } from '../../../src/main/story/model'
+import { openDatabase, type AppDatabase } from '../../../db'
+import { newArticle } from '../../../article/model'
+import { errNotFound, errTitleTaken } from '../../../article/repository'
+import { newStory, type Story } from '../../../story/model'
 import { newArticleRepository } from './article-repository'
 import { newStoryRepository } from './story-repository'
 

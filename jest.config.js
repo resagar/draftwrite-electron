@@ -7,7 +7,7 @@
  */
 module.exports = {
   testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/adapters'],
+  roots: ['<rootDir>/src'],
   testMatch: ['**/*.test.ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }]

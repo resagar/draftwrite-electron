@@ -3,7 +3,7 @@ import { sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 
 /**
  * Database schema, mirror of the initial SQL migration that lives in
- * `adapters/persistence/sqlite/migrations`.
+ * `src/main/adapters/persistence/sqlite/migrations`.
  *
  * Column names stay snake_case in the database; the TypeScript properties are
  * camelCase like everywhere else in the app (`storyID` ↔ `story_id`).

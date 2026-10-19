@@ -1,5 +1,5 @@
-import type { ArticleService } from '../../src/main/article/service'
-import type { StoryService } from '../../src/main/story/service'
+import type { ArticleService } from '../../article/service'
+import type { StoryService } from '../../story/service'
 import { registerArticleHandlers } from './article-service'
 import type { IpcHandlerRegistry } from './contract'
 import { registerStoryHandlers } from './story-service'

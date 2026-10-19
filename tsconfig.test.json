@@ -5,5 +5,5 @@
     "module": "CommonJS",
     "moduleResolution": "node10"
   },
-  "include": ["adapters/**/*", "src/main/**/*"]
+  "include": ["src/main/**/*"]
 }

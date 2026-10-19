@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { eq, sql } from 'drizzle-orm'
-import { openDatabase, type AppDatabase } from '../../../src/main/db'
+import { openDatabase, type AppDatabase } from '../../../db'
 import { articles, stories } from './schema'
 
 function listTables(db: AppDatabase): string[] {

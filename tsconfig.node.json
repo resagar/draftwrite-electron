@@ -5,8 +5,7 @@
     "electron.vite.config.*",
     "drizzle.config.ts",
     "src/main/**/*",
-    "src/preload/**/*",
-    "adapters/**/*"
+    "src/preload/**/*"
   ],
   "compilerOptions": {
     "composite": true,

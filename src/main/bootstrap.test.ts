@@ -2,8 +2,8 @@ import { existsSync, mkdtempSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from '@jest/globals'
-import { registerIpcHandlers } from '../../adapters/ipc/register'
-import { storyChannels } from '../../adapters/ipc/contract'
+import { registerIpcHandlers } from './adapters/ipc/register'
+import { storyChannels } from './adapters/ipc/contract'
 import type { Article } from './article/model'
 import {
   errNotFound as articleErrNotFound,

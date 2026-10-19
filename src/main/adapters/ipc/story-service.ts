@@ -1,4 +1,4 @@
-import type { StoryService } from '../../src/main/story/service'
+import type { StoryService } from '../../story/service'
 import { storyChannels, type IpcHandlerRegistry } from './contract'
 import { toIpcResult } from './errors'
 import { expectString, parseStoryCreatePayload, parseStoryUpdatePayload } from './validate'

@@ -1,11 +1,7 @@
 import { desc, eq, sql } from 'drizzle-orm'
-import type { Article } from '../../../src/main/article/model'
-import {
-  errNotFound,
-  errTitleTaken,
-  type ArticleRepository
-} from '../../../src/main/article/repository'
-import type { AppDatabase } from '../../../src/main/db'
+import type { Article } from '../../../article/model'
+import { errNotFound, errTitleTaken, type ArticleRepository } from '../../../article/repository'
+import type { AppDatabase } from '../../../db'
 import { isUniqueConstraintError, parseDatabaseTime } from './mapping'
 import { articles } from './schema'
 

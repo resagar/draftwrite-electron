@@ -1,11 +1,7 @@
 import { desc, eq, sql } from 'drizzle-orm'
-import type { AppDatabase } from '../../../src/main/db'
-import type { Story } from '../../../src/main/story/model'
-import {
-  errNotFound,
-  errTopicTaken,
-  type StoryRepository
-} from '../../../src/main/story/repository'
+import type { AppDatabase } from '../../../db'
+import type { Story } from '../../../story/model'
+import { errNotFound, errTopicTaken, type StoryRepository } from '../../../story/repository'
 import { isUniqueConstraintError, joinCsv, parseDatabaseTime, splitCsv } from './mapping'
 import { stories } from './schema'
 

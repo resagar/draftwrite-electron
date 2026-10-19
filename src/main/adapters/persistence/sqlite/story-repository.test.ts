@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals'
-import { openDatabase, type AppDatabase } from '../../../src/main/db'
-import { newStory } from '../../../src/main/story/model'
-import { errNotFound, errTopicTaken } from '../../../src/main/story/repository'
+import { openDatabase, type AppDatabase } from '../../../db'
+import { newStory } from '../../../story/model'
+import { errNotFound, errTopicTaken } from '../../../story/repository'
 import { newStoryRepository } from './story-repository'
 
 /** Isolated, migrated in-memory database; a fresh one per test. */

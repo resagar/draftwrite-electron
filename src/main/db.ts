@@ -1,9 +1,9 @@
-import { chmodSync } from 'node:fs'
+import { chmodSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import * as schema from '../../adapters/persistence/sqlite/schema'
+import * as schema from './adapters/persistence/sqlite/schema'
 
 /** Drizzle client handed over to the repositories. */
 export type AppDatabase = BetterSQLite3Database<typeof schema>
@@ -12,11 +12,23 @@ export type AppDatabase = BetterSQLite3Database<typeof schema>
 const memoryDbPath = ':memory:'
 
 /**
- * Migrations live next to the schema. This relative path resolves both when the
- * module runs from the sources (tests) and when the main process is bundled
- * into `out/main`.
+ * Migrations live next to the schema. The module runs both from the sources
+ * under Jest (`__dirname` is `src/main`) and from the electron-vite bundle in
+ * `out/main`, so both candidates are checked in that order.
  */
-const migrationsFolder = join(__dirname, '../../adapters/persistence/sqlite/migrations')
+function resolveMigrationsFolder(): string {
+  const candidates = [
+    join(__dirname, 'adapters/persistence/sqlite/migrations'),
+    join(__dirname, '../../src/main/adapters/persistence/sqlite/migrations')
+  ]
+  const folder = candidates.find((candidate) => existsSync(candidate))
+  if (folder === undefined) {
+    throw new Error(`sqlite migrations folder not found (looked in ${candidates.join(', ')})`)
+  }
+  return folder
+}
+
+const migrationsFolder = resolveMigrationsFolder()
 
 function applyConnectionPragmas(sqlite: Database.Database): void {
   sqlite.pragma('foreign_keys = ON')

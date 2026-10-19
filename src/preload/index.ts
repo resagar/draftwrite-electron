@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { articleChannels, storyChannels } from '../../adapters/ipc/contract'
-import type { ArticleDTO, DraftwriteApi, IpcResult, StoryDTO } from '../../adapters/ipc/contract'
+import { articleChannels, storyChannels } from '../main/adapters/ipc/contract'
+import type { ArticleDTO, DraftwriteApi, IpcResult, StoryDTO } from '../main/adapters/ipc/contract'
 
 /**
  * Forwards a call to its channel and returns the envelope as is. The

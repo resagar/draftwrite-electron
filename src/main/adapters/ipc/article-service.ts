@@ -1,4 +1,4 @@
-import type { ArticleService } from '../../src/main/article/service'
+import type { ArticleService } from '../../article/service'
 import { articleChannels, type IpcHandlerRegistry } from './contract'
 import { toIpcResult } from './errors'
 import { expectString, parseArticleCreatePayload, parseArticleUpdatePayload } from './validate'
