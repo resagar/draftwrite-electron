@@ -101,7 +101,7 @@ export function StoryBand({
             Discard
           </button>
         ) : (
-          <IconButton label="Delete story" onClick={onDelete}>
+          <IconButton label="Delete story" tone="danger" onClick={onDelete}>
             <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
           </IconButton>
         )}

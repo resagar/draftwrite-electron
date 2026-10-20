@@ -111,11 +111,12 @@ export function StoryList(): JSX.Element {
               </div>
               <IconButton
                 label={`Delete story “${story.Topic}”`}
+                tone="danger"
                 onClick={() =>
                   dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId: story.ID })
                 }
                 onKeyDown={(event) => event.stopPropagation()}
-                className="absolute top-2 right-2 focus-visible:bg-neutral/50 focus-visible:text-base-content"
+                className="absolute top-2 right-2"
               >
                 <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
               </IconButton>
