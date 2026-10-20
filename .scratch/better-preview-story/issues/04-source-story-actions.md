@@ -4,15 +4,19 @@
 
 **Blocked by:** 03 (necesita los estados de la fuente para decidir qué acciones están disponibles)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] En un Article guardado con Story disponible, `Copy source text` copia el texto y muestra la confirmación.
-- [ ] En un Article guardado con Story disponible, `Open story in editor` abre el Story editor.
-- [ ] En un Article guardado con Story disponible, `Delete story` abre el diálogo de borrado existente y borra la Story correcta.
-- [ ] En un borrador con Story disponible, solo se ofrece `Copy source text`; `Open story in editor` y `Delete story` no están disponibles.
-- [ ] En `empty`, `loading`, `error` y `missing`, `Copy source text` no está disponible.
-- [ ] En un Article guardado sin Story, `Open story in editor` y `Delete story` no están disponibles y no se abre ningún diálogo.
-- [ ] Durante la creación no se puede borrar por error la Story de otro Article.
-- [ ] Al cambiar de Story, el estado de copiado vuelve a `idle`.
-- [ ] Las acciones usan tokens del tema y no agregan colores nuevos.
-- [ ] Tests de integración cubren las acciones en Article guardado, borrador, Story ausente y cambio de Story.
+- [x] En un Article guardado con Story disponible, `Copy source text` copia el texto y muestra la confirmación.
+- [x] En un Article guardado con Story disponible, `Open story in editor` abre el Story editor.
+- [x] En un Article guardado con Story disponible, `Delete story` abre el diálogo de borrado existente y borra la Story correcta.
+- [x] En un borrador con Story disponible, solo se ofrece `Copy source text`; `Open story in editor` y `Delete story` no están disponibles.
+- [x] En `empty`, `loading`, `error` y `missing`, `Copy source text` no está disponible.
+- [x] En un Article guardado sin Story, `Open story in editor` y `Delete story` no están disponibles y no se abre ningún diálogo.
+- [x] Durante la creación no se puede borrar por error la Story de otro Article.
+- [x] Al cambiar de Story, el estado de copiado vuelve a `idle`.
+- [x] Las acciones usan tokens del tema y no agregan colores nuevos.
+- [x] Tests de integración cubren las acciones en Article guardado, borrador, Story ausente y cambio de Story.
+
+## Comments
+
+- 2026-10-20: Implementado en `8123619`. Acciones ocultas en creación, deshabilitadas fuera de `ready`, y `CopySourceAction` se remonta por `StoryID` para volver a `idle`. Cubierto por tests de integración.
