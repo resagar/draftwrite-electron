@@ -30,7 +30,7 @@ El resultado es que crear o editar una Story ofrece la misma experiencia de escr
 1. Como escritor que crea una Story, quiero ver el Markdown renderizado junto al editor, para revisar el formato mientras escribo.
 2. Como escritor que edita una Story existente, quiero ver el mismo preview, para revisar el texto sin salir del editor.
 3. Como escritor, quiero que el editor de Story use el mismo layout de dos columnas que el de Article, para no re-aprender la interfaz.
-4. Como escritor, quiero que el modo inicial sea Split, para ver editor y preview desde el primer momento.
+4. Como escritor, quiero que el modo inicial del workspace sea Split, para ver editor y preview desde el primer momento, salvo que ya haya elegido Edit o Preview en otro documento.
 5. Como escritor, quiero que el preview se actualice en vivo con cada cambio del texto, para no tener que guardar antes de revisarlo.
 6. Como escritor, quiero que los encabezados Markdown se rendericen con su jerarquía visual, para comprobar la estructura del texto.
 7. Como escritor, quiero que los párrafos, el énfasis y el texto en negrita se rendericen, para revisar el tono del texto.
@@ -70,13 +70,13 @@ El resultado es que crear o editar una Story ofrece la misma experiencia de escr
 
 ### Layout del editor de Story
 
-- `StoryEditor` lee `viewMode` del estado global del workspace con el hook de estado existente; no recibe el modo por props ni crea estado local.
-- Deriva dos flags, equivalentes a los de `ArticleEditor`: `showsEditor = viewMode !== 'preview'` y `showsPreview = viewMode !== 'edit'`.
-- El cuerpo pasa de una columna a un contenedor flex de dos columnas:
+- `EditorPreviewLayout` es el componente compartido que lee `viewMode` del estado global del workspace con el hook de estado existente y deriva los flags `showsEditor = viewMode !== 'preview'` y `showsPreview = viewMode !== 'edit'`. Ni `ArticleEditor` ni `StoryEditor` reciben el modo por props ni crean estado local.
+- `StoryEditor` consume `EditorPreviewLayout` igual que `ArticleEditor`: le pasa la toolbar de formato, el `TextEditor` y `draft.Text` como Markdown. El prefactor del ticket 01 extrajo el layout de `ArticleEditor` sin cambiar su comportamiento; Article sigue componiéndolo con la misma estructura y los mismos flags.
+- El layout dispone el cuerpo en un contenedor flex de dos columnas:
   - columna del editor: visible y `flex-1` en `edit` y `split`; oculta en `preview`;
   - borde divisorio solo cuando editor y preview coexisten (`split`);
   - columna del preview: visible en `split` y `preview`, con `flex-1`, scroll vertical propio y `MarkdownPreview` alimentado por `draft.Text`.
-- La toolbar de formato se renderiza solo si `showsEditor`; en `preview` queda oculta, igual que en Article.
+- El layout renderiza la toolbar de formato solo si `showsEditor`; en `preview` queda oculta, igual que en Article.
 - El preview usa el borrador local (`draft.Text`), no el valor almacenado, para reflejar los cambios antes del guardado diferido.
 - Un texto vacío produce un preview vacío; no se agrega placeholder ni mensaje de error.
 
@@ -94,6 +94,7 @@ El resultado es que crear o editar una Story ofrece la misma experiencia de escr
 - No se agregan campos ni acciones al reducer del workspace. `viewMode` sigue siendo `'edit' | 'split' | 'preview'`, con `'split'` como valor inicial.
 - No se resetea el modo al cambiar de Story o Article. Es el comportamiento actual entre Articles y se conserva para que la preferencia sea del workspace, no de la entidad.
 - Si el usuario dejó un Article en `edit` o `preview`, la Story se abre en ese mismo modo. Es una consecuencia aceptada de compartir el estado, no un caso especial.
+- Si el workspace está en `preview` al crear una Story, la creación hereda ese modo y no muestra el editor, igual que ocurre al crear un Article. Es una consecuencia aceptada de compartir el estado y no se resetea en esta feature.
 
 ### Persistencia y datos
 
