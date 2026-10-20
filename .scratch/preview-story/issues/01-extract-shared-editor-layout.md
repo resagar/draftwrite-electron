@@ -4,7 +4,7 @@
 
 **Blocked by:** ninguna (puede empezar de inmediato)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] `ArticleEditor` usa el layout compartido y conserva exactamente el comportamiento actual en Edit, Split y Preview.
 - [ ] El layout centraliza los flags de visibilidad, el divisor de Split, el scroll del preview y la ocultación de la toolbar en Preview.
@@ -18,3 +18,4 @@
 ## Comments
 
 - **2026-10-20 — Prefactor acordado durante la creación de tickets.** Se hace antes del preview de Story para que ambas editoras compartan el mismo layout y no se duplique la lógica de Edit/Split/Preview.
+- **2026-10-20 — Implementado e integrado.** Implementación en `878c5c3`; merge en `c9ec19d`. Evidencia: suite completa 228 tests, typecheck y lint verdes.
