@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (necesita el preview cableado en Story)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Una Story almacenada muestra un header con su Topic truncado si no cabe y el grupo `View mode` a la derecha.
 - [ ] El header ocupa la misma posición visual que el header de Article y usa los mismos tokens y estructura.
@@ -23,3 +23,4 @@
 ## Comments
 
 - **2026-10-20 — Último ticket de la cadena.** Cierra la paridad con Article: el conmutador vive en el header, en el mismo lugar que en `ArticleHeader`, y la creación queda sin header como en Article.
+- **2026-10-20 — Implementado e integrado.** Implementación en `6a08789`; merge en `06646b7`. Evidencia: suite completa 241 tests, typecheck y lint verdes.
