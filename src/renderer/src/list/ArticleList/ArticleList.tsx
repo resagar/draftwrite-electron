@@ -1,4 +1,4 @@
-import { FileText, Plus } from 'lucide-react'
+import { FileText, Plus, Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
 import { DISABLED_CREATE_BUTTON } from '../../lib/classes'
@@ -13,21 +13,16 @@ import { SkeletonList } from '../../ui/Skeleton/Skeleton'
 import { ListColumn } from '../ListColumn/ListColumn'
 import { ListEmpty } from '../ListEmpty/ListEmpty'
 import { ListRowItem } from '../ListRowItem/ListRowItem'
+import { OptionList } from '../OptionList/OptionList'
 import { SortToggle } from '../SortToggle/SortToggle'
-import { useOptionList } from '../use-option-list'
 
 export function ArticleList(): JSX.Element {
-  const { articles, articlesTotal, articlesStatus, reloadArticles } = useLibrary()
+  const { articles, articlesTotal, articlesStatus, reloadArticles, storyById } = useLibrary()
   const { selectedArticleId, tagFilter } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
 
   const { story: openStory, hasStories: canCreate } = useStoryInContext()
-
-  const list = useOptionList({
-    count: articles.length,
-    onActivate: (index) => navigate({ type: 'article/select', articleId: articles[index].ID })
-  })
 
   const filtered = tagFilter !== null && articlesTotal > 0
 
@@ -105,41 +100,44 @@ export function ArticleList(): JSX.Element {
         </div>
       }
     >
-      <ul
-        role="listbox"
-        aria-label="Articles"
-        className="divide-y divide-base-300/80"
-        onKeyDown={list.onKeyDown}
-      >
-        {articles.map((article, index) => {
-          const selected = article.ID === selectedArticleId
+      <OptionList
+        label="Articles"
+        items={articles}
+        getId={(article) => article.ID}
+        selectedId={selectedArticleId}
+        onSelect={(article) => navigate({ type: 'article/select', articleId: article.ID })}
+        renderContent={(article, selected) => (
+          <ListRowItem
+            title={article.Title}
+            updatedAt={article.UpdatedAt}
+            text={article.Text}
+            selected={selected}
+          />
+        )}
+        renderAction={(article) => {
+          const story = storyById(article.StoryID)
+          const label =
+            story === null
+              ? `Delete article “${article.Title}”`
+              : `Delete article “${article.Title}” from “${story.Topic}”`
 
           return (
-            <li
-              key={article.ID}
-              role="option"
-              aria-selected={selected}
-              tabIndex={list.tabIndexFor(index)}
-              ref={(element) => {
-                list.itemsRef.current[index] = element
-              }}
-              onFocus={() => list.onItemFocus(index)}
-              onClick={() => navigate({ type: 'article/select', articleId: article.ID })}
-              className={cn(
-                'cursor-pointer border-l-2 px-3 py-2.5 transition',
-                selected ? 'border-primary bg-neutral' : 'border-transparent hover:bg-neutral/40'
-              )}
+            <IconButton
+              label={label}
+              tone="danger"
+              onClick={() =>
+                dispatch({
+                  type: 'dialog/open',
+                  dialog: 'delete-article',
+                  articleId: article.ID
+                })
+              }
             >
-              <ListRowItem
-                title={article.Title}
-                updatedAt={article.UpdatedAt}
-                text={article.Text}
-                selected={selected}
-              />
-            </li>
+              <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+            </IconButton>
           )
-        })}
-      </ul>
+        }}
+      />
     </ListColumn>
   )
 }

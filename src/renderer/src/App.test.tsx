@@ -1841,6 +1841,255 @@ describe('deleting', () => {
     expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
     await waitFor(() => expect(screen.queryByRole('option', { name: /Calm software/ })).toBeNull())
   })
+
+  describe('from the article row', () => {
+    const rowStories = [
+      makeStory({ ID: 's1', Topic: 'Calm software', Tags: ['essays'] }),
+      makeStory({ ID: 's2', Topic: 'Boring technology', Tags: ['tech'] })
+    ]
+    const rowArticles = [
+      makeArticle({
+        ID: 'a1',
+        StoryID: 's1',
+        Title: 'The architecture of calm',
+        Text: 'First excerpt.'
+      }),
+      makeArticle({
+        ID: 'a2',
+        StoryID: 's2',
+        Title: 'Boring article',
+        Text: 'Second excerpt.'
+      })
+    ]
+
+    const openRowArticle = async (fake: ReturnType<typeof createFakePort>): Promise<void> => {
+      renderApp(fake.port)
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+      fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+      await screen.findByRole('region', { name: 'Article editor' })
+    }
+
+    const rowDelete = (title: string): HTMLElement =>
+      screen.getByRole('button', { name: new RegExp(`Delete article.*${title}`) })
+
+    it('names each row action with the title and the source story topic', async () => {
+      const fake = createFakePort({ stories: rowStories, articles: rowArticles })
+
+      renderApp(fake.port)
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+      const list = await screen.findByRole('listbox', { name: 'Articles' })
+
+      expect(
+        within(list).getByRole('button', {
+          name: 'Delete article “The architecture of calm” from “Calm software”'
+        })
+      ).toBeTruthy()
+      expect(
+        within(list).getByRole('button', {
+          name: 'Delete article “Boring article” from “Boring technology”'
+        })
+      ).toBeTruthy()
+
+      const calmRow = within(list).getByRole('option', { name: /The architecture of calm/ })
+      expect(calmRow.textContent).not.toContain('essays')
+    })
+
+    it('falls back to the title when the source story is unavailable', async () => {
+      const fake = createFakePort({
+        stories: [],
+        articles: [makeArticle({ ID: 'a3', StoryID: 'missing', Title: 'Orphan article' })]
+      })
+
+      renderApp(fake.port)
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+      await screen.findByRole('listbox', { name: 'Articles' })
+
+      expect(screen.getByRole('button', { name: 'Delete article “Orphan article”' })).toBeTruthy()
+    })
+
+    it('deletes an unselected row and keeps the open article and its editor', async () => {
+      const fake = createFakePort({ stories: rowStories, articles: rowArticles })
+
+      await openRowArticle(fake)
+
+      fireEvent.click(rowDelete('Boring article'))
+
+      const dialog = screen.getByRole('dialog')
+      expect(
+        within(dialog).getByText('Delete “Boring article”? This cannot be undone.')
+      ).toBeTruthy()
+      expect(
+        screen.getByRole('option', { name: /Boring article/ }).getAttribute('aria-selected')
+      ).toBe('false')
+
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Delete article' }))
+
+      await waitFor(() => expect(fake.deletedArticleIds).toEqual(['a2']))
+      await waitFor(() =>
+        expect(screen.queryByRole('option', { name: /Boring article/ })).toBeNull()
+      )
+
+      expect(
+        screen
+          .getByRole('option', { name: /The architecture of calm/ })
+          .getAttribute('aria-selected')
+      ).toBe('true')
+      expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
+      expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toBe(
+        'First excerpt.'
+      )
+    })
+
+    it('deletes the selected row, unmounts its editor and shows the empty list', async () => {
+      const fake = createFakePort({
+        stories: [rowStories[0]],
+        articles: [rowArticles[0]]
+      })
+
+      await openRowArticle(fake)
+
+      fireEvent.click(rowDelete('The architecture of calm'))
+      const dialog = screen.getByRole('dialog')
+      expect(within(dialog).getByText(/The architecture of calm/)).toBeTruthy()
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Delete article' }))
+
+      await waitFor(() => expect(fake.deletedArticleIds).toEqual(['a1']))
+
+      expect(await screen.findByText('No articles yet')).toBeTruthy()
+      expect(screen.queryByRole('region', { name: 'Article editor' })).toBeNull()
+      expect(screen.getByText('Nothing selected')).toBeTruthy()
+    })
+
+    it('keeps the selection when the row deletion is cancelled', async () => {
+      const fake = createFakePort({ stories: rowStories, articles: rowArticles })
+
+      await openRowArticle(fake)
+
+      fireEvent.click(rowDelete('Boring article'))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+
+      expect(fake.calls.deleteArticle).toBe(0)
+      expect(
+        screen
+          .getByRole('option', { name: /The architecture of calm/ })
+          .getAttribute('aria-selected')
+      ).toBe('true')
+      expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
+    })
+
+    it('closes a row deletion with Escape without deleting', async () => {
+      const fake = createFakePort({ stories: rowStories, articles: rowArticles })
+
+      await openRowArticle(fake)
+
+      fireEvent.click(rowDelete('Boring article'))
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+
+      expect(fake.calls.deleteArticle).toBe(0)
+      expect(
+        screen
+          .getByRole('option', { name: /The architecture of calm/ })
+          .getAttribute('aria-selected')
+      ).toBe('true')
+    })
+
+    it('keeps the row and the open article when the deletion fails', async () => {
+      const fake = createFakePort({
+        stories: rowStories,
+        articles: rowArticles,
+        deleteArticleFailures: 1
+      })
+
+      await openRowArticle(fake)
+      const listCalls = fake.calls.listArticles
+
+      fireEvent.click(rowDelete('Boring article'))
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete article' })
+      )
+
+      expect(await screen.findByRole('alert')).toBeTruthy()
+      expect(screen.getByText('Something went wrong. Please try again.')).toBeTruthy()
+      expect(screen.getByRole('dialog')).toBeTruthy()
+      expect(screen.getByRole('option', { name: /Boring article/ })).toBeTruthy()
+      expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
+      expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toBe(
+        'First excerpt.'
+      )
+      await waitFor(() => expect(fake.calls.listArticles).toBeGreaterThan(listCalls))
+    })
+
+    it('does not select a row or open the dialog when its action receives the keyboard', async () => {
+      const fake = createFakePort({ stories: rowStories, articles: rowArticles })
+
+      await openRowArticle(fake)
+      fireEvent.focus(screen.getByRole('option', { name: /Boring article/ }))
+      const button = rowDelete('Boring article')
+
+      fireEvent.keyDown(button, { key: 'Enter' })
+      fireEvent.keyDown(button, { key: ' ' })
+
+      expect(
+        screen
+          .getByRole('option', { name: /The architecture of calm/ })
+          .getAttribute('aria-selected')
+      ).toBe('true')
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
+    })
+
+    it('keeps a draft in progress when the selected row is deleted', async () => {
+      const fake = createFakePort({ stories: rowStories, articles: rowArticles })
+
+      await openRowArticle(fake)
+
+      fireEvent.click(screen.getByRole('button', { name: 'New Article' }))
+      await screen.findByRole('region', { name: 'Article editor' })
+      fireEvent.change(screen.getByLabelText('Subtitle'), {
+        target: { value: 'Draft in progress' }
+      })
+
+      fireEvent.click(rowDelete('The architecture of calm'))
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete article' })
+      )
+
+      await waitFor(() => expect(fake.deletedArticleIds).toEqual(['a1']))
+      await waitFor(() =>
+        expect(screen.queryByRole('option', { name: /The architecture of calm/ })).toBeNull()
+      )
+
+      expect(fake.calls.createArticle).toBe(0)
+      expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
+      expect(screen.getByLabelText<HTMLInputElement>('Subtitle').value).toBe('Draft in progress')
+    })
+
+    it('shows the filtered empty state when the last visible row is deleted', async () => {
+      const fake = createFakePort({ stories: rowStories, articles: rowArticles })
+
+      renderApp(fake.port)
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+      await screen.findByRole('listbox', { name: 'Articles' })
+
+      fireEvent.click(screen.getByRole('button', { name: 'essays' }))
+      expect(screen.getByRole('option', { name: /The architecture of calm/ })).toBeTruthy()
+      expect(screen.queryByRole('option', { name: /Boring article/ })).toBeNull()
+
+      fireEvent.click(rowDelete('The architecture of calm'))
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete article' })
+      )
+
+      await waitFor(() => expect(fake.deletedArticleIds).toEqual(['a1']))
+
+      expect(await screen.findByText('No articles with this tag')).toBeTruthy()
+      expect(screen.queryByText('No articles yet')).toBeNull()
+    })
+  })
 })
 
 describe('keyboard shortcuts', () => {
