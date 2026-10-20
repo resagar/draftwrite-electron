@@ -66,8 +66,9 @@ export function StoryPane({ story, storyId }: StoryPaneProps): JSX.Element {
             type="button"
             aria-label="Delete story"
             title="Delete story"
-            onClick={() => dispatch({ type: 'dialog/open', dialog: 'delete-story' })}
-            className="rounded p-1 text-base-content/60 transition hover:bg-neutral/40 hover:text-error"
+            disabled={story === null}
+            onClick={() => dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId })}
+            className="rounded p-1 text-base-content/60 transition hover:bg-neutral/40 hover:text-error disabled:pointer-events-none disabled:opacity-40"
           >
             <Trash2 aria-hidden="true" className="h-3 w-3" />
           </button>

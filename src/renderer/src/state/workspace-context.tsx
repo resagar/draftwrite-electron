@@ -31,12 +31,14 @@ export type WorkspaceState = {
   // in context when «New Article» is pressed.
   creatingStoryId: string | null
   dialog: DialogKind | null
+  dialogStoryId: string | null
   pendingNavigation: WorkspaceAction | null
 }
 
 export type WorkspaceAction =
   | { type: 'library/select'; library: Library }
   | { type: 'story/select'; storyId: string | null }
+  | { type: 'story/deleted'; storyId: string }
   | { type: 'article/select'; articleId: string | null }
   | { type: 'filter/tag'; tag: string | null }
   | { type: 'sort/toggle' }
@@ -45,7 +47,7 @@ export type WorkspaceAction =
   | { type: 'storyPane/toggle' }
   | { type: 'create/start'; kind: CreateKind; storyId?: string }
   | { type: 'create/cancel' }
-  | { type: 'dialog/open'; dialog: DialogKind }
+  | { type: 'dialog/open'; dialog: DialogKind; storyId?: string }
   | { type: 'dialog/close' }
   | { type: 'pending/set'; action: WorkspaceAction }
   | { type: 'pending/clear' }
@@ -62,6 +64,7 @@ export const initialWorkspaceState: WorkspaceState = {
   creating: null,
   creatingStoryId: null,
   dialog: null,
+  dialogStoryId: null,
   pendingNavigation: null
 }
 
@@ -78,6 +81,8 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         creating: null,
         creatingStoryId: null
       }
+    case 'story/deleted':
+      return state.selectedStoryId === action.storyId ? { ...state, selectedStoryId: null } : state
     case 'article/select':
       return {
         ...state,
@@ -100,9 +105,9 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
     case 'create/cancel':
       return { ...state, creating: null, creatingStoryId: null }
     case 'dialog/open':
-      return { ...state, dialog: action.dialog }
+      return { ...state, dialog: action.dialog, dialogStoryId: action.storyId ?? null }
     case 'dialog/close':
-      return { ...state, dialog: null }
+      return { ...state, dialog: null, dialogStoryId: null }
     case 'pending/set':
       return { ...state, pendingNavigation: action.action }
     case 'pending/clear':

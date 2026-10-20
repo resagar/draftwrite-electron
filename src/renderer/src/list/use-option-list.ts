@@ -6,7 +6,7 @@ type UseOptionListArgs = {
 }
 
 export type OptionList = {
-  itemsRef: RefObject<Array<HTMLLIElement | null>>
+  itemsRef: RefObject<Array<HTMLElement | null>>
   onItemFocus: (index: number) => void
   tabIndexFor: (index: number) => number
   onKeyDown: (event: KeyboardEvent<HTMLUListElement>) => void
@@ -14,7 +14,7 @@ export type OptionList = {
 
 export function useOptionList({ count, onActivate }: UseOptionListArgs): OptionList {
   const [focusIndex, setFocusIndex] = useState(0)
-  const itemsRef = useRef<Array<HTMLLIElement | null>>([])
+  const itemsRef = useRef<Array<HTMLElement | null>>([])
 
   const onItemFocus = (index: number): void => {
     setFocusIndex(index)

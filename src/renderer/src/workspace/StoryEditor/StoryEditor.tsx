@@ -89,6 +89,9 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
         onTitles={(titles) => change({ ...draft, Titles: titles })}
         onTags={(tags) => change({ ...draft, Tags: tags })}
         onDiscard={() => dispatch({ type: 'create/cancel' })}
+        onDelete={() =>
+          dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId: draft.ID })
+        }
       />
 
       <EditorToolbar view={view} />

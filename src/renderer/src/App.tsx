@@ -10,20 +10,20 @@ import { LibraryProvider, useLibrary } from './state/library-context'
 import { requestSave } from './state/save-registry'
 import { useContextualCreate } from './state/use-contextual-create'
 import { useShortcuts } from './state/use-shortcuts'
-import { useStoryInContext } from './state/use-story-in-context'
 import { WorkspaceProvider, useWorkspace, useWorkspaceDispatch } from './state/workspace-context'
 import { ConfirmDialog } from './ui/ConfirmDialog/ConfirmDialog'
 import { Workspace } from './workspace/Workspace/Workspace'
 
 function AppLayout(): JSX.Element {
   const port = useDataPort()
-  const { library, dialog, pendingNavigation, selectedArticleId } = useWorkspace()
-  const { articleById, reloadStories, reloadArticles } = useLibrary()
+  const { library, dialog, dialogStoryId, pendingNavigation, selectedArticleId, selectedStoryId } =
+    useWorkspace()
+  const { articleById, storyById, reloadStories, reloadArticles } = useLibrary()
   const dispatch = useWorkspaceDispatch()
   const [dialogError, setDialogError] = useState<string | null>(null)
 
   const selectedArticle = articleById(selectedArticleId)
-  const { story: openStory } = useStoryInContext()
+  const dialogStory = storyById(dialogStoryId)
 
   const closeDialog = (): void => {
     setDialogError(null)
@@ -91,20 +91,24 @@ function AppLayout(): JSX.Element {
         />
       ) : null}
 
-      {dialog === 'delete-story' && openStory !== null ? (
+      {dialog === 'delete-story' && dialogStory !== null ? (
         <ConfirmDialog
           title="Delete story"
-          message={`Delete “${openStory.Topic}” and every article written from it? This cannot be undone.`}
+          message={`Delete “${dialogStory.Topic}” and every article written from it? This cannot be undone.`}
           confirmLabel="Delete story"
           error={dialogError}
           onCancel={closeDialog}
           onConfirm={() => {
             setDialogError(null)
             void port
-              .deleteStory(openStory.ID)
+              .deleteStory(dialogStory.ID)
               .then(() => {
-                dispatch({ type: 'article/select', articleId: null })
-                dispatch({ type: 'story/select', storyId: null })
+                if (selectedArticle !== null && selectedArticle.StoryID === dialogStory.ID) {
+                  dispatch({ type: 'article/select', articleId: null })
+                }
+                if (selectedStoryId === dialogStory.ID) {
+                  dispatch({ type: 'story/deleted', storyId: dialogStory.ID })
+                }
                 afterWrite()
               })
               .catch(failed)

@@ -1,6 +1,8 @@
+import { Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
 import { TagInput } from '../../forms/TagInput/TagInput'
+import { IconButton } from '../../ui/IconButton/IconButton'
 
 type TitlesFieldProps = {
   titles: string[]
@@ -55,6 +57,7 @@ type StoryBandProps = {
   onTitles: (titles: string[]) => void
   onTags: (tags: string[]) => void
   onDiscard: () => void
+  onDelete: () => void
 }
 
 export function StoryBand({
@@ -65,7 +68,8 @@ export function StoryBand({
   onTopic,
   onTitles,
   onTags,
-  onDiscard
+  onDiscard,
+  onDelete
 }: StoryBandProps): JSX.Element {
   const missingTopic = topic.trim() === ''
 
@@ -96,7 +100,11 @@ export function StoryBand({
           >
             Discard
           </button>
-        ) : null}
+        ) : (
+          <IconButton label="Delete story" onClick={onDelete}>
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          </IconButton>
+        )}
       </div>
 
       {missingTopic ? (
