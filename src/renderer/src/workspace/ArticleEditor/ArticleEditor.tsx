@@ -4,18 +4,17 @@ import { emptyArticle } from '../../data/drafts'
 import { useDataPort } from '../../data/port-context'
 import type { Article } from '../../data/types'
 import { TextEditor } from '../../editor/TextEditor/TextEditor'
-import { cn } from '../../lib/cn'
 import { useLibrary } from '../../state/library-context'
 import { registerSave } from '../../state/save-registry'
 import { publishUnsavedDraft } from '../../state/status-store'
 import { useDraftPersistence } from '../../state/use-draft-persistence'
 import { useEditorStatus } from '../../state/use-editor-status'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
-import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
+import { useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { ArticleBand } from '../ArticleBand/ArticleBand'
+import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
-import { MarkdownPreview } from '../MarkdownPreview/MarkdownPreview'
 
 type ArticleEditorProps = {
   stored: Article | null
@@ -36,7 +35,6 @@ function hasContent(article: Article): boolean {
 export function ArticleEditor({ stored, initialStoryId = '' }: ArticleEditorProps): JSX.Element {
   const port = useDataPort()
   const { allStories, upsertArticle } = useLibrary()
-  const { viewMode } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
   const creating = stored === null
@@ -86,9 +84,6 @@ export function ArticleEditor({ stored, initialStoryId = '' }: ArticleEditorProp
     schedule(next)
   }
 
-  const showsEditor = viewMode !== 'preview'
-  const showsPreview = viewMode !== 'edit'
-
   return (
     <section aria-label="Article editor" className="flex min-w-0 flex-1 flex-col bg-base-100">
       <ArticleBand
@@ -105,30 +100,18 @@ export function ArticleEditor({ stored, initialStoryId = '' }: ArticleEditorProp
         onDiscard={() => dispatch({ type: 'create/cancel' })}
       />
 
-      {showsEditor ? <EditorToolbar view={view} /> : null}
-
-      <div className="flex min-h-0 flex-1">
-        <div
-          className={cn(
-            'min-h-0 min-w-0',
-            showsEditor ? 'flex-1' : 'hidden',
-            showsEditor && showsPreview ? 'border-r border-base-300' : ''
-          )}
-        >
+      <EditorPreviewLayout
+        toolbar={<EditorToolbar view={view} />}
+        editor={
           <TextEditor
             value={draft.Text}
             onChange={(text) => change({ ...draft, Text: text })}
             onCursorChange={publishCursor}
             onCreate={setView}
           />
-        </div>
-
-        {showsPreview ? (
-          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-            <MarkdownPreview markdown={draft.Text} />
-          </div>
-        ) : null}
-      </div>
+        }
+        markdown={draft.Text}
+      />
 
       {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}
     </section>
