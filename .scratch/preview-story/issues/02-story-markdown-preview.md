@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (necesita el layout compartido)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Al crear una Story, el modo inicial es Split y la región `Preview` muestra el Markdown del borrador.
 - [ ] Al abrir una Story almacenada, el preview renderiza su `Text`.
@@ -22,3 +22,4 @@
 ## Comments
 
 - **2026-10-20 — Depende del prefactor 01.** En este ticket todavía no existe el conmutador en la UI de Story; el modo Preview se puede observar heredando `viewMode` desde Article. El header con el conmutador llega en el ticket 03.
+- **2026-10-20 — Implementado e integrado.** Implementación en `4d1d15b`; merge en `6bf4038`. Evidencia: suite completa 235 tests, typecheck y lint verdes.
