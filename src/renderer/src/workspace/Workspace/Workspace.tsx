@@ -5,6 +5,7 @@ import { useWorkspace } from '../../state/workspace-context'
 import { EmptyState } from '../../ui/EmptyState/EmptyState'
 import { ArticleEditor } from '../ArticleEditor/ArticleEditor'
 import { ArticlePane } from '../ArticlePane/ArticlePane'
+import { StoryDocument } from '../StoryDocument/StoryDocument'
 import { StoryEditor } from '../StoryEditor/StoryEditor'
 import { StoryPane } from '../StoryPane/StoryPane'
 
@@ -53,7 +54,7 @@ export function Workspace(): JSX.Element {
   if (story !== null) {
     return (
       <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
-        <StoryEditor key={story.ID} stored={story} />
+        <StoryDocument story={story} />
       </section>
     )
   }

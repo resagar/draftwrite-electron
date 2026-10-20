@@ -714,6 +714,104 @@ describe('story view modes', () => {
     expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
     expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
   })
+
+  describe('the story header', () => {
+    const storySwitcher = (): HTMLElement =>
+      within(screen.getByRole('region', { name: 'Story' })).getByRole('group', {
+        name: 'View mode'
+      })
+
+    it('shows the topic and the view mode switcher of the stored story', async () => {
+      await openStory()
+
+      const pane = screen.getByRole('region', { name: 'Story' })
+
+      expect(within(pane).getByRole('heading', { level: 2, name: 'Calm software' })).toBeTruthy()
+      expect(within(storySwitcher()).getAllByRole('button')).toHaveLength(3)
+      expect(within(pane).queryByRole('button', { name: 'Delete story' })).toBeNull()
+      expect(within(pane).queryByRole('button', { name: 'Duplicate story' })).toBeNull()
+      expect(within(pane).queryByRole('button', { name: 'Toggle source pane' })).toBeNull()
+    })
+
+    it('hides the preview and keeps the editor and the tools in edit mode', async () => {
+      await openStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Edit' }))
+
+      expect(
+        within(storySwitcher()).getByRole('button', { name: 'Edit' }).getAttribute('aria-pressed')
+      ).toBe('true')
+      expect(screen.queryByRole('region', { name: 'Preview' })).toBeNull()
+      expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
+      expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+    })
+
+    it('hides the editor and the tools and leaves only the preview in preview mode', async () => {
+      await openStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
+
+      expect(
+        within(storySwitcher())
+          .getByRole('button', { name: 'Preview' })
+          .getAttribute('aria-pressed')
+      ).toBe('true')
+      expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
+
+      const preview = screen.getByRole('region', { name: 'Preview' })
+
+      expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+    })
+
+    it('brings the editor, the tools and the preview back in split mode', async () => {
+      await openStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Split' }))
+
+      expect(
+        within(storySwitcher()).getByRole('button', { name: 'Split' }).getAttribute('aria-pressed')
+      ).toBe('true')
+      expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
+      expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+      expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
+    })
+
+    it('mounts no header while creating a story', async () => {
+      renderApp(createFakePort({ stories: [] }).port)
+      await startNewStory()
+
+      expect(screen.queryByRole('region', { name: 'Story' })).toBeNull()
+      expect(screen.queryByRole('group', { name: 'View mode' })).toBeNull()
+      expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
+    })
+
+    it('keeps the view mode when switching between a story and an article', async () => {
+      renderApp(createFakePort({ stories, articles }).port)
+      await pickStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+
+      const articleList = await screen.findByRole('listbox', { name: 'Articles' })
+
+      fireEvent.click(within(articleList).getByRole('option', { name: /The architecture of calm/ }))
+      await screen.findByRole('region', { name: 'Article editor' })
+
+      expect(screen.getByRole('button', { name: 'Preview' }).getAttribute('aria-pressed')).toBe(
+        'true'
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Stories' }))
+      await pickStory()
+
+      expect(
+        within(storySwitcher())
+          .getByRole('button', { name: 'Preview' })
+          .getAttribute('aria-pressed')
+      ).toBe('true')
+    })
+  })
 })
 
 describe('formatting toolbar', () => {
