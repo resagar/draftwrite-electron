@@ -1,7 +1,7 @@
-import { PanelRight, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
 import type { Article, Story } from '../../data/types'
-import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
+import { useWorkspaceDispatch } from '../../state/workspace-context'
 import { IconButton } from '../../ui/IconButton/IconButton'
 import { ViewModeSwitcher } from '../ViewModeSwitcher/ViewModeSwitcher'
 
@@ -11,7 +11,6 @@ type ArticleHeaderProps = {
 }
 
 export function ArticleHeader({ article, story }: ArticleHeaderProps): JSX.Element {
-  const { storyPaneVisible } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
 
   return (
@@ -37,13 +36,6 @@ export function ArticleHeader({ article, story }: ArticleHeaderProps): JSX.Eleme
           onClick={() => dispatch({ type: 'dialog/open', dialog: 'delete-article' })}
         >
           <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-        </IconButton>
-        <IconButton
-          label="Toggle source pane"
-          aria-pressed={storyPaneVisible}
-          onClick={() => dispatch({ type: 'storyPane/toggle' })}
-        >
-          <PanelRight aria-hidden="true" className="h-3.5 w-3.5" />
         </IconButton>
       </div>
     </header>

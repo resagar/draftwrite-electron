@@ -1,18 +1,41 @@
 import { BookOpen } from 'lucide-react'
 import type { JSX } from 'react'
 import { useLibrary } from '../../state/library-context'
-import { useWorkspace } from '../../state/workspace-context'
+import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
+import type { LoadStatus } from '../../state/use-list'
+import type { Story } from '../../data/types'
 import { EmptyState } from '../../ui/EmptyState/EmptyState'
 import { ArticleEditor } from '../ArticleEditor/ArticleEditor'
 import { ArticlePane } from '../ArticlePane/ArticlePane'
 import { StoryEditor } from '../StoryEditor/StoryEditor'
 import { StoryEditorPane } from '../StoryEditorPane/StoryEditorPane'
-import { StoryPane } from '../StoryPane/StoryPane'
+import { StoryPane, type SourceStoryState } from '../StoryPane/StoryPane'
+
+function sourceStory(storyId: string, story: Story | null, status: LoadStatus): SourceStoryState {
+  if (story !== null) {
+    return { kind: 'ready', storyId, story }
+  }
+
+  if (storyId === '') {
+    return { kind: 'empty' }
+  }
+
+  if (status === 'loading') {
+    return { kind: 'loading', storyId }
+  }
+
+  if (status === 'error') {
+    return { kind: 'error', storyId }
+  }
+
+  return { kind: 'missing', storyId }
+}
 
 export function Workspace(): JSX.Element {
-  const { creating, creatingStoryId, selectedArticleId, selectedStoryId, storyPaneVisible } =
+  const { creating, creatingStoryId, selectedArticleId, selectedStoryId, storyPaneExpanded } =
     useWorkspace()
-  const { articleById, storyById } = useLibrary()
+  const dispatch = useWorkspaceDispatch()
+  const { articleById, storyById, storiesStatus, reloadStories } = useLibrary()
 
   if (creating === 'story') {
     return (
@@ -22,29 +45,34 @@ export function Workspace(): JSX.Element {
     )
   }
 
-  if (creating === 'article') {
-    return (
-      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
-        <ArticleEditor stored={null} initialStoryId={creatingStoryId ?? ''} />
-      </section>
-    )
-  }
+  const article = creating === 'article' ? null : articleById(selectedArticleId)
+  const creatingArticle = creating === 'article'
 
-  const article = articleById(selectedArticleId)
-
-  if (article !== null) {
-    const story = storyById(article.StoryID)
+  if (creatingArticle || article !== null) {
+    const storyId = creatingArticle ? (creatingStoryId ?? '') : (article?.StoryID ?? '')
+    const story = storyById(storyId)
+    const source = sourceStory(storyId, story, storiesStatus)
 
     return (
       <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
-        <div
-          className={
-            storyPaneVisible ? 'flex min-h-0 min-w-0 flex-1 xl:flex-none' : 'hidden xl:flex'
-          }
-        >
-          <StoryPane story={story} storyId={article.StoryID} />
-        </div>
-        <ArticlePane article={article} story={story} />
+        <StoryPane
+          source={source}
+          creating={creatingArticle}
+          expanded={storyPaneExpanded}
+          onToggle={() => dispatch({ type: 'storyPane/toggle' })}
+          onRetry={reloadStories}
+        />
+        {creatingArticle ? (
+          <ArticleEditor
+            stored={null}
+            initialStoryId={storyId}
+            onStoryChange={(nextStoryId) =>
+              dispatch({ type: 'create/story', storyId: nextStoryId })
+            }
+          />
+        ) : article !== null ? (
+          <ArticlePane article={article} story={story} />
+        ) : null}
       </section>
     )
   }
