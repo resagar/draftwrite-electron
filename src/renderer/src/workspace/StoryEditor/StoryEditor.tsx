@@ -91,7 +91,7 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
         onTags={(tags) => change({ ...draft, Tags: tags })}
         onDiscard={() => dispatch({ type: 'create/cancel' })}
         onDelete={() =>
-          dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId: draft.ID })
+          dispatch({ type: 'dialog/open', request: { kind: 'delete-story', storyId: draft.ID } })
         }
       />
 

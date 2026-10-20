@@ -14,7 +14,17 @@ export type OptionList = {
 
 export function useOptionList({ count, onActivate }: UseOptionListArgs): OptionList {
   const [focusIndex, setFocusIndex] = useState(0)
+  const [previousCount, setPreviousCount] = useState(count)
   const itemsRef = useRef<Array<HTMLElement | null>>([])
+
+  // A list that empties loses its last position: when it fills again, the
+  // first option must be the tab stop instead of a stale, unreachable index.
+  if (count !== previousCount) {
+    setPreviousCount(count)
+    if (count === 0) {
+      setFocusIndex(0)
+    }
+  }
 
   const activeIndex = count === 0 ? 0 : Math.min(focusIndex, count - 1)
 

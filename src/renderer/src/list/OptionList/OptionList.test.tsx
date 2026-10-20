@@ -150,21 +150,40 @@ describe('OptionList', () => {
     )
 
     const action = screen.getByRole('button', { name: 'Delete Alpha' })
+    action.focus()
 
     fireEvent.keyDown(action, { key: 'Enter' })
     fireEvent.keyDown(action, { key: ' ' })
 
+    expect(document.activeElement).toBe(action)
     expect(onSelect).not.toHaveBeenCalled()
   })
 
-  it('does not render an action slot or reserve its space without a row action', () => {
+  it('leaves focus on the row action for the list navigation keys', () => {
+    const onSelect = jest.fn()
+
+    render(
+      optionList({
+        onSelect,
+        renderAction: (item) => <button type="button">Delete {item.name}</button>
+      })
+    )
+
+    const action = screen.getByRole('button', { name: 'Delete Alpha' })
+    action.focus()
+
+    for (const key of ['ArrowDown', 'ArrowUp', 'Home', 'End']) {
+      fireEvent.keyDown(action, { key })
+      expect(document.activeElement).toBe(action)
+    }
+
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('does not render an action without a row action function', () => {
     render(optionList())
 
     expect(screen.queryByRole('button')).toBeNull()
-
-    for (const option of screen.getAllByRole('option')) {
-      expect(option.className).not.toContain('pr-10')
-    }
   })
 
   it('keeps a tab stop and activates a real item when the list shrinks', () => {
@@ -182,5 +201,21 @@ describe('OptionList', () => {
     fireEvent.keyDown(options[0], { key: 'Enter' })
 
     expect(onSelect).toHaveBeenCalledWith(items[0])
+  })
+
+  it('resets the tab stop to the first option after the list empties and fills again', () => {
+    const onSelect = jest.fn()
+    const { rerender } = render(optionList({ onSelect }))
+
+    fireEvent.focus(screen.getByRole('option', { name: 'Gamma' }))
+
+    rerender(optionList({ items: [], onSelect }))
+    expect(screen.queryByRole('option')).toBeNull()
+
+    rerender(optionList({ items, onSelect }))
+
+    const options = screen.getAllByRole('option')
+    expect(options[0].getAttribute('tabindex')).toBe('0')
+    expect(options.filter((option) => option.getAttribute('tabindex') === '0')).toHaveLength(1)
   })
 })

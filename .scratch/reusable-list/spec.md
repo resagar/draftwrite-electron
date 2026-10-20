@@ -177,6 +177,7 @@ El diálogo de borrado de Article pasa a recibir un objetivo explícito y deja d
 - **Seam nuevo, acotado:** tests de componente de `OptionList` con Testing Library. Cubre el contrato reutilizable de listbox, roving tabindex, fila y slot de acción.
 - No se crea un seam nuevo para el reducer ni para el hook de opciones. Su comportamiento se observa desde `App` y desde `OptionList`.
 - Los tests de `OptionList` evitan repetir las mismas aserciones de accesibilidad en las dos listas; la integración de `App` sigue siendo la que prueba el comportamiento de cada entidad.
+- jsdom no sintetiza el `click` nativo de un `<button>` a partir de Enter o Espacio. Por eso la integración de `App` verifica que la acción sea un botón nativo y que su click abra el diálogo sin cambiar la selección; el contrato de teclado se prueba en `OptionList`.
 
 ### Qué hace bueno a un test
 
@@ -194,21 +195,22 @@ El diálogo de borrado de Article pasa a recibir un objetivo explícito y deja d
 - ArrowDown, ArrowUp, Home y End mueven el foco de la opción.
 - Enter y Espacio llaman a la selección con el elemento correcto.
 - Un clic en la acción no selecciona la fila.
-- Enter o Espacio sobre la acción no seleccionan la fila.
+- Enter, Espacio, ArrowDown, ArrowUp, Home y End sobre la acción no seleccionan la fila ni mueven el foco de la lista; el foco permanece en la acción.
 - La acción no es descendiente de la opción.
-- Sin acción no se renderiza botón ni se reserva el espacio de la acción.
+- Sin acción no se renderiza botón de acción.
 - Al rerenderizar con menos elementos, sigue habiendo exactamente una opción con `tabIndex=0` y la activación no rompe.
+- Al vaciar la lista y volver a poblarla, la primera opción recupera `tabIndex=0`.
 
 ### Casos de integración de `App`
 
-- Con dos Articles, existen botones de fila distinguibles por título (y Topic cuando corresponda).
+- Con dos Articles que comparten título en Stories distintas, los botones de fila son distinguibles por nombre accesible e incluyen el Topic de su Story.
 - Abrir un Article A y borrar la fila B: el diálogo muestra B, se borra B, A sigue seleccionado y su editor sigue abierto.
 - Borrar la fila del Article seleccionado: la selección se limpia, el editor se desmonta y, si era el último, aparece `No articles yet`.
 - Cancelar o Escape: no se llama a `deleteArticle`, se conserva la selección y el editor.
-- Enter o Espacio sobre la acción de una fila: no selecciona la fila ni abre el diálogo.
+- La acción de una fila es un botón nativo y su click abre el diálogo sin seleccionar la fila. En jsdom el click nativo no se sintetiza desde `keydown`; la cobertura de Enter, Espacio, flechas, Inicio y Fin vive en `OptionList`.
 - Fallo de `deleteArticle`: aparece `role="alert"`, la fila sigue, el Article abierto sigue y las listas se recargan.
 - Borrar el Article seleccionado mientras se crea otro Article: la creación sigue montada y el borrado se ejecuta.
-- Borrar el último Article visible de un filtro: se muestra el estado de filtro vacío.
+- Borrar el último Article visible de un filtro, aunque sea el último de la biblioteca: se muestra el estado de filtro vacío.
 - El botón del header del Article sigue borrando el Article abierto sin cambios observables.
 - El borrado de Story desde la fila y desde el editor sigue pasando sin cambios.
 - Los nombres accesibles de los botones de fila incluyen el título y, cuando hay Story, el Topic.

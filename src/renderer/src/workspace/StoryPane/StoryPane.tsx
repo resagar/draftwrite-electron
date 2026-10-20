@@ -143,7 +143,9 @@ export function StoryPane({
                   aria-label="Delete story"
                   title="Delete story"
                   disabled={source.kind !== 'ready'}
-                  onClick={() => dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId })}
+                  onClick={() =>
+                    dispatch({ type: 'dialog/open', request: { kind: 'delete-story', storyId } })
+                  }
                   className="rounded p-1 text-error transition hover:bg-error/10 hover:text-error disabled:pointer-events-none disabled:opacity-40"
                 >
                   <Trash2 aria-hidden="true" className="h-3 w-3" />

@@ -90,7 +90,10 @@ export function StoryList(): JSX.Element {
             label={`Delete story “${story.Topic}”`}
             tone="danger"
             onClick={() =>
-              dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId: story.ID })
+              dispatch({
+                type: 'dialog/open',
+                request: { kind: 'delete-story', storyId: story.ID }
+              })
             }
           >
             <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />

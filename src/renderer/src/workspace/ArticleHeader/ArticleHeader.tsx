@@ -35,7 +35,10 @@ export function ArticleHeader({ article, story }: ArticleHeaderProps): JSX.Eleme
           label="Delete article"
           tone="danger"
           onClick={() =>
-            dispatch({ type: 'dialog/open', dialog: 'delete-article', articleId: article.ID })
+            dispatch({
+              type: 'dialog/open',
+              request: { kind: 'delete-article', articleId: article.ID }
+            })
           }
         >
           <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />

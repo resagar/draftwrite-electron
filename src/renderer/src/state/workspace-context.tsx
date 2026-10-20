@@ -15,7 +15,7 @@ export type ViewMode = 'edit' | 'split' | 'preview'
 
 export type CreateKind = 'story' | 'article'
 
-export type DialogTarget =
+export type DeleteRequest =
   { kind: 'delete-story'; storyId: string } | { kind: 'delete-article'; articleId: string }
 
 export type WorkspaceState = {
@@ -31,7 +31,7 @@ export type WorkspaceState = {
   // The Story a new Article is pre-selected with, taken from whatever story is
   // in context when «New Article» is pressed.
   creatingStoryId: string | null
-  dialog: DialogTarget | null
+  dialog: DeleteRequest | null
   pendingNavigation: WorkspaceAction | null
 }
 
@@ -49,8 +49,7 @@ export type WorkspaceAction =
   | { type: 'create/start'; kind: CreateKind; storyId?: string }
   | { type: 'create/story'; storyId: string }
   | { type: 'create/cancel' }
-  | { type: 'dialog/open'; dialog: 'delete-story'; storyId: string }
-  | { type: 'dialog/open'; dialog: 'delete-article'; articleId: string }
+  | { type: 'dialog/open'; request: DeleteRequest }
   | { type: 'dialog/close' }
   | { type: 'pending/set'; action: WorkspaceAction }
   | { type: 'pending/clear' }
@@ -119,13 +118,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
     case 'create/cancel':
       return { ...state, creating: null, creatingStoryId: null }
     case 'dialog/open':
-      return {
-        ...state,
-        dialog:
-          action.dialog === 'delete-story'
-            ? { kind: 'delete-story', storyId: action.storyId }
-            : { kind: 'delete-article', articleId: action.articleId }
-      }
+      return { ...state, dialog: action.request }
     case 'dialog/close':
       return { ...state, dialog: null }
     case 'pending/set':

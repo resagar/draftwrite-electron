@@ -1894,6 +1894,32 @@ describe('deleting', () => {
       expect(calmRow.textContent).not.toContain('essays')
     })
 
+    it('distinguishes row actions for articles with the same title in different stories', async () => {
+      const fake = createFakePort({
+        stories: rowStories,
+        articles: [
+          makeArticle({ ID: 'a1', StoryID: 's1', Title: 'Shared title' }),
+          makeArticle({ ID: 'a2', StoryID: 's2', Title: 'Shared title' })
+        ]
+      })
+
+      renderApp(fake.port)
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+      const list = await screen.findByRole('listbox', { name: 'Articles' })
+
+      const calmAction = within(list).getByRole('button', {
+        name: 'Delete article “Shared title” from “Calm software”'
+      })
+      const boringAction = within(list).getByRole('button', {
+        name: 'Delete article “Shared title” from “Boring technology”'
+      })
+
+      expect(calmAction).not.toBe(boringAction)
+      expect(
+        within(list).getAllByRole('button', { name: /Delete article “Shared title”/ })
+      ).toHaveLength(2)
+    })
+
     it('falls back to the title when the source story is unavailable', async () => {
       const fake = createFakePort({
         stories: [],
@@ -2023,23 +2049,29 @@ describe('deleting', () => {
       await waitFor(() => expect(fake.calls.listArticles).toBeGreaterThan(listCalls))
     })
 
-    it('does not select a row or open the dialog when its action receives the keyboard', async () => {
+    it('opens the dialog from a native row-action button without changing the selection', async () => {
       const fake = createFakePort({ stories: rowStories, articles: rowArticles })
 
       await openRowArticle(fake)
       fireEvent.focus(screen.getByRole('option', { name: /Boring article/ }))
       const button = rowDelete('Boring article')
 
-      fireEvent.keyDown(button, { key: 'Enter' })
-      fireEvent.keyDown(button, { key: ' ' })
+      expect(button.tagName).toBe('BUTTON')
+      expect(button.getAttribute('type')).toBe('button')
 
+      fireEvent.click(button)
+
+      const dialog = screen.getByRole('dialog')
+      expect(
+        within(dialog).getByText('Delete “Boring article”? This cannot be undone.')
+      ).toBeTruthy()
       expect(
         screen
           .getByRole('option', { name: /The architecture of calm/ })
           .getAttribute('aria-selected')
       ).toBe('true')
-      expect(screen.queryByRole('dialog')).toBeNull()
       expect(screen.getByRole('region', { name: 'Article editor' })).toBeTruthy()
+      expect(fake.calls.deleteArticle).toBe(0)
     })
 
     it('keeps a draft in progress when the selected row is deleted', async () => {
@@ -2079,6 +2111,28 @@ describe('deleting', () => {
       expect(screen.getByRole('option', { name: /The architecture of calm/ })).toBeTruthy()
       expect(screen.queryByRole('option', { name: /Boring article/ })).toBeNull()
 
+      fireEvent.click(rowDelete('The architecture of calm'))
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete article' })
+      )
+
+      await waitFor(() => expect(fake.deletedArticleIds).toEqual(['a1']))
+
+      expect(await screen.findByText('No articles with this tag')).toBeTruthy()
+      expect(screen.queryByText('No articles yet')).toBeNull()
+    })
+
+    it('keeps the filtered empty state when the last article overall is deleted', async () => {
+      const fake = createFakePort({
+        stories: [makeStory({ ID: 's1', Topic: 'Calm software', Tags: ['essays'] })],
+        articles: [makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm' })]
+      })
+
+      renderApp(fake.port)
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+      await screen.findByRole('listbox', { name: 'Articles' })
+
+      fireEvent.click(screen.getByRole('button', { name: 'essays' }))
       fireEvent.click(rowDelete('The architecture of calm'))
       fireEvent.click(
         within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete article' })

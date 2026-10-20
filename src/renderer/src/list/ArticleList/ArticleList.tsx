@@ -17,14 +17,14 @@ import { OptionList } from '../OptionList/OptionList'
 import { SortToggle } from '../SortToggle/SortToggle'
 
 export function ArticleList(): JSX.Element {
-  const { articles, articlesTotal, articlesStatus, reloadArticles, storyById } = useLibrary()
+  const { articles, articlesStatus, reloadArticles, storyById } = useLibrary()
   const { selectedArticleId, tagFilter } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
 
   const { story: openStory, hasStories: canCreate } = useStoryInContext()
 
-  const filtered = tagFilter !== null && articlesTotal > 0
+  const filtered = tagFilter !== null
 
   const startNew = (): void =>
     navigate({ type: 'create/start', kind: 'article', storyId: openStory?.ID })
@@ -128,8 +128,7 @@ export function ArticleList(): JSX.Element {
               onClick={() =>
                 dispatch({
                   type: 'dialog/open',
-                  dialog: 'delete-article',
-                  articleId: article.ID
+                  request: { kind: 'delete-article', articleId: article.ID }
                 })
               }
             >
