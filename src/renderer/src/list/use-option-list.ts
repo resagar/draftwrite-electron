@@ -16,22 +16,29 @@ export function useOptionList({ count, onActivate }: UseOptionListArgs): OptionL
   const [focusIndex, setFocusIndex] = useState(0)
   const itemsRef = useRef<Array<HTMLElement | null>>([])
 
+  const activeIndex = count === 0 ? 0 : Math.min(focusIndex, count - 1)
+
   const onItemFocus = (index: number): void => {
     setFocusIndex(index)
   }
 
-  const tabIndexFor = (index: number): number => (index === focusIndex ? 0 : -1)
+  const tabIndexFor = (index: number): number => (index === activeIndex ? 0 : -1)
 
   const onKeyDown = (event: KeyboardEvent<HTMLUListElement>): void => {
+    const target = event.target
+    if (!(target instanceof HTMLElement) || target.closest('[role="option"]') === null) {
+      return
+    }
+
     if (count === 0) {
       return
     }
 
     let nextIndex: number | null = null
     if (event.key === 'ArrowDown') {
-      nextIndex = Math.min(focusIndex + 1, count - 1)
+      nextIndex = Math.min(activeIndex + 1, count - 1)
     } else if (event.key === 'ArrowUp') {
-      nextIndex = Math.max(focusIndex - 1, 0)
+      nextIndex = Math.max(activeIndex - 1, 0)
     } else if (event.key === 'Home') {
       nextIndex = 0
     } else if (event.key === 'End') {
@@ -47,7 +54,7 @@ export function useOptionList({ count, onActivate }: UseOptionListArgs): OptionL
 
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      onActivate(focusIndex)
+      onActivate(activeIndex)
     }
   }
 

@@ -1,6 +1,5 @@
 import { Inbox, Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
-import { cn } from '../../lib/cn'
 import { CREATE_LABELS } from '../../lib/create-labels'
 import { useLibrary } from '../../state/library-context'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
@@ -11,19 +10,14 @@ import { SkeletonList } from '../../ui/Skeleton/Skeleton'
 import { ListColumn } from '../ListColumn/ListColumn'
 import { ListEmpty } from '../ListEmpty/ListEmpty'
 import { ListRowItem } from '../ListRowItem/ListRowItem'
+import { OptionList } from '../OptionList/OptionList'
 import { SortToggle } from '../SortToggle/SortToggle'
-import { useOptionList } from '../use-option-list'
 
 export function StoryList(): JSX.Element {
   const { stories, storiesTotal, storiesStatus, reloadStories } = useLibrary()
   const { selectedStoryId, tagFilter } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
-
-  const list = useOptionList({
-    count: stories.length,
-    onActivate: (index) => navigate({ type: 'story/select', storyId: stories[index].ID })
-  })
 
   const filtered = tagFilter !== null && storiesTotal > 0
 
@@ -76,54 +70,33 @@ export function StoryList(): JSX.Element {
 
   return (
     <ListColumn title="Stories" count={stories.length} headerActions={<SortToggle />}>
-      <ul
-        role="listbox"
-        aria-label="Stories"
-        className="divide-y divide-base-300/80"
-        onKeyDown={list.onKeyDown}
-      >
-        {stories.map((story, index) => {
-          const selected = story.ID === selectedStoryId
-
-          return (
-            <li key={story.ID} role="presentation" className="relative">
-              <div
-                role="option"
-                aria-selected={selected}
-                tabIndex={list.tabIndexFor(index)}
-                ref={(element) => {
-                  list.itemsRef.current[index] = element
-                }}
-                onFocus={() => list.onItemFocus(index)}
-                onClick={() => navigate({ type: 'story/select', storyId: story.ID })}
-                className={cn(
-                  'cursor-pointer border-l-2 px-3 py-2.5 pr-10 transition',
-                  selected ? 'border-primary bg-neutral' : 'border-transparent hover:bg-neutral/40'
-                )}
-              >
-                <ListRowItem
-                  title={story.Topic}
-                  updatedAt={story.UpdatedAt}
-                  text={story.Text}
-                  tags={story.Tags}
-                  selected={selected}
-                />
-              </div>
-              <IconButton
-                label={`Delete story “${story.Topic}”`}
-                tone="danger"
-                onClick={() =>
-                  dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId: story.ID })
-                }
-                onKeyDown={(event) => event.stopPropagation()}
-                className="absolute top-2 right-2"
-              >
-                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-              </IconButton>
-            </li>
-          )
-        })}
-      </ul>
+      <OptionList
+        label="Stories"
+        items={stories}
+        getId={(story) => story.ID}
+        selectedId={selectedStoryId}
+        onSelect={(story) => navigate({ type: 'story/select', storyId: story.ID })}
+        renderContent={(story, selected) => (
+          <ListRowItem
+            title={story.Topic}
+            updatedAt={story.UpdatedAt}
+            text={story.Text}
+            tags={story.Tags}
+            selected={selected}
+          />
+        )}
+        renderAction={(story) => (
+          <IconButton
+            label={`Delete story “${story.Topic}”`}
+            tone="danger"
+            onClick={() =>
+              dispatch({ type: 'dialog/open', dialog: 'delete-story', storyId: story.ID })
+            }
+          >
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          </IconButton>
+        )}
+      />
     </ListColumn>
   )
 }
