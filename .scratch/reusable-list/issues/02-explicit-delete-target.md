@@ -8,20 +8,20 @@ Al confirmar el borrado de un Article se limpia la selección solo si el Article
 
 **Blocked by:** None (puede empezar inmediatamente)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] El estado del diálogo modela un objetivo discriminado: `delete-story` con `storyId` o `delete-article` con `articleId`.
-- [ ] No existe un estado válido de diálogo `delete-article` sin Article.
-- [ ] El header del Article abre el diálogo con el ID del Article abierto.
-- [ ] `App` resuelve la Story o el Article por ID desde la biblioteca completa, no desde la selección ni desde la lista filtrada.
-- [ ] Si el objetivo ya no existe, el diálogo no se renderiza y no se borra nada; no se usa la selección como fallback.
-- [ ] Confirmar borra el ID del objetivo resuelto y el mensaje muestra el título o Topic de ese objetivo.
-- [ ] Al borrar un Article se limpia la selección solo si coincide con el Article borrado.
-- [ ] Borrar un Article no modifica `selectedStoryId`, `creating` ni `creatingStoryId`.
-- [ ] El borrado de Article desde el header conserva su comportamiento visible; cancelar, Escape y error siguen funcionando.
-- [ ] El borrado de Story desde la fila y desde el editor conserva su comportamiento y sus tests sin cambios.
-- [ ] El botón de borrar del header usa el tono destructivo del tema.
-- [ ] `pnpm test`, `pnpm typecheck` y `pnpm lint` pasan.
+- [x] El estado del diálogo modela un objetivo discriminado: `delete-story` con `storyId` o `delete-article` con `articleId`.
+- [x] No existe un estado válido de diálogo `delete-article` sin Article.
+- [x] El header del Article abre el diálogo con el ID del Article abierto.
+- [x] `App` resuelve la Story o el Article por ID desde la biblioteca completa, no desde la selección ni desde la lista filtrada.
+- [x] Si el objetivo ya no existe, el diálogo no se renderiza y no se borra nada; no se usa la selección como fallback.
+- [x] Confirmar borra el ID del objetivo resuelto y el mensaje muestra el título o Topic de ese objetivo.
+- [x] Al borrar un Article se limpia la selección solo si coincide con el Article borrado.
+- [x] Borrar un Article no modifica `selectedStoryId`, `creating` ni `creatingStoryId`.
+- [x] El borrado de Article desde el header conserva su comportamiento visible; cancelar, Escape y error siguen funcionando.
+- [x] El borrado de Story desde la fila y desde el editor conserva su comportamiento y sus tests sin cambios.
+- [x] El botón de borrar del header usa el tono destructivo del tema.
+- [x] `pnpm test`, `pnpm typecheck` y `pnpm lint` pasan.
 
 ## Comments
 
@@ -29,3 +29,6 @@ Al confirmar el borrado de un Article se limpia la selección solo si el Article
 - Este ticket es un prefactor del borrado por fila: no agrega todavía la acción a la lista de Articles.
 - El caso de borrar un Article no seleccionado se prueba en el ticket 03, cuando exista el disparador desde la fila.
 
+- Resuelto en `1389716` e integrado en `feat/reusable-list`.
+- El contrato final usa `DeleteRequest` y `dialog/open` con `request`, sin estados inválidos.
+- El borrado de un Article no seleccionado se verifica en el ticket 03.

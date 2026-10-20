@@ -8,22 +8,25 @@ Incluye el endurecimiento del foco y del teclado: cuando la cantidad de elemento
 
 **Blocked by:** None (puede empezar inmediatamente)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Existe un componente de lista interactiva compartido, sin conocimiento de Story ni Article.
-- [ ] La lista de Stories lo usa para el listbox y las filas, sin cambios visibles en opciones, selección, filtrado ni creación.
-- [ ] La fila sigue exponiendo `role="option"`, `aria-selected` y el foco móvil.
-- [ ] Exactamente una opción tiene `tabIndex=0`; las flechas, Inicio, Fin, Enter y Espacio siguen funcionando.
-- [ ] La acción por fila se renderiza como control hermano de la opción, no dentro de ella.
-- [ ] Un clic, Enter o Espacio sobre la acción no selecciona la fila ni mueve el foco de la lista.
-- [ ] Cuando no hay acción, no se renderiza botón ni se reserva el espacio de la acción.
-- [ ] Al reducirse la cantidad de elementos, la lista sigue teniendo exactamente una opción con `tabIndex=0` y la activación no accede a un elemento inexistente.
-- [ ] Tests enfocados del componente cubren listbox, opciones, selección, roving tabindex, teclado, acción hermana, acción sin selección y lista que se acorta.
-- [ ] Los tests existentes de la lista de Stories, navegación por teclado y borrado desde la fila pasan sin modificarse.
-- [ ] `pnpm test`, `pnpm typecheck` y `pnpm lint` pasan.
+- [x] Existe un componente de lista interactiva compartido, sin conocimiento de Story ni Article.
+- [x] La lista de Stories lo usa para el listbox y las filas, sin cambios visibles en opciones, selección, filtrado ni creación.
+- [x] La fila sigue exponiendo `role="option"`, `aria-selected` y el foco móvil.
+- [x] Exactamente una opción tiene `tabIndex=0`; las flechas, Inicio, Fin, Enter y Espacio siguen funcionando.
+- [x] La acción por fila se renderiza como control hermano de la opción, no dentro de ella.
+- [x] Un clic, Enter o Espacio sobre la acción no selecciona la fila ni mueve el foco de la lista.
+- [x] Cuando no hay acción, no se renderiza botón ni se reserva el espacio de la acción.
+- [x] Al reducirse la cantidad de elementos, la lista sigue teniendo exactamente una opción con `tabIndex=0` y la activación no accede a un elemento inexistente.
+- [x] Tests enfocados del componente cubren listbox, opciones, selección, roving tabindex, teclado, acción hermana, acción sin selección y lista que se acorta.
+- [x] Los tests existentes de la lista de Stories, navegación por teclado y borrado desde la fila pasan sin modificarse.
+- [x] `pnpm test`, `pnpm typecheck` y `pnpm lint` pasan.
 
 ## Comments
 
 - Spec: `../spec.md`. Informe: `../research.md`.
 - Este ticket es un prefactor: no agrega la acción de borrar a la lista de Articles ni cambia el diálogo de borrado.
 
+- Resuelto en `1389716` e integrado en `feat/reusable-list`.
+- Verificación final: 292 tests en 19 suites; typecheck y lint verdes.
+- El contrato de `OptionList` cubre listbox, roving tabindex, acción hermana, teclado y reset del foco al vaciar la lista.
