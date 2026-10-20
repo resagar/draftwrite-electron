@@ -784,9 +784,16 @@ describe('story view modes', () => {
 
       expect(within(pane).getByRole('heading', { level: 2, name: 'Calm software' })).toBeTruthy()
       expect(within(storySwitcher()).getAllByRole('button')).toHaveLength(3)
-      expect(within(pane).queryByRole('button', { name: 'Delete story' })).toBeNull()
-      expect(within(pane).queryByRole('button', { name: 'Duplicate story' })).toBeNull()
-      expect(within(pane).queryByRole('button', { name: 'Toggle source pane' })).toBeNull()
+
+      const header = within(pane)
+        .getByRole('heading', { level: 2, name: 'Calm software' })
+        .closest('header')
+      expect(header).not.toBeNull()
+      const headerScope = within(header as HTMLElement)
+
+      expect(headerScope.queryByRole('button', { name: 'Delete story' })).toBeNull()
+      expect(headerScope.queryByRole('button', { name: 'Duplicate story' })).toBeNull()
+      expect(headerScope.queryByRole('button', { name: 'Toggle source pane' })).toBeNull()
     })
 
     it('hides the preview and keeps the editor and the tools in edit mode', async () => {
