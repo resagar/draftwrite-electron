@@ -589,6 +589,133 @@ describe('view modes', () => {
   })
 })
 
+describe('story view modes', () => {
+  const markdown =
+    '# Calm\n\n**sturdy** and *gentle* and ~~old~~\n\n| a | b |\n| - | - |\n| 1 | 2 |'
+  const stories = [makeStory({ ID: 's1', Topic: 'Calm software', Text: markdown })]
+  const articles = [
+    makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm', Text: 'Old body' })
+  ]
+
+  const pickStory = async (): Promise<void> => {
+    const list = await screen.findByRole('listbox', { name: 'Stories' })
+
+    fireEvent.click(within(list).getByRole('option', { name: /Calm software/ }))
+    await screen.findByRole('region', { name: 'Story editor' })
+  }
+
+  const openStory = async (): Promise<ReturnType<typeof createFakePort>> => {
+    const fake = createFakePort({ stories, articles })
+
+    renderApp(fake.port)
+    await pickStory()
+
+    return fake
+  }
+
+  const startNewStory = async (): Promise<void> => {
+    const sidebar = screen.getByRole('complementary', { name: 'Library' })
+
+    fireEvent.click(within(sidebar).getByRole('button', { name: /New Story/ }))
+    await screen.findByRole('region', { name: 'Story editor' })
+  }
+
+  const inheritViewMode = async (label: 'Edit' | 'Preview'): Promise<void> => {
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+
+    const articleList = await screen.findByRole('listbox', { name: 'Articles' })
+
+    fireEvent.click(within(articleList).getByRole('option', { name: /The architecture of calm/ }))
+
+    const switcher = await screen.findByRole('group', { name: 'View mode' })
+
+    fireEvent.click(within(switcher).getByRole('button', { name: label }))
+    fireEvent.click(screen.getByRole('button', { name: 'Stories' }))
+    await pickStory()
+  }
+
+  it('shows the rendered preview beside the editor while creating a story', async () => {
+    renderApp(createFakePort({ stories: [] }).port)
+    await startNewStory()
+
+    expect(screen.getByRole('textbox', { name: 'Article text' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
+    expect(screen.queryByRole('group', { name: 'View mode' })).toBeNull()
+
+    act(() => replaceEditorText('# Calm\n\n**sturdy** and ~~old~~'))
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+    expect(within(preview).getByText('sturdy').tagName).toBe('STRONG')
+  })
+
+  it('renders the text of the stored story it opens', async () => {
+    await openStory()
+
+    expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+  })
+
+  it('renders gfm tables, emphasis and strikethrough', async () => {
+    await openStory()
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('table')).toBeTruthy()
+    expect(within(preview).getByText('sturdy').tagName).toBe('STRONG')
+    expect(within(preview).getByText('gentle').tagName).toBe('EM')
+    expect(within(preview).getByText('old').tagName).toBe('DEL')
+  })
+
+  it('updates the preview as the writer types, before the save lands', async () => {
+    const fake = await openStory()
+
+    act(() => replaceEditorText('Hello **world**'))
+
+    expect(within(screen.getByRole('region', { name: 'Preview' })).getByText('world').tagName).toBe(
+      'STRONG'
+    )
+    expect(fake.calls.updateStory).toBe(0)
+
+    await waitFor(() => expect(fake.updatedStories[0]?.Text).toBe('Hello **world**'), {
+      timeout: 3000
+    })
+  })
+
+  it('renders an empty preview for a story with no text', async () => {
+    renderApp(
+      createFakePort({
+        stories: [makeStory({ ID: 's1', Topic: 'Calm software', Text: '' })]
+      }).port
+    )
+    await pickStory()
+
+    expect(screen.getByRole('region', { name: 'Preview' }).textContent).toBe('')
+  })
+
+  it('hides the preview in edit mode', async () => {
+    renderApp(createFakePort({ stories, articles }).port)
+    await inheritViewMode('Edit')
+
+    expect(screen.queryByRole('region', { name: 'Preview' })).toBeNull()
+    expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+  })
+
+  it('hides the editor and the tools when only the preview is shown', async () => {
+    renderApp(createFakePort({ stories, articles }).port)
+    await inheritViewMode('Preview')
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+    expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
+  })
+})
+
 describe('formatting toolbar', () => {
   const stories = [makeStory({ ID: 's1', Topic: 'Calm software' })]
   const articles = [
