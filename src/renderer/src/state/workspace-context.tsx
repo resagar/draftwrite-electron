@@ -25,7 +25,7 @@ export type WorkspaceState = {
   sortDirection: SortDirection
   viewMode: ViewMode
   sidebarCollapsed: boolean
-  storyPaneVisible: boolean
+  storyPaneExpanded: boolean
   creating: CreateKind | null
   // The Story a new Article is pre-selected with, taken from whatever story is
   // in context when «New Article» is pressed.
@@ -44,6 +44,7 @@ export type WorkspaceAction =
   | { type: 'sidebar/toggle' }
   | { type: 'storyPane/toggle' }
   | { type: 'create/start'; kind: CreateKind; storyId?: string }
+  | { type: 'create/story'; storyId: string }
   | { type: 'create/cancel' }
   | { type: 'dialog/open'; dialog: DialogKind }
   | { type: 'dialog/close' }
@@ -58,7 +59,7 @@ export const initialWorkspaceState: WorkspaceState = {
   sortDirection: 'desc',
   viewMode: 'split',
   sidebarCollapsed: false,
-  storyPaneVisible: false,
+  storyPaneExpanded: true,
   creating: null,
   creatingStoryId: null,
   dialog: null,
@@ -94,9 +95,16 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
     case 'sidebar/toggle':
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed }
     case 'storyPane/toggle':
-      return { ...state, storyPaneVisible: !state.storyPaneVisible }
+      return { ...state, storyPaneExpanded: !state.storyPaneExpanded }
     case 'create/start':
-      return { ...state, creating: action.kind, creatingStoryId: action.storyId ?? null }
+      return {
+        ...state,
+        creating: action.kind,
+        creatingStoryId: action.storyId ?? null,
+        storyPaneExpanded: action.kind === 'article' ? true : state.storyPaneExpanded
+      }
+    case 'create/story':
+      return { ...state, creatingStoryId: action.storyId }
     case 'create/cancel':
       return { ...state, creating: null, creatingStoryId: null }
     case 'dialog/open':

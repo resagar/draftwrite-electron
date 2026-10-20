@@ -385,7 +385,82 @@ describe('source story pane', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
     fireEvent.click(await screen.findByRole('option', { name: /Orphan/ }))
 
-    expect(await screen.findByText(/no longer exists/)).toBeTruthy()
+    const pane = await screen.findByRole('region', { name: 'Source story' })
+
+    expect(within(pane).getByText(/no longer exists/)).toBeTruthy()
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Copy source text' }).disabled
+    ).toBe(true)
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Open story in editor' }).disabled
+    ).toBe(true)
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Delete story' }).disabled
+    ).toBe(true)
+  })
+
+  it('shows that the source story is loading without calling it missing', async () => {
+    const gate = createDeferred()
+    const fake = createFakePort({
+      stories,
+      articles,
+      listStoriesGate: gate.promise
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+
+    const pane = await screen.findByRole('region', { name: 'Source story' })
+    const loading = within(pane).getByRole('status')
+
+    expect(loading.textContent).toContain('Loading source story')
+    expect(loading.getAttribute('aria-busy')).toBe('true')
+    expect(within(pane).queryByText(/no longer exists/)).toBeNull()
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Copy source text' }).disabled
+    ).toBe(true)
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Open story in editor' }).disabled
+    ).toBe(true)
+
+    const toggle = within(pane).getByRole('button', { name: 'Toggle source story' })
+    toggle.focus()
+    fireEvent.click(toggle)
+    gate.resolve()
+
+    expect(await within(pane).findByText('Calm software')).toBeTruthy()
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(toggle)
+  })
+
+  it('offers to retry when the source story cannot be loaded', async () => {
+    const fake = createFakePort({
+      stories,
+      articles,
+      listStoriesFailures: 1
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+
+    const pane = await screen.findByRole('region', { name: 'Source story' })
+
+    expect(within(pane).getByRole('alert')).toBeTruthy()
+    expect(within(pane).getByText('Source story could not be loaded')).toBeTruthy()
+    expect(within(pane).queryByText(/no longer exists/)).toBeNull()
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Copy source text' }).disabled
+    ).toBe(true)
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Delete story' }).disabled
+    ).toBe(true)
+
+    fireEvent.click(within(pane).getByRole('button', { name: 'Try again' }))
+
+    expect(await within(pane).findByText('Calm software')).toBeTruthy()
+    expect(fake.calls.listStories).toBe(2)
   })
 
   it('copies the source text and confirms it', async () => {
@@ -401,17 +476,51 @@ describe('source story pane', () => {
     expect(writeText).toHaveBeenCalledWith('Raw thoughts.')
   })
 
-  it('lets the writer toggle the source pane', async () => {
+  it('lets the writer minimize and restore the source story pane', async () => {
     renderApp(createFakePort({ stories, articles }).port)
-    await openArticle()
 
-    const toggle = screen.getByRole('button', { name: 'Toggle source pane' })
+    const pane = await openArticle()
+    const toggle = within(pane).getByRole('button', { name: 'Toggle source story' })
 
-    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getAllByRole('button', { name: 'Toggle source story' })).toHaveLength(1)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(toggle.getAttribute('aria-pressed')).toBeNull()
+    expect(document.getElementById(toggle.getAttribute('aria-controls') ?? '')).toBeTruthy()
+
+    toggle.focus()
+    fireEvent.click(toggle)
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(within(pane).queryByRole('button', { name: 'Copy source text' })).toBeNull()
+    expect(document.activeElement).toBe(toggle)
 
     fireEvent.click(toggle)
 
-    expect(toggle.getAttribute('aria-pressed')).toBe('true')
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(within(pane).getByRole('button', { name: 'Copy source text' })).toBeTruthy()
+    expect(document.activeElement).toBe(toggle)
+  })
+
+  it('keeps the pane minimized while switching articles in the session', async () => {
+    const twoArticles = [
+      makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm' }),
+      makeArticle({ ID: 'a2', StoryID: 's1', Title: 'The quiet tools' })
+    ]
+
+    renderApp(createFakePort({ stories, articles: twoArticles }).port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+
+    const pane = await screen.findByRole('region', { name: 'Source story' })
+    fireEvent.click(within(pane).getByRole('button', { name: 'Toggle source story' }))
+
+    fireEvent.click(await screen.findByRole('option', { name: /The quiet tools/ }))
+
+    const nextPane = screen.getByRole('region', { name: 'Source story' })
+    const toggle = within(nextPane).getByRole('button', { name: 'Toggle source story' })
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(within(nextPane).queryByRole('button', { name: 'Copy source text' })).toBeNull()
   })
 
   it('opens the source story in its editor from the pane header', async () => {
@@ -676,6 +785,184 @@ describe('creating an article', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New Article' }))
     await screen.findByRole('region', { name: 'Article editor' })
   }
+
+  it('shows the source story pane while creating, empty until a story is chosen', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    await openNewArticle(fake)
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+
+    expect(within(pane).getByText('No source story yet')).toBeTruthy()
+    expect(within(pane).queryByText(/no longer exists/)).toBeNull()
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's2' } })
+
+    expect(within(pane).getByText('Boring technology')).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: '' } })
+
+    expect(within(pane).getByText('No source story yet')).toBeTruthy()
+    expect(within(pane).queryByText('#s2')).toBeNull()
+  })
+
+  it('opens the source story pane from the sidebar new article action', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    await screen.findByText('No articles yet')
+
+    fireEvent.click(
+      within(screen.getByRole('complementary', { name: 'Library' })).getByRole('button', {
+        name: /New Article/
+      })
+    )
+
+    await screen.findByRole('region', { name: 'Article editor' })
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+
+    expect(within(pane).getByText('No source story yet')).toBeTruthy()
+  })
+
+  it('shows the preselected story in the pane before saving', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(await screen.findByRole('option', { name: /Boring technology/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    await screen.findByText('No articles yet')
+    fireEvent.click(screen.getByRole('button', { name: 'New Article' }))
+    await screen.findByRole('region', { name: 'Article editor' })
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+
+    expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s2')
+    expect(within(pane).getByText('Boring technology')).toBeTruthy()
+  })
+
+  it('keeps the source pane and its story when the article is saved', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    await openNewArticle(fake)
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's2' } })
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Calm' } })
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+    expect(within(pane).getByText('Boring technology')).toBeTruthy()
+
+    await waitFor(() => expect(fake.calls.createArticle).toBe(1), { timeout: 3000 })
+    await waitFor(() =>
+      expect(screen.getByLabelText<HTMLSelectElement>('Story').disabled).toBe(true)
+    )
+
+    expect(screen.getByRole('region', { name: 'Source story' })).toBe(pane)
+    expect(within(pane).getByText('Boring technology')).toBeTruthy()
+  })
+
+  it('keeps the source pane read-only while creating', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    await openNewArticle(fake)
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+    const copy = within(pane).getByRole<HTMLButtonElement>('button', {
+      name: 'Copy source text'
+    })
+
+    expect(within(pane).queryByRole('button', { name: 'Open story in editor' })).toBeNull()
+    expect(within(pane).queryByRole('button', { name: 'Delete story' })).toBeNull()
+    expect(copy.disabled).toBe(true)
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's1' } })
+
+    expect(
+      within(pane).getByRole<HTMLButtonElement>('button', { name: 'Copy source text' }).disabled
+    ).toBe(false)
+  })
+
+  it('clears the copied confirmation when the source story changes', async () => {
+    const writeText = jest.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+
+    const fake = createFakePort({ stories, articles: [] })
+
+    await openNewArticle(fake)
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's1' } })
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+    fireEvent.click(within(pane).getByRole('button', { name: 'Copy source text' }))
+
+    expect(await within(pane).findByText('Copied')).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's2' } })
+
+    expect(within(pane).queryByText('Copied')).toBeNull()
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's1' } })
+
+    expect(within(pane).queryByText('Copied')).toBeNull()
+  })
+
+  it('keeps the pane minimized when the created article is saved', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    await openNewArticle(fake)
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's1' } })
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Calm' } })
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+    fireEvent.click(within(pane).getByRole('button', { name: 'Toggle source story' }))
+
+    await waitFor(() => expect(fake.calls.createArticle).toBe(1), { timeout: 3000 })
+    await waitFor(() =>
+      expect(screen.getByLabelText<HTMLSelectElement>('Story').disabled).toBe(true)
+    )
+
+    expect(screen.getByRole('region', { name: 'Source story' })).toBe(pane)
+    expect(
+      within(pane)
+        .getByRole('button', { name: 'Toggle source story' })
+        .getAttribute('aria-expanded')
+    ).toBe('false')
+  })
+
+  it('expands the pane for a new article after it was minimized', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    await openNewArticle(fake)
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's1' } })
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'First' } })
+
+    await waitFor(() => expect(fake.calls.createArticle).toBe(1), { timeout: 3000 })
+    await waitFor(() =>
+      expect(screen.getByLabelText<HTMLSelectElement>('Story').disabled).toBe(true)
+    )
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+    fireEvent.click(within(pane).getByRole('button', { name: 'Toggle source story' }))
+    expect(
+      within(pane)
+        .getByRole('button', { name: 'Toggle source story' })
+        .getAttribute('aria-expanded')
+    ).toBe('false')
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Article' }))
+    await screen.findByRole('region', { name: 'Article editor' })
+
+    const nextPane = screen.getByRole('region', { name: 'Source story' })
+
+    expect(
+      within(nextPane)
+        .getByRole('button', { name: 'Toggle source story' })
+        .getAttribute('aria-expanded')
+    ).toBe('true')
+  })
 
   it('creates the article from the story the writer picks, and opens it', async () => {
     const fake = createFakePort({ stories, articles: [] })
@@ -1063,6 +1350,9 @@ describe('keyboard shortcuts', () => {
 
     await screen.findByRole('region', { name: 'Article editor' })
     expect(screen.getByLabelText<HTMLSelectElement>('Story').value).toBe('s1')
+
+    const pane = screen.getByRole('region', { name: 'Source story' })
+    expect(within(pane).getByText('Calm software')).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Title'), {
       target: { value: 'The architecture of calm' }

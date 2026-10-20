@@ -21,6 +21,7 @@ type ArticleEditorProps = {
   stored: Article | null
   // Only read while creating: a stored article already carries its StoryID.
   initialStoryId?: string
+  onStoryChange?: (storyId: string) => void
 }
 
 function hasContent(article: Article): boolean {
@@ -33,7 +34,11 @@ function hasContent(article: Article): boolean {
   )
 }
 
-export function ArticleEditor({ stored, initialStoryId = '' }: ArticleEditorProps): JSX.Element {
+export function ArticleEditor({
+  stored,
+  initialStoryId = '',
+  onStoryChange
+}: ArticleEditorProps): JSX.Element {
   const port = useDataPort()
   const { allStories, upsertArticle } = useLibrary()
   const { viewMode } = useWorkspace()
@@ -98,7 +103,12 @@ export function ArticleEditor({ stored, initialStoryId = '' }: ArticleEditorProp
         subtitle={draft.Subtitle}
         target={draft.Target}
         creating={creating}
-        onStory={(storyId) => change({ ...draft, StoryID: storyId })}
+        onStory={(storyId) => {
+          change({ ...draft, StoryID: storyId })
+          if (creating) {
+            onStoryChange?.(storyId)
+          }
+        }}
         onTitle={(title) => change({ ...draft, Title: title })}
         onSubtitle={(subtitle) => change({ ...draft, Subtitle: subtitle })}
         onTarget={(target) => change({ ...draft, Target: target })}
