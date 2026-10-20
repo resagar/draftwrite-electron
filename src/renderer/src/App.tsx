@@ -16,14 +16,14 @@ import { Workspace } from './workspace/Workspace/Workspace'
 
 function AppLayout(): JSX.Element {
   const port = useDataPort()
-  const { library, dialog, dialogStoryId, pendingNavigation, selectedArticleId, selectedStoryId } =
-    useWorkspace()
+  const { library, dialog, pendingNavigation, selectedArticleId, selectedStoryId } = useWorkspace()
   const { articleById, storyById, reloadStories, reloadArticles } = useLibrary()
   const dispatch = useWorkspaceDispatch()
   const [dialogError, setDialogError] = useState<string | null>(null)
 
   const selectedArticle = articleById(selectedArticleId)
-  const dialogStory = storyById(dialogStoryId)
+  const dialogStory = dialog?.kind === 'delete-story' ? storyById(dialog.storyId) : null
+  const dialogArticle = dialog?.kind === 'delete-article' ? articleById(dialog.articleId) : null
 
   const closeDialog = (): void => {
     setDialogError(null)
@@ -71,19 +71,19 @@ function AppLayout(): JSX.Element {
         />
       )}
 
-      {dialog === 'delete-article' && selectedArticle !== null ? (
+      {dialog?.kind === 'delete-article' && dialogArticle !== null ? (
         <ConfirmDialog
           title="Delete article"
-          message={`Delete “${selectedArticle.Title}”? This cannot be undone.`}
+          message={`Delete “${dialogArticle.Title}”? This cannot be undone.`}
           confirmLabel="Delete article"
           error={dialogError}
           onCancel={closeDialog}
           onConfirm={() => {
             setDialogError(null)
             void port
-              .deleteArticle(selectedArticle.ID)
+              .deleteArticle(dialogArticle.ID)
               .then(() => {
-                dispatch({ type: 'article/select', articleId: null })
+                dispatch({ type: 'article/deleted', articleId: dialogArticle.ID })
                 afterWrite()
               })
               .catch(failed)
@@ -91,7 +91,7 @@ function AppLayout(): JSX.Element {
         />
       ) : null}
 
-      {dialog === 'delete-story' && dialogStory !== null ? (
+      {dialog?.kind === 'delete-story' && dialogStory !== null ? (
         <ConfirmDialog
           title="Delete story"
           message={`Delete “${dialogStory.Topic}” and every article written from it? This cannot be undone.`}

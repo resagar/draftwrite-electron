@@ -33,7 +33,10 @@ export function ArticleHeader({ article, story }: ArticleHeaderProps): JSX.Eleme
         <ViewModeSwitcher />
         <IconButton
           label="Delete article"
-          onClick={() => dispatch({ type: 'dialog/open', dialog: 'delete-article' })}
+          tone="danger"
+          onClick={() =>
+            dispatch({ type: 'dialog/open', dialog: 'delete-article', articleId: article.ID })
+          }
         >
           <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
         </IconButton>
