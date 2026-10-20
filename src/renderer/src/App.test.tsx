@@ -467,6 +467,13 @@ function replaceEditorText(next: string): void {
   })
 }
 
+async function startNewStory(): Promise<void> {
+  const sidebar = screen.getByRole('complementary', { name: 'Library' })
+
+  fireEvent.click(within(sidebar).getByRole('button', { name: /New Story/ }))
+  await screen.findByRole('region', { name: 'Story editor' })
+}
+
 describe('editing an article', () => {
   const stories = [makeStory({ ID: 's1', Topic: 'Calm software' })]
   const articles = [
@@ -604,6 +611,250 @@ describe('view modes', () => {
     expect(within(screen.getByRole('region', { name: 'Preview' })).getByText('world').tagName).toBe(
       'STRONG'
     )
+  })
+})
+
+describe('story view modes', () => {
+  const markdown =
+    '# Calm\n\n**sturdy** and *gentle* and ~~old~~\n\n| a | b |\n| - | - |\n| 1 | 2 |'
+  const stories = [makeStory({ ID: 's1', Topic: 'Calm software', Text: markdown })]
+  const articles = [
+    makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm', Text: 'Old body' })
+  ]
+
+  const pickStory = async (): Promise<void> => {
+    const list = await screen.findByRole('listbox', { name: 'Stories' })
+
+    fireEvent.click(within(list).getByRole('option', { name: /Calm software/ }))
+    await screen.findByRole('region', { name: 'Story editor' })
+  }
+
+  const openStoredStory = async (): Promise<ReturnType<typeof createFakePort>> => {
+    const fake = createFakePort({ stories, articles })
+
+    renderApp(fake.port)
+    await pickStory()
+
+    return fake
+  }
+
+  const inheritViewModeFromArticle = async (label: 'Edit' | 'Preview'): Promise<void> => {
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+
+    const articleList = await screen.findByRole('listbox', { name: 'Articles' })
+
+    fireEvent.click(within(articleList).getByRole('option', { name: /The architecture of calm/ }))
+
+    const switcher = await screen.findByRole('group', { name: 'View mode' })
+
+    fireEvent.click(within(switcher).getByRole('button', { name: label }))
+    fireEvent.click(screen.getByRole('button', { name: 'Stories' }))
+    await pickStory()
+  }
+
+  it('shows the rendered preview beside the editor while creating a story', async () => {
+    renderApp(createFakePort({ stories: [] }).port)
+    await startNewStory()
+
+    expect(screen.getByRole('textbox', { name: 'Article text' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
+    expect(screen.queryByRole('group', { name: 'View mode' })).toBeNull()
+
+    act(() => replaceEditorText('# Calm\n\n**sturdy** and ~~old~~'))
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+    expect(within(preview).getByText('sturdy').tagName).toBe('STRONG')
+  })
+
+  it('renders the text of the stored story it opens', async () => {
+    await openStoredStory()
+
+    expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+  })
+
+  it('renders gfm tables, emphasis and strikethrough', async () => {
+    await openStoredStory()
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('table')).toBeTruthy()
+    expect(within(preview).getByText('sturdy').tagName).toBe('STRONG')
+    expect(within(preview).getByText('gentle').tagName).toBe('EM')
+    expect(within(preview).getByText('old').tagName).toBe('DEL')
+  })
+
+  it('renders lists, quotes, inline code, links and rules of the stored story', async () => {
+    const richText = [
+      '- first point',
+      '- second point',
+      '',
+      '1. step one',
+      '2. step two',
+      '',
+      '> a quoted line',
+      '',
+      'Run `pnpm test` and read [the docs](https://example.com).',
+      '',
+      '---'
+    ].join('\n')
+
+    renderApp(
+      createFakePort({
+        stories: [makeStory({ ID: 's1', Topic: 'Calm software', Text: richText })]
+      }).port
+    )
+    await pickStory()
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+    const lists = within(preview).getAllByRole('list')
+
+    expect(lists.map((list) => list.tagName)).toEqual(['UL', 'OL'])
+    expect(within(preview).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(preview).getByRole('blockquote').textContent).toContain('a quoted line')
+    expect(within(preview).getByText('pnpm test').tagName).toBe('CODE')
+    expect(within(preview).getByRole('link', { name: 'the docs' }).getAttribute('href')).toBe(
+      'https://example.com'
+    )
+    expect(within(preview).getByRole('separator')).toBeTruthy()
+  })
+
+  it('updates the preview as the writer types, before the save lands', async () => {
+    const fake = await openStoredStory()
+
+    act(() => replaceEditorText('Hello **world**'))
+
+    expect(within(screen.getByRole('region', { name: 'Preview' })).getByText('world').tagName).toBe(
+      'STRONG'
+    )
+    expect(fake.calls.updateStory).toBe(0)
+
+    await waitFor(() => expect(fake.updatedStories[0]?.Text).toBe('Hello **world**'), {
+      timeout: 3000
+    })
+  })
+
+  it('renders an empty preview for a story with no text', async () => {
+    renderApp(
+      createFakePort({
+        stories: [makeStory({ ID: 's1', Topic: 'Calm software', Text: '' })]
+      }).port
+    )
+    await pickStory()
+
+    expect(screen.getByRole('region', { name: 'Preview' }).textContent).toBe('')
+  })
+
+  it('hides the preview in edit mode', async () => {
+    renderApp(createFakePort({ stories, articles }).port)
+    await inheritViewModeFromArticle('Edit')
+
+    expect(screen.queryByRole('region', { name: 'Preview' })).toBeNull()
+    expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+  })
+
+  it('hides the editor and the tools when only the preview is shown', async () => {
+    renderApp(createFakePort({ stories, articles }).port)
+    await inheritViewModeFromArticle('Preview')
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+
+    expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+    expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
+  })
+
+  describe('the story header', () => {
+    const storySwitcher = (): HTMLElement =>
+      within(screen.getByRole('region', { name: 'Story' })).getByRole('group', {
+        name: 'View mode'
+      })
+
+    const pressedMode = (label: 'Edit' | 'Split' | 'Preview'): string | null =>
+      within(storySwitcher()).getByRole('button', { name: label }).getAttribute('aria-pressed')
+
+    it('shows the topic and the view mode switcher of the stored story', async () => {
+      await openStoredStory()
+
+      const pane = screen.getByRole('region', { name: 'Story' })
+
+      expect(within(pane).getByRole('heading', { level: 2, name: 'Calm software' })).toBeTruthy()
+      expect(within(storySwitcher()).getAllByRole('button')).toHaveLength(3)
+      expect(within(pane).queryByRole('button', { name: 'Delete story' })).toBeNull()
+      expect(within(pane).queryByRole('button', { name: 'Duplicate story' })).toBeNull()
+      expect(within(pane).queryByRole('button', { name: 'Toggle source pane' })).toBeNull()
+    })
+
+    it('hides the preview and keeps the editor and the tools in edit mode', async () => {
+      await openStoredStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Edit' }))
+
+      expect(pressedMode('Edit')).toBe('true')
+      expect(screen.queryByRole('region', { name: 'Preview' })).toBeNull()
+      expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
+      expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+    })
+
+    it('hides the editor and the tools and leaves only the preview in preview mode', async () => {
+      await openStoredStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
+
+      expect(pressedMode('Preview')).toBe('true')
+      expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
+
+      const preview = screen.getByRole('region', { name: 'Preview' })
+
+      expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
+    })
+
+    it('brings the editor, the tools and the preview back in split mode', async () => {
+      await openStoredStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Split' }))
+
+      expect(pressedMode('Split')).toBe('true')
+      expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
+      expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
+      expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
+    })
+
+    it('mounts no header while creating a story', async () => {
+      renderApp(createFakePort({ stories: [] }).port)
+      await startNewStory()
+
+      expect(screen.queryByRole('region', { name: 'Story' })).toBeNull()
+      expect(screen.queryByRole('group', { name: 'View mode' })).toBeNull()
+      expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
+    })
+
+    it('keeps the view mode when switching between a story and an article', async () => {
+      renderApp(createFakePort({ stories, articles }).port)
+      await pickStory()
+
+      fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+
+      const articleList = await screen.findByRole('listbox', { name: 'Articles' })
+
+      fireEvent.click(within(articleList).getByRole('option', { name: /The architecture of calm/ }))
+      await screen.findByRole('region', { name: 'Article editor' })
+
+      expect(screen.getByRole('button', { name: 'Preview' }).getAttribute('aria-pressed')).toBe(
+        'true'
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Stories' }))
+      await pickStory()
+
+      expect(pressedMode('Preview')).toBe('true')
+    })
   })
 })
 
@@ -1461,13 +1712,6 @@ describe('the story editor', () => {
   const openStory = async (fake: ReturnType<typeof createFakePort>): Promise<void> => {
     renderApp(fake.port)
     fireEvent.click(await screen.findByRole('option', { name: /Calm software/ }))
-    await screen.findByRole('region', { name: 'Story editor' })
-  }
-
-  const startNewStory = async (): Promise<void> => {
-    const sidebar = screen.getByRole('complementary', { name: 'Library' })
-
-    fireEvent.click(within(sidebar).getByRole('button', { name: /New Story/ }))
     await screen.findByRole('region', { name: 'Story editor' })
   }
 
