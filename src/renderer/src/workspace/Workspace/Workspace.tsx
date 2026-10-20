@@ -5,8 +5,8 @@ import { useWorkspace } from '../../state/workspace-context'
 import { EmptyState } from '../../ui/EmptyState/EmptyState'
 import { ArticleEditor } from '../ArticleEditor/ArticleEditor'
 import { ArticlePane } from '../ArticlePane/ArticlePane'
-import { StoryDocument } from '../StoryDocument/StoryDocument'
 import { StoryEditor } from '../StoryEditor/StoryEditor'
+import { StoryEditorPane } from '../StoryEditorPane/StoryEditorPane'
 import { StoryPane } from '../StoryPane/StoryPane'
 
 export function Workspace(): JSX.Element {
@@ -54,7 +54,7 @@ export function Workspace(): JSX.Element {
   if (story !== null) {
     return (
       <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
-        <StoryDocument story={story} />
+        <StoryEditorPane story={story} />
       </section>
     )
   }

@@ -449,6 +449,13 @@ function replaceEditorText(next: string): void {
   })
 }
 
+async function startNewStory(): Promise<void> {
+  const sidebar = screen.getByRole('complementary', { name: 'Library' })
+
+  fireEvent.click(within(sidebar).getByRole('button', { name: /New Story/ }))
+  await screen.findByRole('region', { name: 'Story editor' })
+}
+
 describe('editing an article', () => {
   const stories = [makeStory({ ID: 's1', Topic: 'Calm software' })]
   const articles = [
@@ -604,7 +611,7 @@ describe('story view modes', () => {
     await screen.findByRole('region', { name: 'Story editor' })
   }
 
-  const openStory = async (): Promise<ReturnType<typeof createFakePort>> => {
+  const openStoredStory = async (): Promise<ReturnType<typeof createFakePort>> => {
     const fake = createFakePort({ stories, articles })
 
     renderApp(fake.port)
@@ -613,14 +620,7 @@ describe('story view modes', () => {
     return fake
   }
 
-  const startNewStory = async (): Promise<void> => {
-    const sidebar = screen.getByRole('complementary', { name: 'Library' })
-
-    fireEvent.click(within(sidebar).getByRole('button', { name: /New Story/ }))
-    await screen.findByRole('region', { name: 'Story editor' })
-  }
-
-  const inheritViewMode = async (label: 'Edit' | 'Preview'): Promise<void> => {
+  const inheritViewModeFromArticle = async (label: 'Edit' | 'Preview'): Promise<void> => {
     fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
 
     const articleList = await screen.findByRole('listbox', { name: 'Articles' })
@@ -651,7 +651,7 @@ describe('story view modes', () => {
   })
 
   it('renders the text of the stored story it opens', async () => {
-    await openStory()
+    await openStoredStory()
 
     expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
 
@@ -661,7 +661,7 @@ describe('story view modes', () => {
   })
 
   it('renders gfm tables, emphasis and strikethrough', async () => {
-    await openStory()
+    await openStoredStory()
 
     const preview = screen.getByRole('region', { name: 'Preview' })
 
@@ -671,8 +671,43 @@ describe('story view modes', () => {
     expect(within(preview).getByText('old').tagName).toBe('DEL')
   })
 
+  it('renders lists, quotes, inline code, links and rules of the stored story', async () => {
+    const richText = [
+      '- first point',
+      '- second point',
+      '',
+      '1. step one',
+      '2. step two',
+      '',
+      '> a quoted line',
+      '',
+      'Run `pnpm test` and read [the docs](https://example.com).',
+      '',
+      '---'
+    ].join('\n')
+
+    renderApp(
+      createFakePort({
+        stories: [makeStory({ ID: 's1', Topic: 'Calm software', Text: richText })]
+      }).port
+    )
+    await pickStory()
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+    const lists = within(preview).getAllByRole('list')
+
+    expect(lists.map((list) => list.tagName)).toEqual(['UL', 'OL'])
+    expect(within(preview).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(preview).getByRole('blockquote').textContent).toContain('a quoted line')
+    expect(within(preview).getByText('pnpm test').tagName).toBe('CODE')
+    expect(within(preview).getByRole('link', { name: 'the docs' }).getAttribute('href')).toBe(
+      'https://example.com'
+    )
+    expect(within(preview).getByRole('separator')).toBeTruthy()
+  })
+
   it('updates the preview as the writer types, before the save lands', async () => {
-    const fake = await openStory()
+    const fake = await openStoredStory()
 
     act(() => replaceEditorText('Hello **world**'))
 
@@ -699,7 +734,7 @@ describe('story view modes', () => {
 
   it('hides the preview in edit mode', async () => {
     renderApp(createFakePort({ stories, articles }).port)
-    await inheritViewMode('Edit')
+    await inheritViewModeFromArticle('Edit')
 
     expect(screen.queryByRole('region', { name: 'Preview' })).toBeNull()
     expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
@@ -707,7 +742,7 @@ describe('story view modes', () => {
 
   it('hides the editor and the tools when only the preview is shown', async () => {
     renderApp(createFakePort({ stories, articles }).port)
-    await inheritViewMode('Preview')
+    await inheritViewModeFromArticle('Preview')
 
     const preview = screen.getByRole('region', { name: 'Preview' })
 
@@ -721,8 +756,11 @@ describe('story view modes', () => {
         name: 'View mode'
       })
 
+    const pressedMode = (label: 'Edit' | 'Split' | 'Preview'): string | null =>
+      within(storySwitcher()).getByRole('button', { name: label }).getAttribute('aria-pressed')
+
     it('shows the topic and the view mode switcher of the stored story', async () => {
-      await openStory()
+      await openStoredStory()
 
       const pane = screen.getByRole('region', { name: 'Story' })
 
@@ -734,28 +772,22 @@ describe('story view modes', () => {
     })
 
     it('hides the preview and keeps the editor and the tools in edit mode', async () => {
-      await openStory()
+      await openStoredStory()
 
       fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Edit' }))
 
-      expect(
-        within(storySwitcher()).getByRole('button', { name: 'Edit' }).getAttribute('aria-pressed')
-      ).toBe('true')
+      expect(pressedMode('Edit')).toBe('true')
       expect(screen.queryByRole('region', { name: 'Preview' })).toBeNull()
       expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
       expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
     })
 
     it('hides the editor and the tools and leaves only the preview in preview mode', async () => {
-      await openStory()
+      await openStoredStory()
 
       fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
 
-      expect(
-        within(storySwitcher())
-          .getByRole('button', { name: 'Preview' })
-          .getAttribute('aria-pressed')
-      ).toBe('true')
+      expect(pressedMode('Preview')).toBe('true')
       expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
 
       const preview = screen.getByRole('region', { name: 'Preview' })
@@ -764,14 +796,12 @@ describe('story view modes', () => {
     })
 
     it('brings the editor, the tools and the preview back in split mode', async () => {
-      await openStory()
+      await openStoredStory()
 
       fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
       fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Split' }))
 
-      expect(
-        within(storySwitcher()).getByRole('button', { name: 'Split' }).getAttribute('aria-pressed')
-      ).toBe('true')
+      expect(pressedMode('Split')).toBe('true')
       expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
       expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
       expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
@@ -805,11 +835,7 @@ describe('story view modes', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Stories' }))
       await pickStory()
 
-      expect(
-        within(storySwitcher())
-          .getByRole('button', { name: 'Preview' })
-          .getAttribute('aria-pressed')
-      ).toBe('true')
+      expect(pressedMode('Preview')).toBe('true')
     })
   })
 })
@@ -1420,13 +1446,6 @@ describe('the story editor', () => {
   const openStory = async (fake: ReturnType<typeof createFakePort>): Promise<void> => {
     renderApp(fake.port)
     fireEvent.click(await screen.findByRole('option', { name: /Calm software/ }))
-    await screen.findByRole('region', { name: 'Story editor' })
-  }
-
-  const startNewStory = async (): Promise<void> => {
-    const sidebar = screen.getByRole('complementary', { name: 'Library' })
-
-    fireEvent.click(within(sidebar).getByRole('button', { name: /New Story/ }))
     await screen.findByRole('region', { name: 'Story editor' })
   }
 
