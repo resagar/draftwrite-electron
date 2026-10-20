@@ -12,6 +12,7 @@ import { useEditorStatus } from '../../state/use-editor-status'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
 import { useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
+import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
 import { StoryBand } from '../StoryBand/StoryBand'
 
@@ -91,16 +92,18 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
         onDiscard={() => dispatch({ type: 'create/cancel' })}
       />
 
-      <EditorToolbar view={view} />
-
-      <div className="min-h-0 flex-1">
-        <TextEditor
-          value={draft.Text}
-          onChange={(text) => change({ ...draft, Text: text })}
-          onCursorChange={publishCursor}
-          onCreate={setView}
-        />
-      </div>
+      <EditorPreviewLayout
+        toolbar={<EditorToolbar view={view} />}
+        editor={
+          <TextEditor
+            value={draft.Text}
+            onChange={(text) => change({ ...draft, Text: text })}
+            onCursorChange={publishCursor}
+            onCreate={setView}
+          />
+        }
+        markdown={draft.Text}
+      />
 
       {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}
     </section>
