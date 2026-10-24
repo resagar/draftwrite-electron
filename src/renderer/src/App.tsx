@@ -34,7 +34,8 @@ function AppLayout(): JSX.Element {
 
   useShortcuts({
     onNew: create.start,
-    onSave: () => void requestSave()
+    onSave: () => void requestSave(),
+    onToggleZen: () => dispatch({ type: 'zen/toggle' })
   })
 
   const afterWrite = (): void => {

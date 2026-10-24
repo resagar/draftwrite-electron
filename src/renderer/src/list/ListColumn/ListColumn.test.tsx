@@ -27,3 +27,22 @@ describe('ListColumn resizing', () => {
     expect(window.localStorage.getItem('draftwrite.panel.list')).toBe('296')
   })
 })
+
+describe('ListColumn collapsing', () => {
+  it('closes to zero width without a separator, keeping the content mounted', () => {
+    const { container } = render(
+      <ListColumn title="Stories" collapsed>
+        <div>row</div>
+      </ListColumn>
+    )
+
+    const section = container.querySelector('section')
+
+    expect(parseFloat(section?.style.width ?? '1')).toBe(0)
+    expect(parseFloat(section?.style.minWidth ?? '1')).toBe(0)
+    expect(section?.getAttribute('aria-hidden')).toBe('true')
+    expect(section?.hasAttribute('inert')).toBe(true)
+    expect(screen.getByText('row')).toBeTruthy()
+    expect(screen.queryByRole('separator')).toBeNull()
+  })
+})

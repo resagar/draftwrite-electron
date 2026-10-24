@@ -15,7 +15,7 @@ import { SortToggle } from '../SortToggle/SortToggle'
 
 export function StoryList(): JSX.Element {
   const { stories, storiesTotal, storiesStatus, reloadStories } = useLibrary()
-  const { selectedStoryId, tagFilter } = useWorkspace()
+  const { selectedStoryId, tagFilter, zenMode } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
 
@@ -23,7 +23,7 @@ export function StoryList(): JSX.Element {
 
   if (storiesStatus === 'loading') {
     return (
-      <ListColumn title="Stories">
+      <ListColumn title="Stories" collapsed={zenMode}>
         <SkeletonList label="Loading stories" />
       </ListColumn>
     )
@@ -31,7 +31,7 @@ export function StoryList(): JSX.Element {
 
   if (storiesStatus === 'error') {
     return (
-      <ListColumn title="Stories">
+      <ListColumn title="Stories" collapsed={zenMode}>
         <ErrorState
           title="Stories could not be loaded"
           description="The app could not read your stories from the local database."
@@ -43,7 +43,7 @@ export function StoryList(): JSX.Element {
 
   if (stories.length === 0) {
     return (
-      <ListColumn title="Stories" count={0}>
+      <ListColumn title="Stories" count={0} collapsed={zenMode}>
         <ListEmpty
           filtered={filtered}
           icon={<Inbox className="h-7 w-7" />}
@@ -69,7 +69,12 @@ export function StoryList(): JSX.Element {
   }
 
   return (
-    <ListColumn title="Stories" count={stories.length} headerActions={<SortToggle />}>
+    <ListColumn
+      title="Stories"
+      count={stories.length}
+      collapsed={zenMode}
+      headerActions={<SortToggle />}
+    >
       <OptionList
         label="Stories"
         items={stories}

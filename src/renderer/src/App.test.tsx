@@ -23,6 +23,67 @@ describe('App shell', () => {
   })
 })
 
+describe('zen mode', () => {
+  const zenButton = (): HTMLElement => screen.getByRole('button', { name: /Zen mode/ })
+
+  it('hides the sidebar and the list while keeping the editor, and brings them back', async () => {
+    const fake = createFakePort({
+      stories: [makeStory({ ID: 's1', Topic: 'Calm software' })],
+      articles: []
+    })
+
+    renderApp(fake.port)
+
+    const list = await screen.findByRole('listbox', { name: 'Stories' })
+    fireEvent.click(within(list).getByRole('option', { name: /Calm software/ }))
+    const listRegion = screen.getByRole('region', { name: 'Stories' })
+
+    fireEvent.click(zenButton())
+
+    expect(zenButton().getAttribute('aria-pressed')).toBe('true')
+    expect(screen.queryByRole('complementary', { name: 'Library' })).toBeNull()
+    expect(screen.queryByRole('listbox', { name: 'Stories' })).toBeNull()
+    expect(screen.getByRole('region', { name: 'Story editor' })).toBeTruthy()
+    // The list keeps its content and animates its width to zero instead of unmounting.
+    expect(listRegion.style.width).toBe('0px')
+    expect(listRegion.getAttribute('aria-hidden')).toBe('true')
+
+    fireEvent.click(zenButton())
+
+    expect(zenButton().getAttribute('aria-pressed')).toBe('false')
+    expect(screen.getByRole('complementary', { name: 'Library' })).toBeTruthy()
+    expect(screen.getByRole('listbox', { name: 'Stories' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Story editor' })).toBeTruthy()
+  })
+
+  it('toggles from the keyboard with Ctrl/Cmd+Shift+D and ignores Ctrl+D', () => {
+    renderApp(createFakePort().port)
+
+    fireEvent.keyDown(window, { key: 'd', ctrlKey: true })
+    expect(zenButton().getAttribute('aria-pressed')).toBe('false')
+
+    fireEvent.keyDown(window, { key: 'D', ctrlKey: true, shiftKey: true })
+    expect(zenButton().getAttribute('aria-pressed')).toBe('true')
+
+    fireEvent.keyDown(window, { key: 'D', ctrlKey: true, shiftKey: true })
+    expect(zenButton().getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('leaves the sidebar rail untouched', () => {
+    renderApp(createFakePort().port)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }))
+
+    fireEvent.click(zenButton())
+    fireEvent.click(zenButton())
+
+    expect(
+      screen.getByRole('button', { name: 'Toggle sidebar' }).getAttribute('aria-pressed')
+    ).toBe('true')
+    expect(zenButton().getAttribute('aria-pressed')).toBe('false')
+  })
+})
+
 describe('library', () => {
   it('announces the active library and switches to articles', async () => {
     renderApp(createFakePort({ stories: [makeStory()] }).port)

@@ -1,11 +1,14 @@
-import { Feather, PanelLeft } from 'lucide-react'
+import { Expand, Feather, PanelLeft, Shrink } from 'lucide-react'
 import type { JSX } from 'react'
+import { usePlatformModifier } from '../../state/use-platform'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { IconButton } from '../../ui/IconButton/IconButton'
 
 export function TitleBar(): JSX.Element {
-  const { sidebarCollapsed } = useWorkspace()
+  const { sidebarCollapsed, zenMode } = useWorkspace()
+  const modifier = usePlatformModifier()
   const dispatch = useWorkspaceDispatch()
+  const zenLabel = `Zen mode (${modifier} Shift D)`
 
   return (
     <header className="z-30 flex h-9 min-h-9 items-center gap-3 border-b border-base-300 bg-base-300 px-3 select-none">
@@ -25,6 +28,17 @@ export function TitleBar(): JSX.Element {
       </div>
 
       <div className="flex w-[220px] items-center justify-end gap-2">
+        <IconButton
+          label={zenLabel}
+          aria-pressed={zenMode}
+          onClick={() => dispatch({ type: 'zen/toggle' })}
+        >
+          {zenMode ? (
+            <Shrink aria-hidden="true" className="h-3.5 w-3.5" />
+          ) : (
+            <Expand aria-hidden="true" className="h-3.5 w-3.5" />
+          )}
+        </IconButton>
         <IconButton
           label="Toggle sidebar"
           aria-pressed={sidebarCollapsed}

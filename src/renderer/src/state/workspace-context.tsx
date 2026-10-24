@@ -26,6 +26,7 @@ export type WorkspaceState = {
   sortDirection: SortDirection
   viewMode: ViewMode
   sidebarCollapsed: boolean
+  zenMode: boolean
   storyPaneExpanded: boolean
   creating: CreateKind | null
   // The Story a new Article is pre-selected with, taken from whatever story is
@@ -45,6 +46,7 @@ export type WorkspaceAction =
   | { type: 'sort/toggle' }
   | { type: 'viewMode/select'; viewMode: ViewMode }
   | { type: 'sidebar/toggle' }
+  | { type: 'zen/toggle' }
   | { type: 'storyPane/toggle' }
   | { type: 'create/start'; kind: CreateKind; storyId?: string }
   | { type: 'create/story'; storyId: string }
@@ -62,6 +64,7 @@ export const initialWorkspaceState: WorkspaceState = {
   sortDirection: 'desc',
   viewMode: 'split',
   sidebarCollapsed: false,
+  zenMode: false,
   storyPaneExpanded: true,
   creating: null,
   creatingStoryId: null,
@@ -104,6 +107,8 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return { ...state, viewMode: action.viewMode }
     case 'sidebar/toggle':
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed }
+    case 'zen/toggle':
+      return { ...state, zenMode: !state.zenMode }
     case 'storyPane/toggle':
       return { ...state, storyPaneExpanded: !state.storyPaneExpanded }
     case 'create/start':

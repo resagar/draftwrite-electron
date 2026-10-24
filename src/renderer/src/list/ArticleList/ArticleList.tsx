@@ -18,7 +18,7 @@ import { SortToggle } from '../SortToggle/SortToggle'
 
 export function ArticleList(): JSX.Element {
   const { articles, articlesStatus, reloadArticles, storyById } = useLibrary()
-  const { selectedArticleId, tagFilter } = useWorkspace()
+  const { selectedArticleId, tagFilter, zenMode } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
 
@@ -45,7 +45,7 @@ export function ArticleList(): JSX.Element {
 
   if (articlesStatus === 'loading') {
     return (
-      <ListColumn title="Articles">
+      <ListColumn title="Articles" collapsed={zenMode}>
         <SkeletonList label="Loading articles" />
       </ListColumn>
     )
@@ -53,7 +53,7 @@ export function ArticleList(): JSX.Element {
 
   if (articlesStatus === 'error') {
     return (
-      <ListColumn title="Articles">
+      <ListColumn title="Articles" collapsed={zenMode}>
         <ErrorState
           title="Articles could not be loaded"
           description="The app could not read your articles from the local database."
@@ -65,7 +65,7 @@ export function ArticleList(): JSX.Element {
 
   if (articles.length === 0) {
     return (
-      <ListColumn title="Articles" count={0}>
+      <ListColumn title="Articles" count={0} collapsed={zenMode}>
         <ListEmpty
           filtered={filtered}
           icon={<FileText className="h-7 w-7" />}
@@ -90,6 +90,7 @@ export function ArticleList(): JSX.Element {
     <ListColumn
       title="Articles"
       count={articles.length}
+      collapsed={zenMode}
       headerActions={
         <div className="flex items-center gap-1.5">
           <SortToggle />
