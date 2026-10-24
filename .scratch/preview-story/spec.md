@@ -68,6 +68,11 @@ El resultado es que crear o editar una Story ofrece la misma experiencia de escr
 - No se crea un segundo componente de preview ni se parametriza el existente. El texto de la Story (`Story.Text`) es un `string`, igual que el del Article.
 - No se agregan dependencias: `react-markdown` y `remark-gfm` ya están instalados.
 
+> **Actualización (2026-10-24):** esta decisión quedó superada. Para que un Enter simple
+> renderice un salto de línea visible, `MarkdownPreview` registra `remark-breaks` después
+> de `remark-gfm`. El componente sigue siendo compartido y mantiene la misma API
+> `{ markdown: string }`.
+
 ### Layout del editor de Story
 
 - `EditorPreviewLayout` es el componente compartido que lee `viewMode` del estado global del workspace con el hook de estado existente y deriva los flags `showsEditor = viewMode !== 'preview'` y `showsPreview = viewMode !== 'edit'`. Ni `ArticleEditor` ni `StoryEditor` reciben el modo por props ni crean estado local.

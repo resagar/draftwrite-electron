@@ -1,9 +1,10 @@
 import type { Components } from 'react-markdown'
 import type { JSX } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 
-const PLUGINS = [remarkGfm]
+const PLUGINS = [remarkGfm, remarkBreaks]
 
 const COMPONENTS: Components = {
   h1: ({ children }) => (

@@ -15,7 +15,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - sqlite -> [https://sqlite.org/](https://sqlite.org/) vía better-sqlite3 -> [https://github.com/WiseLibs/better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
 - Drizzle ORM -> [https://orm.drizzle.team/](https://orm.drizzle.team/) + drizzle-kit (migraciones) -> [https://orm.drizzle.team/docs/kit-overview](https://orm.drizzle.team/docs/kit-overview)
 - editor: CodeMirror vía `@uiw/react-codemirror` -> [https://codemirror.net/](https://codemirror.net/)
-- react-markdown -> [https://github.com/remarkjs/react-markdown](https://github.com/remarkjs/react-markdown) + remark-gfm -> [https://github.com/remarkjs/remark-gfm](https://github.com/remarkjs/remark-gfm)
+- react-markdown -> [https://github.com/remarkjs/react-markdown](https://github.com/remarkjs/react-markdown) + remark-gfm -> [https://github.com/remarkjs/remark-gfm](https://github.com/remarkjs/remark-gfm) + remark-breaks -> [https://github.com/remarkjs/remark-breaks](https://github.com/remarkjs/remark-breaks)
 - iconos: lucide-react -> [https://lucide.dev/](https://lucide.dev/)
 - fuentes: `@fontsource/{inter,fira-code,newsreader}` -> [https://fontsource.org/](https://fontsource.org/)
 - Tailwind 4 + daisyUI 5 (tema dracula)
@@ -60,6 +60,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - Todo bug corregido debe tener una prueba de regresión cuando sea razonable.
 - Los tests existentes son parte del contrato y no deben modificarse para hacer pasar una implementación.
 - El renderer se prueba con Jest + jsdom + Testing Library (proyecto `renderer` de `jest.config.js`); los tests viven junto al código en `src/renderer/src`.
+- Los bugs de layout/scroll no se verifican en jsdom: usar un harness headless (Chromium) o la app Electron; no añadir tests de layout a la suite de Jest.
 
 **Importante:** Si un test parece incorrecto, detenerse y solicitar revisión.
 

@@ -90,7 +90,10 @@ export function ArticleEditor({
   }
 
   return (
-    <section aria-label="Article editor" className="flex min-w-0 flex-1 flex-col bg-base-100">
+    <section
+      aria-label="Article editor"
+      className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
+    >
       <ArticleBand
         stories={allStories}
         storyId={draft.StoryID}

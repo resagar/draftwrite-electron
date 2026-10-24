@@ -701,6 +701,30 @@ describe('view modes', () => {
     expect(within(preview).getByText('old').tagName).toBe('DEL')
   })
 
+  it('renders a single newline as a line break in the preview', async () => {
+    renderApp(
+      createFakePort({
+        stories,
+        articles: [
+          makeArticle({
+            ID: 'a2',
+            StoryID: 's1',
+            Title: 'Line breaks',
+            Text: 'first line\nsecond line'
+          })
+        ]
+      }).port
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /Line breaks/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    const preview = screen.getByRole('region', { name: 'Preview' })
+    const paragraph = within(preview).getByText(/first line/)
+
+    expect(paragraph.querySelector('br')).not.toBeNull()
+  })
+
   it('hides the preview in edit mode', async () => {
     await openArticle()
 

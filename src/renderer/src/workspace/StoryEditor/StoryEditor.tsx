@@ -80,7 +80,7 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
   }
 
   return (
-    <section aria-label="Story editor" className="flex min-w-0 flex-1 flex-col bg-base-100">
+    <section aria-label="Story editor" className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100">
       <StoryBand
         topic={draft.Topic}
         titles={draft.Titles}
