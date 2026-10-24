@@ -1,8 +1,10 @@
 import type { Components } from 'react-markdown'
 import type { JSX } from 'react'
+import { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
+import { PreviewCursorSync } from './PreviewCursorSync'
 import { rehypeCodeLineMarkers } from './rehype-code-line-markers'
 import { remarkSourceLineMarkers } from './remark-source-line-markers'
 import { SOURCE_END_LINE_ATTRIBUTE, SOURCE_START_LINE_ATTRIBUTE } from './source-lines'
@@ -143,9 +145,24 @@ const COMPONENTS: Components = {
 }
 
 export function MarkdownPreview({ markdown }: { markdown: string }): JSX.Element {
+  const containerRef = useRef<HTMLElement>(null)
+  const articleRef = useRef<HTMLElement>(null)
+  const topSpacerRef = useRef<HTMLDivElement>(null)
+  const bottomSpacerRef = useRef<HTMLDivElement>(null)
+
   return (
-    <section aria-label="Preview" className="min-w-0 flex-1">
-      <article className="mx-auto max-w-[560px] p-8 select-text">
+    // The preview owns its scroll: `EditorPreviewLayout` no longer wraps it.
+    // `overflow-anchor: none` keeps scroll anchoring from fighting the measured
+    // `scrollTop`, `overscroll-behavior: contain` stops the wheel at the end and
+    // `scroll-behavior: auto` keeps every write instant, including the animated
+    // ones of ticket 08 (they drive `scrollTop` themselves).
+    <section
+      ref={containerRef}
+      aria-label="Preview"
+      className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] [scroll-behavior:auto]"
+    >
+      <div ref={topSpacerRef} aria-hidden="true" data-preview-spacer="top" />
+      <article ref={articleRef} className="mx-auto max-w-[560px] p-8 select-text">
         <ReactMarkdown
           remarkPlugins={PLUGINS}
           rehypePlugins={REHYPE_PLUGINS}
@@ -154,6 +171,14 @@ export function MarkdownPreview({ markdown }: { markdown: string }): JSX.Element
           {markdown}
         </ReactMarkdown>
       </article>
+      <div ref={bottomSpacerRef} aria-hidden="true" data-preview-spacer="bottom" />
+      <PreviewCursorSync
+        markdown={markdown}
+        containerRef={containerRef}
+        articleRef={articleRef}
+        topSpacerRef={topSpacerRef}
+        bottomSpacerRef={bottomSpacerRef}
+      />
     </section>
   )
 }
