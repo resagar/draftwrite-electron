@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { countCharacters, countWords, readingTimeMinutes } from '../data/format'
-import { publishStatus, resetStatus, type SaveStatus } from './status-store'
+import { publishStatus, resetStatus, type EditorCursor, type SaveStatus } from './status-store'
 
 type EditorStatusArgs = {
   text: string
@@ -8,7 +8,7 @@ type EditorStatusArgs = {
 }
 
 type EditorStatusControls = {
-  publishCursor: (cursor: { line: number; column: number }) => void
+  publishCursor: (cursor: EditorCursor) => void
 }
 
 // Reports the editor to the status bar. The first report is deferred so the
@@ -58,6 +58,6 @@ export function useEditorStatus({ text, status }: EditorStatusArgs): EditorStatu
   }, [text])
 
   return {
-    publishCursor: (cursor: { line: number; column: number }) => publishStatus({ cursor })
+    publishCursor: (cursor: EditorCursor) => publishStatus({ cursor })
   }
 }
