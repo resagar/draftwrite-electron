@@ -1,11 +1,13 @@
 import { PlusCircle } from 'lucide-react'
-import type { JSX } from 'react'
+import type { CSSProperties, JSX } from 'react'
 import { cn } from '../../lib/cn'
 import { DISABLED_CREATE_BUTTON } from '../../lib/classes'
 import { useContextualCreate } from '../../state/use-contextual-create'
 import { usePlatformModifier } from '../../state/use-platform'
 import { useWorkspace } from '../../state/workspace-context'
 import { Kbd } from '../../ui/Kbd/Kbd'
+import { Resizer } from '../../ui/Resizer/Resizer'
+import { usePanelResizer } from '../../ui/Resizer/use-resizer'
 import { LibraryNav } from '../LibraryNav/LibraryNav'
 import { TagList } from '../TagList/TagList'
 
@@ -13,15 +15,26 @@ export function Sidebar(): JSX.Element {
   const { sidebarCollapsed } = useWorkspace()
   const modifier = usePlatformModifier()
   const create = useContextualCreate()
+  const { size, resizerProps } = usePanelResizer({
+    storageKey: 'sidebar',
+    defaultSize: 220,
+    min: 160,
+    max: 320,
+    label: 'Resize sidebar'
+  })
 
   const actionLabel = `${create.label} (${modifier} N)`
+  // The expanded width only applies on `lg`; below it the sidebar keeps its
+  // 56 px rail, as before. The resizer is hidden there too.
+  const style = { '--sidebar-width': `${size}px` } as CSSProperties
 
   return (
     <aside
       aria-label="Library"
+      style={style}
       className={cn(
-        'flex w-14 min-w-14 shrink-0 flex-col justify-between border-r border-base-300 bg-base-200 select-none',
-        sidebarCollapsed ? '' : 'lg:w-[220px] lg:min-w-[220px]'
+        'relative flex w-14 min-w-14 shrink-0 flex-col justify-between border-r border-base-300 bg-base-200 select-none',
+        sidebarCollapsed ? '' : 'lg:w-[var(--sidebar-width)] lg:min-w-[var(--sidebar-width)]'
       )}
     >
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
@@ -61,6 +74,10 @@ export function Sidebar(): JSX.Element {
           </span>
         </button>
       </div>
+
+      {sidebarCollapsed ? null : (
+        <Resizer {...resizerProps} className="absolute inset-y-0 right-0 z-10 hidden lg:flex" />
+      )}
     </aside>
   )
 }

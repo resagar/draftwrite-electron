@@ -7,6 +7,8 @@ import { useWorkspaceNavigation } from '../../state/use-navigation'
 import { useWorkspaceDispatch } from '../../state/workspace-context'
 import { ErrorState } from '../../ui/ErrorState/ErrorState'
 import { IconButton } from '../../ui/IconButton/IconButton'
+import { Resizer } from '../../ui/Resizer/Resizer'
+import { usePanelResizer } from '../../ui/Resizer/use-resizer'
 import { TagChip } from '../../ui/TagChip/TagChip'
 
 export type SourceStoryState =
@@ -68,6 +70,13 @@ export function StoryPane({
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
   const storyId = source.kind === 'empty' ? '' : source.storyId
+  const { size, resizerProps } = usePanelResizer({
+    storageKey: 'story',
+    defaultSize: 360,
+    min: 240,
+    max: 560,
+    label: 'Resize source story'
+  })
 
   const toggle = (): void => {
     setAnimating(true)
@@ -77,19 +86,20 @@ export function StoryPane({
   return (
     <section
       aria-label="Source story"
+      style={expanded ? { width: size, minWidth: size } : undefined}
       onTransitionEnd={(event) => {
         if (event.propertyName === 'width') {
           setAnimating(false)
         }
       }}
       className={cn(
-        'flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-base-300 bg-base-200/50',
-        expanded ? 'w-[360px] min-w-[360px] xl:w-[420px] xl:min-w-[420px]' : 'w-10 min-w-10',
+        'relative flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-base-300 bg-base-200/50',
+        expanded ? '' : 'w-10 min-w-10',
         animating &&
           'transition-[width,min-width] duration-200 ease-out motion-reduce:transition-none'
       )}
     >
-      <div className="flex h-full min-h-0 w-[360px] flex-col xl:w-[420px]">
+      <div className="flex h-full min-h-0 w-full flex-col">
         <header className="flex h-9 min-h-9 items-center gap-2 border-b border-base-300 bg-base-200/80 px-2">
           <IconButton
             label="Toggle source story"
@@ -218,6 +228,8 @@ export function StoryPane({
           )}
         </div>
       </div>
+
+      {expanded ? <Resizer {...resizerProps} className="absolute inset-y-0 right-0 z-10" /> : null}
     </section>
   )
 }
