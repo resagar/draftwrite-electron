@@ -53,32 +53,6 @@ export function PreviewCursorSync({
   // markdown or geometry change with the same line may not.
   const followed = useRef<FollowedLine>({ synced: false, line: null })
 
-  // One animator per scroller, and it dies with the preview: the wheel and the
-  // pointer listeners, the scrollbar guard and the pending frame are all inside.
-  useLayoutEffect(() => {
-    const container = containerRef.current
-
-    if (container === null) {
-      return
-    }
-
-    const win = container.ownerDocument.defaultView ?? null
-    const animator = createPreviewScrollAnimator({
-      container,
-      scheduler: browserFrameScheduler(win ?? window),
-      win
-    })
-    animatorRef.current = animator
-
-    return () => {
-      animator.destroy()
-
-      if (animatorRef.current === animator) {
-        animatorRef.current = null
-      }
-    }
-  }, [containerRef])
-
   // The single write point of the preview scroll. `layout` corrects the viewport
   // instantly; only `caret` is allowed to fly.
   const applyScroll = useCallback(
@@ -172,6 +146,42 @@ export function PreviewCursorSync({
     // spacers and the scroll never show an intermediate state.
     sync(reason)
   }, [sync, markdown, line])
+
+  // One animator per scroller, and it dies with the preview: the wheel and the
+  // pointer listeners, the scrollbar guard and the pending frame are all inside.
+  //
+  // This must be a passive effect, not a layout one: `PreviewCursorSync` is a
+  // child of the `<section>` it measures, and React runs a child's layout effect
+  // before the parent host ref is attached. A layout effect here saw
+  // `containerRef.current === null`, returned, and — with a stable ref
+  // dependency — never ran again, so the preview never scrolled. By the time
+  // passive effects run the ref is attached; the explicit sync below replaces
+  // the measurement the layout effect could not do.
+  useEffect(() => {
+    const container = containerRef.current
+
+    if (container === null) {
+      return
+    }
+
+    const win = container.ownerDocument.defaultView ?? null
+    const animator = createPreviewScrollAnimator({
+      container,
+      scheduler: browserFrameScheduler(win ?? window),
+      win
+    })
+    animatorRef.current = animator
+
+    syncRef.current('layout')
+
+    return () => {
+      animator.destroy()
+
+      if (animatorRef.current === animator) {
+        animatorRef.current = null
+      }
+    }
+  }, [containerRef])
 
   useEffect(() => {
     // jsdom has none, and a missing observer only means "re-measure on the next

@@ -348,6 +348,40 @@ export function bottomSpacerHeight(
   return Math.max(0, viewportHeight - (articleHeight - lastTop))
 }
 
+/**
+ * Top spacer that centres the first SOURCE LINE, not the whole first block.
+ *
+ * `T = max(0, H/2 - lineTop - lineHeight/2)`. The block formula would centre a
+ * tall first paragraph instead of the line the writer is on; with the marker
+ * rect this is the line that lands at `H/2` when `scrollTop = 0`.
+ */
+export function topSpacerForLine(
+  viewportHeight: number,
+  lineTop: number,
+  lineHeight: number
+): number {
+  return Math.max(0, viewportHeight / 2 - lineTop - lineHeight / 2)
+}
+
+/**
+ * Bottom spacer that lets the last SOURCE LINE reach the centre, not just the
+ * top of its block.
+ *
+ * `B = max(0, H/2 + lineTop + lineHeight/2 - articleHeight)`. The last block can
+ * be taller than the viewport, and the line inside it may sit far below the
+ * block top: the block formula gives no room there, while this one keeps the
+ * caret line centreable. The caller takes the maximum with the block formula so
+ * the last block can still reach the top edge.
+ */
+export function bottomSpacerForLine(
+  viewportHeight: number,
+  articleHeight: number,
+  lineTop: number,
+  lineHeight: number
+): number {
+  return Math.max(0, viewportHeight / 2 + lineTop + lineHeight / 2 - articleHeight)
+}
+
 /** Arguments of `centerScrollTop`, all in CSS pixels. */
 export type CenterArgs = {
   /** Top of the target in the scroller's content coordinates. */
@@ -617,15 +651,35 @@ export function measurePreviewSync({
   const articleRect = article.getBoundingClientRect()
   const firstRect = blocks[0].element.getBoundingClientRect()
   const lastRect = blocks[blocks.length - 1].element.getBoundingClientRect()
-  const topHeight = topSpacerHeight(
-    viewportHeight,
-    firstRect.top - articleRect.top,
-    firstRect.height
-  )
-  const bottomHeight = bottomSpacerHeight(
-    viewportHeight,
-    articleRect.height,
-    lastRect.top - articleRect.top
+
+  // The caret follows a source line, so the spacers are anchored to the first
+  // and last rendered line markers. The block rects stay as the fallback for
+  // anchors that render no marked text (an image-only paragraph, an `hr`).
+  const markers = article.querySelectorAll<HTMLElement>(`[${SOURCE_LINE_ATTRIBUTE}]`)
+  const firstMarkerRect = markers[0]?.getBoundingClientRect() ?? null
+  const lastMarkerRect = markers[markers.length - 1]?.getBoundingClientRect() ?? null
+
+  const topHeight =
+    firstMarkerRect === null
+      ? topSpacerHeight(viewportHeight, firstRect.top - articleRect.top, firstRect.height)
+      : topSpacerForLine(
+          viewportHeight,
+          firstMarkerRect.top - articleRect.top,
+          firstMarkerRect.height
+        )
+
+  // Both conditions must hold: the last block can reach the top edge, and the
+  // last line can still be centred when its block is taller than the viewport.
+  const bottomHeight = Math.max(
+    bottomSpacerHeight(viewportHeight, articleRect.height, lastRect.top - articleRect.top),
+    lastMarkerRect === null
+      ? 0
+      : bottomSpacerForLine(
+          viewportHeight,
+          articleRect.height,
+          lastMarkerRect.top - articleRect.top,
+          lastMarkerRect.height
+        )
   )
 
   topSpacer.style.height = `${topHeight}px`

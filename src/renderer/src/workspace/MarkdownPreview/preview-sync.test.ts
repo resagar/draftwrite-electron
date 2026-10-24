@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 import {
+  bottomSpacerForLine,
   bottomSpacerHeight,
   centerScrollTop,
   computeLineRect,
@@ -10,6 +11,7 @@ import {
   parseLineHeight,
   readSourceBlocks,
   resolveLineUnit,
+  topSpacerForLine,
   topSpacerHeight,
   type Rect,
   type SourceBlock
@@ -415,6 +417,29 @@ describe('bottomSpacerHeight', () => {
 
   it('clamps to zero when the last block is taller than the viewport', () => {
     expect(bottomSpacerHeight(500, 1000, 400)).toBe(0)
+  })
+})
+
+describe('topSpacerForLine', () => {
+  it('centres the first source line, not the whole first block', () => {
+    // H = 500, lineTop = 0, lineHeight = 20: 250 - 0 - 10.
+    expect(topSpacerForLine(500, 0, 20)).toBe(240)
+  })
+
+  it('clamps to zero when the line is already at or below the centre', () => {
+    expect(topSpacerForLine(500, 400, 20)).toBe(0)
+  })
+})
+
+describe('bottomSpacerForLine', () => {
+  it('lets the last line centre inside a block taller than the viewport', () => {
+    // H = 362, A = 1601.625, lineTop = 1533.5, lineHeight = 22:
+    // 181 + 1533.5 + 11 - 1601.625.
+    expect(bottomSpacerForLine(362, 1601.625, 1533.5, 22)).toBeCloseTo(123.875, 3)
+  })
+
+  it('clamps to zero when the last line already has room', () => {
+    expect(bottomSpacerForLine(500, 1000, 400, 20)).toBe(0)
   })
 })
 
