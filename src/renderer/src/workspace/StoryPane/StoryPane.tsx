@@ -203,10 +203,12 @@ export function StoryPane({
             </p>
           ) : (
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5 select-text">
-              <h3 className="text-xs font-semibold text-secondary">{source.story.Topic}</h3>
+              <h3 className="text-[14px] leading-loose font-semibold text-secondary">
+                {source.story.Topic}
+              </h3>
 
               {source.story.Titles.length > 0 ? (
-                <ul className="space-y-0.5 text-xs text-base-content/80">
+                <ul className="space-y-0.5 text-[14px] leading-loose text-base-content/80">
                   {source.story.Titles.map((title) => (
                     <li key={title}>{title}</li>
                   ))}
@@ -221,7 +223,7 @@ export function StoryPane({
                 </div>
               ) : null}
 
-              <pre className="font-mono text-xs leading-relaxed whitespace-pre-wrap text-base-content/70">
+              <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
                 {source.story.Text}
               </pre>
             </div>
