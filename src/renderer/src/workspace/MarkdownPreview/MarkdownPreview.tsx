@@ -37,7 +37,7 @@ const COMPONENTS: Components = {
   h1: ({ children, node }) => (
     <h1
       {...blockAnchors(node)}
-      className="mb-4 border-b border-base-300 pb-2 font-sans text-2xl font-bold tracking-tight text-secondary"
+      className="mb-4 border-b border-base-300 pb-2 font-sans text-[24px] leading-loose font-bold tracking-tight text-secondary"
     >
       {children}
     </h1>
@@ -45,7 +45,7 @@ const COMPONENTS: Components = {
   h2: ({ children, node }) => (
     <h2
       {...blockAnchors(node)}
-      className="mt-6 mb-2.5 font-sans text-base font-semibold tracking-tight text-secondary"
+      className="mt-6 mb-2.5 font-sans text-[18px] leading-loose font-semibold tracking-tight text-secondary"
     >
       {children}
     </h2>
@@ -53,20 +53,32 @@ const COMPONENTS: Components = {
   h3: ({ children, node }) => (
     <h3
       {...blockAnchors(node)}
-      className="mt-4 mb-2 font-sans text-sm font-semibold text-secondary"
+      className="mt-4 mb-2 font-sans text-[16px] leading-loose font-semibold text-secondary"
     >
       {children}
     </h3>
   ),
   // h4-h6 were rendered by react-markdown's defaults before: no class, so the
   // markup stays identical apart from the anchors.
-  h4: ({ children, node }) => <h4 {...blockAnchors(node)}>{children}</h4>,
-  h5: ({ children, node }) => <h5 {...blockAnchors(node)}>{children}</h5>,
-  h6: ({ children, node }) => <h6 {...blockAnchors(node)}>{children}</h6>,
+  h4: ({ children, node }) => (
+    <h4 {...blockAnchors(node)} className="text-[16px] leading-loose">
+      {children}
+    </h4>
+  ),
+  h5: ({ children, node }) => (
+    <h5 {...blockAnchors(node)} className="text-[16px] leading-loose">
+      {children}
+    </h5>
+  ),
+  h6: ({ children, node }) => (
+    <h6 {...blockAnchors(node)} className="text-[16px] leading-loose">
+      {children}
+    </h6>
+  ),
   p: ({ children, node }) => (
     <p
       {...blockAnchors(node)}
-      className="mb-4 font-sans text-sm leading-relaxed text-base-content/90"
+      className="mb-4 font-sans text-[16px] leading-loose text-base-content/90"
     >
       {children}
     </p>
@@ -81,7 +93,7 @@ const COMPONENTS: Components = {
   blockquote: ({ children, node }) => (
     <blockquote
       {...blockAnchors(node)}
-      className="my-4 rounded-r border-l-2 border-secondary/70 bg-base-200/40 py-1.5 pl-3.5 font-sans text-sm text-base-content/75 italic"
+      className="my-4 rounded-r border-l-2 border-secondary/70 bg-base-200/40 py-1.5 pl-3.5 font-sans text-[16px] leading-loose text-base-content/75 italic"
     >
       {children}
     </blockquote>
@@ -89,7 +101,7 @@ const COMPONENTS: Components = {
   ul: ({ children, node }) => (
     <ul
       {...blockAnchors(node)}
-      className="mb-4 list-disc space-y-1.5 pl-5 font-sans text-sm text-base-content/80 marker:text-primary"
+      className="mb-4 list-disc space-y-1.5 pl-5 font-sans text-[16px] leading-loose text-base-content/80 marker:text-primary"
     >
       {children}
     </ul>
@@ -97,7 +109,7 @@ const COMPONENTS: Components = {
   ol: ({ children, node }) => (
     <ol
       {...blockAnchors(node)}
-      className="mb-4 list-decimal space-y-1.5 pl-5 font-sans text-sm text-base-content/80 marker:text-primary"
+      className="mb-4 list-decimal space-y-1.5 pl-5 font-sans text-[16px] leading-loose text-base-content/80 marker:text-primary"
     >
       {children}
     </ol>
@@ -110,21 +122,21 @@ const COMPONENTS: Components = {
     </li>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-base-300 px-1 py-0.5 font-mono text-xs text-success">
+    <code className="rounded bg-base-300 px-1 py-0.5 font-mono text-[16px] text-success">
       {children}
     </code>
   ),
   pre: ({ children, node }) => (
     <pre
       {...blockAnchors(node)}
-      className="my-3 overflow-x-auto rounded border border-line bg-base-300 p-3 font-mono text-xs leading-relaxed text-base-content/90"
+      className="my-3 overflow-x-auto rounded border border-line bg-base-300 p-3 font-mono text-[16px] leading-loose text-base-content/90"
     >
       {children}
     </pre>
   ),
   table: ({ children, node }) => (
     <div {...blockAnchors(node)} className="my-3 overflow-x-auto">
-      <table className="w-full border-collapse font-sans text-xs text-base-content/85">
+      <table className="w-full border-collapse font-sans text-[16px] leading-loose text-base-content/85">
         {children}
       </table>
     </div>
@@ -162,7 +174,10 @@ export function MarkdownPreview({ markdown }: { markdown: string }): JSX.Element
       className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] [scroll-behavior:auto]"
     >
       <div ref={topSpacerRef} aria-hidden="true" data-preview-spacer="top" />
-      <article ref={articleRef} className="mx-auto max-w-[560px] p-8 select-text">
+      <article
+        ref={articleRef}
+        className="mx-auto max-w-[560px] p-8 text-[16px] leading-loose select-text"
+      >
         <ReactMarkdown
           remarkPlugins={PLUGINS}
           rehypePlugins={REHYPE_PLUGINS}

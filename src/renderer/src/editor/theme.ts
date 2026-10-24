@@ -5,21 +5,26 @@ import { tags } from '@lezer/highlight'
 const base = EditorView.theme(
   {
     '&': { backgroundColor: 'transparent', color: 'var(--color-base-content)', height: '100%' },
-    '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.7' },
+    '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '2' },
     '.cm-content': {
       padding: '16px 20px',
-      fontSize: 'var(--text-sm)',
+      fontSize: '16px',
+      lineHeight: '2',
       caretColor: 'var(--color-primary)',
-      // Same reading column as the preview. The max width only bites when the
-      // pane is wider than the column; a narrow split keeps the full width.
-      maxWidth: '560px',
-      marginLeft: 'auto',
+      // The editor uses a wider measure than the preview at 16 px. The gutter
+      // takes the left auto margin so the numbers and the text move together:
+      // centring only the content left the line numbers far to the left.
+      maxWidth: '680px',
+      marginLeft: '0',
       marginRight: 'auto'
     },
     '.cm-gutters': {
       backgroundColor: 'transparent',
       border: 'none',
       color: 'var(--color-gutter)',
+      fontSize: '16px',
+      lineHeight: '2',
+      marginLeft: 'auto',
       opacity: '0.6'
     },
     '.cm-activeLine': {
