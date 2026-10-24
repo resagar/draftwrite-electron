@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import type { RefObject } from 'react'
+import { browserFrameScheduler } from '../../scroll/smooth-scroll'
 import { usePreviewLine } from '../../state/status-store'
+import {
+  createPreviewScrollAnimator,
+  type PreviewScrollAnimator,
+  type PreviewScrollReason
+} from './preview-scroll-animator'
 import { measurePreviewSync } from './preview-sync'
 
 /** Elements of the preview the sync has to measure. Owned by `MarkdownPreview`. */
@@ -13,15 +19,10 @@ export type PreviewCursorSyncProps = {
   bottomSpacerRef: RefObject<HTMLElement | null>
 }
 
-/**
- * Applies a scroll destination to the preview.
- *
- * This is the only place that moves the preview. Ticket 08 swaps the assignment
- * for the shared animator (`createScrollAnimator(...).request(target, {
- * reason })`) and adds the cancelling listeners; nothing else changes.
- */
-function applyScroll(container: HTMLElement, target: number): void {
-  container.scrollTop = target
+/** A caret line as it was followed, and whether any sync has happened yet. */
+type FollowedLine = {
+  synced: boolean
+  line: number | null
 }
 
 /**
@@ -31,8 +32,9 @@ function applyScroll(container: HTMLElement, target: number): void {
  * caret move re-renders this component and nothing of `MarkdownPreview`: the
  * Markdown is not parsed again for every arrow key.
  *
- * With no animation yet, the destination is written once per sync. Wheel and
- * scrollbar still own the preview between caret events.
+ * The scroll itself belongs to `preview-scroll-animator.ts`: this component
+ * measures a destination, decides whether it is a caret move or a layout
+ * correction, and calls the animator. It never writes `scrollTop` itself.
  */
 export function PreviewCursorSync({
   markdown,
@@ -46,41 +48,113 @@ export function PreviewCursorSync({
   // what tells "the article moved because the spacers changed" apart, so a sync
   // without a cursor can keep the article where the reader left it.
   const previousTopSpacer = useRef<number | null>(null)
+  const animatorRef = useRef<PreviewScrollAnimator | null>(null)
+  // The line the preview followed last: a new caret line may animate, and a
+  // markdown or geometry change with the same line may not.
+  const followed = useRef<FollowedLine>({ synced: false, line: null })
 
-  const sync = useCallback(() => {
+  // One animator per scroller, and it dies with the preview: the wheel and the
+  // pointer listeners, the scrollbar guard and the pending frame are all inside.
+  useLayoutEffect(() => {
     const container = containerRef.current
-    const article = articleRef.current
-    const topSpacer = topSpacerRef.current
-    const bottomSpacer = bottomSpacerRef.current
 
-    if (container === null || article === null || topSpacer === null || bottomSpacer === null) {
+    if (container === null) {
       return
     }
 
-    const measurement = measurePreviewSync({ container, article, topSpacer, bottomSpacer, line })
+    const win = container.ownerDocument.defaultView ?? null
+    const animator = createPreviewScrollAnimator({
+      container,
+      scheduler: browserFrameScheduler(win ?? window),
+      win
+    })
+    animatorRef.current = animator
 
-    // No viewport to measure: jsdom, or the preview mounted in a hidden pane.
-    if (measurement === null) {
-      return
+    return () => {
+      animator.destroy()
+
+      if (animatorRef.current === animator) {
+        animatorRef.current = null
+      }
     }
+  }, [containerRef])
 
-    const previous = previousTopSpacer.current
-    previousTopSpacer.current = measurement.topSpacer
+  // The single write point of the preview scroll. `layout` corrects the viewport
+  // instantly; only `caret` is allowed to fly.
+  const applyScroll = useCallback(
+    (container: HTMLElement, target: number, reason: PreviewScrollReason, lineUnit: number) => {
+      const animator = animatorRef.current
 
-    if (measurement.target === null) {
-      // Nothing to follow. Every sync but the first shifts the article by the
-      // change of the top spacer, so it is compensated to keep it in place. The
-      // first one does not: the spacers are already in place before the first
-      // paint, and compensating would hide the centring of the first block.
-      if (previous !== null) {
-        applyScroll(container, container.scrollTop + measurement.topSpacer - previous)
+      if (animator === null || animator.container !== container) {
+        return
       }
 
-      return
-    }
+      animator.scrollTo(target, reason, lineUnit)
+    },
+    []
+  )
 
-    applyScroll(container, measurement.target)
-  }, [containerRef, articleRef, topSpacerRef, bottomSpacerRef, line])
+  const sync = useCallback(
+    (reason: PreviewScrollReason) => {
+      const container = containerRef.current
+      const article = articleRef.current
+      const topSpacer = topSpacerRef.current
+      const bottomSpacer = bottomSpacerRef.current
+      const animator = animatorRef.current
+
+      if (
+        container === null ||
+        article === null ||
+        topSpacer === null ||
+        bottomSpacer === null ||
+        animator === null
+      ) {
+        return
+      }
+
+      // No viewport to measure: jsdom, or the preview mounted in a hidden pane.
+      if (container.clientHeight <= 0) {
+        animator.cancel('hidden')
+
+        return
+      }
+
+      // The spacers are about to be rewritten, which invalidates the
+      // `scrollHeight` and the destination any flight was aiming at: it must be
+      // stopped before the first write, not after it.
+      animator.cancel('resync')
+
+      const measurement = measurePreviewSync({ container, article, topSpacer, bottomSpacer, line })
+
+      if (measurement === null) {
+        return
+      }
+
+      const previous = previousTopSpacer.current
+      previousTopSpacer.current = measurement.topSpacer
+
+      if (measurement.target === null) {
+        // Nothing to follow. Every sync but the first shifts the article by the
+        // change of the top spacer, so it is compensated to keep it in place. The
+        // first one does not: the spacers are already in place before the first
+        // paint, and compensating would hide the centring of the first block.
+        if (previous !== null) {
+          applyScroll(
+            container,
+            container.scrollTop + measurement.topSpacer - previous,
+            // A compensation keeps the reader where they were: never a flight.
+            'layout',
+            measurement.lineUnit
+          )
+        }
+
+        return
+      }
+
+      applyScroll(container, measurement.target, reason, measurement.lineUnit)
+    },
+    [articleRef, applyScroll, bottomSpacerRef, containerRef, line, topSpacerRef]
+  )
 
   // The observer must call the latest closure without being recreated on every
   // caret move.
@@ -88,11 +162,18 @@ export function PreviewCursorSync({
 
   useLayoutEffect(() => {
     syncRef.current = sync
+
+    const previous = followed.current
+    // Only a new caret line may animate. A markdown change, a resize and the
+    // first sync move the viewport, not the caret, so they land at once.
+    const reason: PreviewScrollReason =
+      previous.synced && line !== null && line !== previous.line ? 'caret' : 'layout'
+    followed.current = { synced: true, line }
+
     // Measures and applies the destination before the browser paints, so the
     // spacers and the scroll never show an intermediate state.
-    // No animation yet: there is nothing to cancel here.
-    sync()
-  }, [sync, markdown])
+    sync(reason)
+  }, [sync, markdown, line])
 
   useEffect(() => {
     // jsdom has none, and a missing observer only means "re-measure on the next
@@ -111,7 +192,7 @@ export function PreviewCursorSync({
     // The container carries viewport resizes; the article carries late images
     // and fonts. The spacers are not observed: writing them changes
     // `scrollHeight`, not the size of anything observed.
-    const observer = new ResizeObserver(() => syncRef.current())
+    const observer = new ResizeObserver(() => syncRef.current('layout'))
     observer.observe(container)
     observer.observe(article)
 
