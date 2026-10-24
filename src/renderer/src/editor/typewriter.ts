@@ -1,5 +1,6 @@
 import { EditorState } from '@codemirror/state'
 import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { typewriterAnimation, typewriterCenterScroll } from './typewriter-animation'
 
 /**
  * Turns the scroll a transaction already asks for into a vertical centering of
@@ -82,7 +83,13 @@ export const typewriterPadding = [
 
 /**
  * Typewriter scroll for the shared editor: the caret stays in the vertical
- * center while typing and the asymmetric padding makes the whole document
- * reachable. Both Story and Article get it through `articleEditorExtensions`.
+ * center while typing, the asymmetric padding makes the whole document
+ * reachable and the large recenterings are animated. Both Story and Article
+ * get it through `articleEditorExtensions`.
  */
-export const typewriter = [typewriterScroll, ...typewriterPadding]
+export const typewriter = [
+  typewriterScroll,
+  typewriterAnimation,
+  ...typewriterPadding,
+  typewriterCenterScroll
+]
