@@ -12,6 +12,7 @@ import type { SelectionRange } from '@codemirror/state'
 import { EditorView, ViewPlugin, type PluginValue, type ViewUpdate } from '@codemirror/view'
 import {
   browserFrameScheduler,
+  CARET_OFFSET_LINES,
   centerOffset,
   createScrollAnimator,
   type FrameScheduler,
@@ -46,22 +47,29 @@ export interface CaretGeometry {
 export interface CenterGeometry extends CaretGeometry {
   viewportHeight: number
   scrollHeight: number
+  /** Height of one line: the caret offset is `CARET_OFFSET_LINES` of these. */
+  lineHeight: number
 }
 
 /**
- * The `scrollTop` that leaves `block` vertically centered, clamped to the
- * scrollable range.
+ * The `scrollTop` that leaves `block` `CARET_OFFSET_LINES` above the vertical
+ * centre, clamped to the scrollable range.
  *
  * The padding belongs to the formula: the typewriter padding is what lets the
- * first line be centered at `scrollTop = 0` and the last one while there is
- * still room below it. With `paddingTop = (H - L) / 2` and a one line block
- * the result is the top of the block itself. The clamping is the shared
- * `centerOffset`, which the preview uses for the same job.
+ * first line be anchored at that height with `scrollTop = 0` and the last one
+ * while there is still room below it. The clamping is the shared `centerOffset`,
+ * which the preview uses for the same job with an offset of 0.
  */
 export function computeCenterTarget(geometry: CenterGeometry): number {
-  const { paddingTop, block, viewportHeight, scrollHeight } = geometry
+  const { paddingTop, block, viewportHeight, scrollHeight, lineHeight } = geometry
 
-  return centerOffset(paddingTop + block.top, block.height, viewportHeight, scrollHeight)
+  return centerOffset(
+    paddingTop + block.top,
+    block.height,
+    viewportHeight,
+    scrollHeight,
+    CARET_OFFSET_LINES * lineHeight
+  )
 }
 
 export interface TypewriterCenteringDeps {
@@ -87,17 +95,19 @@ export class TypewriterCentering {
 
   center(head: number): ScrollOutcome {
     const { paddingTop, block } = this.deps.measure(head)
+    const lineHeight = this.deps.lineHeight()
 
     return this.animator.request(
       computeCenterTarget({
         paddingTop,
         block,
         viewportHeight: this.deps.scroller.clientHeight,
-        scrollHeight: this.deps.scroller.scrollHeight
+        scrollHeight: this.deps.scroller.scrollHeight,
+        lineHeight
       }),
       // The animator thresholds on `max(lineUnit, clientHeight / 6)`: one line
       // is the floor, so a one or two line adjustment is written at once.
-      { lineUnit: this.deps.lineHeight() }
+      { lineUnit: lineHeight }
     )
   }
 

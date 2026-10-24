@@ -76,13 +76,13 @@ describe('typewriterScroll', () => {
 })
 
 describe('computeTypewriterPadding', () => {
-  it('centers the first line and leaves room to bring the last one to the top', () => {
-    expect(computeTypewriterPadding(430, 24)).toEqual({ top: 203, bottom: 406 })
-    expect(computeTypewriterPadding(600, 24)).toEqual({ top: 288, bottom: 576 })
+  it('anchors the first line four lines above the middle and leaves room to bring the last one to the top', () => {
+    expect(computeTypewriterPadding(430, 24)).toEqual({ top: 107, bottom: 406 })
+    expect(computeTypewriterPadding(600, 24)).toEqual({ top: 192, bottom: 576 })
   })
 
   it('rounds the top and ceils the bottom so the padding stays in whole pixels', () => {
-    expect(computeTypewriterPadding(430.5, 23.8)).toEqual({ top: 203, bottom: 407 })
+    expect(computeTypewriterPadding(430.5, 23.8)).toEqual({ top: 108, bottom: 407 })
   })
 
   it('drops the padding when the editor has no measurable height', () => {
@@ -102,7 +102,7 @@ describe('computeTypewriterPadding', () => {
 
 describe('typewriterPaddingStyle', () => {
   it('declares only the vertical padding, so the horizontal one stays with the theme', () => {
-    expect(typewriterPaddingStyle(430, 24)).toBe('padding-top: 203px; padding-bottom: 406px')
+    expect(typewriterPaddingStyle(430, 24)).toBe('padding-top: 107px; padding-bottom: 406px')
   })
 
   it('declares an explicit 0/0 when the editor has no measurable height', () => {

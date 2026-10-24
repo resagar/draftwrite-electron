@@ -1,5 +1,6 @@
 import { EditorState } from '@codemirror/state'
 import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { CARET_OFFSET_LINES } from '../scroll/smooth-scroll'
 import { typewriterAnimation, typewriterCenterScroll } from './typewriter-animation'
 
 /**
@@ -23,10 +24,12 @@ export interface TypewriterPadding {
 /**
  * The vertical padding that replaces the theme's one on `.cm-content`.
  *
- * `top` centers the first line with `scrollTop = 0`; `bottom` lets the last
- * line reach the top edge of the scroller while `editorHeight - lineHeight`
- * pixels of blank space stay below it, and keeps the scroll range finite.
- * `top` is rounded and `bottom` ceiled so the padding stays in whole pixels.
+ * `top` anchors the first line `CARET_OFFSET_LINES` above the middle of the
+ * scroller with `scrollTop = 0`, which is where the caret sits while writing.
+ * `bottom` lets the last line reach the top edge of the scroller while
+ * `editorHeight - lineHeight` pixels of blank space stay below it, and keeps
+ * the scroll range finite. `top` is rounded and `bottom` ceiled so the padding
+ * stays in whole pixels.
  */
 export function computeTypewriterPadding(
   editorHeight: number,
@@ -37,7 +40,7 @@ export function computeTypewriterPadding(
   }
 
   return {
-    top: Math.round((editorHeight - lineHeight) / 2),
+    top: Math.max(0, Math.round((editorHeight - lineHeight) / 2 - CARET_OFFSET_LINES * lineHeight)),
     bottom: Math.ceil(editorHeight - lineHeight)
   }
 }

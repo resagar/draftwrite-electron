@@ -9,6 +9,16 @@
 
 export const DURATION = 150
 
+/**
+ * Lines above the viewport centre where the caret is anchored.
+ *
+ * The editor sits below a toolbar and the window chrome, so the geometric
+ * centre of its scroller is not the centre of the screen. Four lines keeps the
+ * caret where the writer perceives it as centred without hiding the line just
+ * written. Applied by the editor; the preview keeps its own anchor.
+ */
+export const CARET_OFFSET_LINES = 4
+
 /** Sub-pixel and rounding tolerance, in CSS pixels. */
 export const SCROLL_EPSILON = 2
 
@@ -31,14 +41,19 @@ export function easeOutCubic(t: number): number {
  * `top`, the preview narrows a target taller than the viewport to its first
  * row — so this is the only centering arithmetic in the app: both scrollers use
  * it, which is what keeps their motion comparable.
+ *
+ * `anchorOffset` moves the anchor down by that many pixels, which leaves the
+ * span that many pixels above the centre; the editor uses it for its caret
+ * offset and the preview passes 0.
  */
 export function centerOffset(
   top: number,
   height: number,
   viewportHeight: number,
-  scrollHeight: number
+  scrollHeight: number,
+  anchorOffset = 0
 ): number {
-  const centered = top + height / 2 - viewportHeight / 2
+  const centered = top + height / 2 - viewportHeight / 2 + anchorOffset
   const maxScrollTop = Math.max(0, scrollHeight - viewportHeight)
 
   return Math.max(0, Math.min(maxScrollTop, centered))

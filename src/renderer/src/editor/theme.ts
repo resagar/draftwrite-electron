@@ -9,7 +9,12 @@ const base = EditorView.theme(
     '.cm-content': {
       padding: '16px 20px',
       fontSize: 'var(--text-sm)',
-      caretColor: 'var(--color-primary)'
+      caretColor: 'var(--color-primary)',
+      // Same reading column as the preview. The max width only bites when the
+      // pane is wider than the column; a narrow split keeps the full width.
+      maxWidth: '560px',
+      marginLeft: 'auto',
+      marginRight: 'auto'
     },
     '.cm-gutters': {
       backgroundColor: 'transparent',

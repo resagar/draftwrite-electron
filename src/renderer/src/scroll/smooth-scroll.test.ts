@@ -123,6 +123,11 @@ describe('centerOffset', () => {
     expect(centerOffset(1000, 100, 500, 6000)).toBe(800)
   })
 
+  it('leaves the span above the centre by the anchor offset', () => {
+    // 1000 + 50 - 250 + 96.
+    expect(centerOffset(1000, 100, 500, 6000, 96)).toBe(896)
+  })
+
   it('clamps to the top of the document', () => {
     expect(centerOffset(40, 100, 500, 6000)).toBe(0)
     expect(centerOffset(-300, 100, 500, 6000)).toBe(0)

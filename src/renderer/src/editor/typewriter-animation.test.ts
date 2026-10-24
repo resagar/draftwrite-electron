@@ -87,7 +87,8 @@ interface CenteringOptions {
 
 /**
  * The geometry of the headless harness, without layout: a 430 px scroller, a
- * 24 px line, `padding-top: 203px` and `scrollHeight: 3009` (100 lines).
+ * 24 px line, `padding-top: 107px` (203 minus the four line caret offset) and
+ * `scrollHeight: 3009` (100 lines).
  */
 function mountCentering(options: CenteringOptions = {}): {
   centering: TypewriterCentering
@@ -112,7 +113,7 @@ function mountCentering(options: CenteringOptions = {}): {
     measure: (head) => {
       measuredHeads.push(head)
 
-      return { paddingTop: options.paddingTop ?? 203, block }
+      return { paddingTop: options.paddingTop ?? 107, block }
     }
   })
 
@@ -131,7 +132,8 @@ describe('computeCenterTarget', () => {
   it('centers the first line with the top padding alone', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 203,
+        paddingTop: 107,
+        lineHeight: 24,
         block: { top: 0, height: 24 },
         viewportHeight: 430,
         scrollHeight: 3009
@@ -142,7 +144,8 @@ describe('computeCenterTarget', () => {
   it('centers a middle line on its block top', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 203,
+        paddingTop: 107,
+        lineHeight: 24,
         block: { top: 1176, height: 24 },
         viewportHeight: 430,
         scrollHeight: 3009
@@ -153,7 +156,8 @@ describe('computeCenterTarget', () => {
   it('centers the last line while leaving room below it', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 203,
+        paddingTop: 107,
+        lineHeight: 24,
         block: { top: 2376, height: 24 },
         viewportHeight: 430,
         scrollHeight: 3009
@@ -164,7 +168,8 @@ describe('computeCenterTarget', () => {
   it('never scrolls above the top of the document', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 203,
+        paddingTop: 107,
+        lineHeight: 24,
         block: { top: -100, height: 24 },
         viewportHeight: 430,
         scrollHeight: 3009
@@ -175,7 +180,8 @@ describe('computeCenterTarget', () => {
   it('clamps to the last scrollable pixel', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 203,
+        paddingTop: 107,
+        lineHeight: 24,
         block: { top: 2376, height: 24 },
         viewportHeight: 430,
         scrollHeight: 2430
@@ -186,7 +192,8 @@ describe('computeCenterTarget', () => {
   it('centers the whole block of a wrapped line', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 203,
+        paddingTop: 107,
+        lineHeight: 24,
         block: { top: 100, height: 72 },
         viewportHeight: 430,
         scrollHeight: 3009
@@ -197,7 +204,8 @@ describe('computeCenterTarget', () => {
   it('follows the padding the plugin actually wrote', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 138,
+        paddingTop: 42,
+        lineHeight: 24,
         block: { top: 100, height: 72 },
         viewportHeight: 300,
         scrollHeight: 2034
@@ -208,7 +216,8 @@ describe('computeCenterTarget', () => {
   it('stays at the top when the document is shorter than the viewport', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 203,
+        paddingTop: 107,
+        lineHeight: 24,
         block: { top: 0, height: 24 },
         viewportHeight: 430,
         scrollHeight: 430
