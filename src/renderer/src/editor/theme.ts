@@ -14,7 +14,7 @@ const base = EditorView.theme(
       // The editor uses a wider measure than the preview at 16 px. The gutter
       // takes the left auto margin so the numbers and the text move together:
       // centring only the content left the line numbers far to the left.
-      maxWidth: '1061px',
+      maxWidth: '849px',
       marginLeft: '0',
       marginRight: 'auto'
     },
