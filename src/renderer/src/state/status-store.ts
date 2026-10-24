@@ -2,12 +2,22 @@ import { useSyncExternalStore } from 'react'
 
 export type SaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error' | 'incomplete'
 
+/** How the caret moved: typed/keyed, or settled at the end of a pointer gesture. */
+export type CursorOrigin = 'keyboard' | 'pointer'
+
+export type EditorCursor = {
+  line: number
+  column: number
+  origin: CursorOrigin
+}
+
 export type EditorStatus = {
   save: SaveStatus
   words: number
   characters: number
   readingMinutes: number
-  cursor: { line: number; column: number } | null
+  /** Always a settled caret: the editor never publishes one mid-gesture. */
+  cursor: EditorCursor | null
 }
 
 const EMPTY: EditorStatus = {
@@ -74,6 +84,9 @@ export function useEditorStatus(): EditorStatus {
  *
  * A primitive, not the cursor object: a change of column or of save state must
  * not re-render the preview, and react-markdown parses inside its render.
+ *
+ * Both origins are followable, because `EditorStatus.cursor` only ever holds a
+ * settled caret: a caret typed, keyed or left where a click or a drag ended.
  */
 export function selectPreviewLine(status: EditorStatus): number | null {
   return status.cursor?.line ?? null

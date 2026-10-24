@@ -134,7 +134,7 @@ describe('PreviewCursorSync', () => {
     render(<PreviewCursorSync markdown="# Title" {...refsOf(fixture)} />)
 
     act(() => {
-      publishStatus({ cursor: { line: 1, column: 3 } })
+      publishStatus({ cursor: { line: 1, column: 3, origin: 'keyboard' } })
     })
 
     // Marker at 700 in viewport coordinates with the scroller at 500 → 1200 in

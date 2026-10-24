@@ -1,13 +1,10 @@
 import type { EditorView } from '@codemirror/view'
 import type { JSX } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
+import type { EditorCursor } from '../../state/status-store'
 import { articleEditorExtensions } from '../extensions'
 import { draftwriteTheme } from '../theme'
-
-export type EditorCursor = {
-  line: number
-  column: number
-}
+import { cursorOrigin } from './cursor-origin'
 
 type TextEditorProps = {
   value: string
@@ -32,9 +29,15 @@ export function TextEditor({
       onCreateEditor={(view) => onCreate(view)}
       onChange={(next) => onChange(next)}
       onUpdate={(update) => {
+        // Focus, scroll and geometry updates have no origin: publishing them
+        // would move the preview without the caret moving, and a pointer
+        // selection in progress is not a settled caret yet.
+        const origin = cursorOrigin(update)
+        if (origin === null) return
+
         const head = update.state.selection.main.head
         const line = update.state.doc.lineAt(head)
-        onCursorChange({ line: line.number, column: head - line.from + 1 })
+        onCursorChange({ line: line.number, column: head - line.from + 1, origin })
       }}
     />
   )
