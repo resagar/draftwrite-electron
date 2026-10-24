@@ -11,8 +11,8 @@
 import type { SelectionRange } from '@codemirror/state'
 import { EditorView, ViewPlugin, type PluginValue, type ViewUpdate } from '@codemirror/view'
 import {
+  browserFrameScheduler,
   createScrollAnimator,
-  prefersReducedMotion,
   type FrameScheduler,
   type ScrollAnimator,
   type Scroller,
@@ -103,16 +103,6 @@ export class TypewriterCentering {
 
   cancel(reason: string): void {
     this.animator.cancel(reason)
-  }
-}
-
-/** Frame source of the real scroller: `performance.now` and the window's `rAF`. */
-export function browserFrameScheduler(win: Window): FrameScheduler {
-  return {
-    now: () => win.performance.now(),
-    requestFrame: (callback) => win.requestAnimationFrame(callback),
-    cancelFrame: (handle) => win.cancelAnimationFrame(handle),
-    reducedMotion: () => prefersReducedMotion()
   }
 }
 

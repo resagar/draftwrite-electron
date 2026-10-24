@@ -66,6 +66,20 @@ export interface FrameScheduler {
   reducedMotion: () => boolean
 }
 
+/**
+ * Frame source of a real scroller: `performance.now`, the window's `rAF` and
+ * the motion preference. Injected into the animator so a test can drive the
+ * clock by hand.
+ */
+export function browserFrameScheduler(win: Window): FrameScheduler {
+  return {
+    now: () => win.performance.now(),
+    requestFrame: (callback) => win.requestAnimationFrame(callback),
+    cancelFrame: (handle) => win.cancelAnimationFrame(handle),
+    reducedMotion: () => prefersReducedMotion()
+  }
+}
+
 export interface ScrollRequestOptions {
   /** One typographic line of the destination, in CSS pixels. */
   lineUnit?: number

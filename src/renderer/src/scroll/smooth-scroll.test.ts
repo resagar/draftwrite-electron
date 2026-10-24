@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import {
+  browserFrameScheduler,
   createScrollAnimator,
   DURATION,
   easeOutCubic,
@@ -163,6 +164,44 @@ describe('prefersReducedMotion', () => {
     stubMatchMedia(() => ({ matches: false }))
 
     expect(prefersReducedMotion()).toBe(false)
+  })
+})
+
+describe('browserFrameScheduler', () => {
+  it('reads the clock and frames of the window it is given', () => {
+    const requested: ((time: number) => void)[] = []
+    const cancelled: number[] = []
+    const win = {
+      performance: { now: () => 123.5 },
+      requestAnimationFrame: (callback: (time: number) => void): number => {
+        requested.push(callback)
+
+        return 7
+      },
+      cancelAnimationFrame: (handle: number): void => {
+        cancelled.push(handle)
+      }
+    } as unknown as Window
+    const scheduler = browserFrameScheduler(win)
+    const step = (): void => undefined
+
+    expect(scheduler.now()).toBe(123.5)
+    expect(scheduler.requestFrame(step)).toBe(7)
+    expect(requested).toEqual([step])
+
+    scheduler.cancelFrame(7)
+
+    expect(cancelled).toEqual([7])
+  })
+
+  it('reports the motion preference of the environment', () => {
+    stubMatchMedia(() => ({ matches: true }))
+
+    expect(browserFrameScheduler(window).reducedMotion()).toBe(true)
+
+    stubMatchMedia(() => ({ matches: false }))
+
+    expect(browserFrameScheduler(window).reducedMotion()).toBe(false)
   })
 })
 
