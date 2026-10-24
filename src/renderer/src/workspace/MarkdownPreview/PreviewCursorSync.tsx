@@ -112,13 +112,6 @@ export function PreviewCursorSync({
         return
       }
 
-      // No viewport to measure: jsdom, or the preview mounted in a hidden pane.
-      if (container.clientHeight <= 0) {
-        animator.cancel('hidden')
-
-        return
-      }
-
       // The spacers are about to be rewritten, which invalidates the
       // `scrollHeight` and the destination any flight was aiming at: it must be
       // stopped before the first write, not after it.
@@ -126,7 +119,12 @@ export function PreviewCursorSync({
 
       const measurement = measurePreviewSync({ container, article, topSpacer, bottomSpacer, line })
 
+      // No viewport to measure: jsdom, or the preview mounted in a hidden pane.
+      // The measurement reads it (it writes no spacer and returns nothing), so
+      // the lifecycle does not have to probe the geometry itself.
       if (measurement === null) {
+        animator.cancel('hidden')
+
         return
       }
 

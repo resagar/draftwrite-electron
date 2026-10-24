@@ -1,15 +1,21 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 
-// The animator is a jsdom-unfriendly flight loop (real `rAF`, real `scrollTop`),
-// so the sync is tested for what it decides: the destination, the reason and
-// the order of the cancel. Its own behaviour is covered by
-// `preview-scroll-animator.test.ts`.
+// Two jsdom-unfriendly pieces are replaced by their seam:
+// - the animator is a real flight loop over a real `scrollTop`, tested in
+//   `preview-scroll-animator.test.ts`;
+// - the measurement reads layout (`getBoundingClientRect`, `getClientRects`,
+//   `clientHeight`), which jsdom does not implement; its arithmetic is tested
+//   with plain rects in `preview-sync.test.ts`.
+// What is left here is the orchestration: who is asked, in which order and with
+// which reason.
 jest.mock('./preview-scroll-animator', () => ({ createPreviewScrollAnimator: jest.fn() }))
+jest.mock('./preview-sync', () => ({ measurePreviewSync: jest.fn() }))
 
 import { act, render } from '@testing-library/react'
 import { publishStatus, resetStatus } from '../../state/status-store'
 import type { PreviewScrollAnimator } from './preview-scroll-animator'
 import { createPreviewScrollAnimator } from './preview-scroll-animator'
+import { measurePreviewSync, type PreviewMeasurement } from './preview-sync'
 import { PreviewCursorSync, type PreviewCursorSyncProps } from './PreviewCursorSync'
 
 type Fixture = {
@@ -31,45 +37,14 @@ type FakeAnimator = PreviewScrollAnimator & {
   destroyed: boolean
 }
 
-type Rect = {
-  top: number
-  bottom: number
-  height: number
-  left: number
-  right: number
-  width: number
-  x: number
-  y: number
-  toJSON: () => Record<string, never>
-}
+/**
+ * Order in which the component cancelled a flight and measured the preview:
+ * the once-only `scrollHeight` of the spacers must never be rewritten while a
+ * flight is still aiming at it.
+ */
+type Step = 'cancel:resync' | 'cancel:hidden' | 'measure'
 
-/** Runs inside `cancel`, so a test can see the DOM as it was before it. */
-let onCancel: (() => void) | null = null
-
-const stubRect = (element: HTMLElement, top: number, height: number): void => {
-  Object.defineProperty(element, 'getBoundingClientRect', {
-    configurable: true,
-    value: (): Rect => ({
-      top,
-      bottom: top + height,
-      height,
-      left: 0,
-      right: 0,
-      width: 0,
-      x: 0,
-      y: top,
-      toJSON: () => ({})
-    })
-  })
-}
-
-const stubNumber = (
-  element: HTMLElement,
-  property: 'clientHeight' | 'scrollHeight' | 'scrollTop',
-  value: number
-): void => {
-  Object.defineProperty(element, property, { configurable: true, value, writable: true })
-}
+let steps: Step[] = []
 
 const buildFixture = (): Fixture => {
   document.body.innerHTML = `
@@ -88,15 +63,6 @@ const buildFixture = (): Fixture => {
   const topSpacer = container.querySelector('[data-preview-spacer="top"]') as HTMLElement
   const bottomSpacer = container.querySelector('[data-preview-spacer="bottom"]') as HTMLElement
 
-  stubRect(container, 0, 500)
-  stubNumber(container, 'clientHeight', 500)
-  stubNumber(container, 'scrollHeight', 5000)
-  stubNumber(container, 'scrollTop', 500)
-  stubRect(article, 100, 600)
-  stubRect(article.querySelector('p') as HTMLElement, 132, 40)
-  stubRect(article.querySelector('hr') as HTMLElement, 400, 20)
-  stubRect(article.querySelector('[data-source-line="1"]') as HTMLElement, 700, 40)
-
   return {
     container,
     article,
@@ -110,6 +76,15 @@ const buildFixture = (): Fixture => {
       bottomSpacerRef: { current: bottomSpacer }
     }
   }
+}
+
+/** Fixed measurements, one per sync, in the order the syncs happen. */
+const stubMeasurements = (...measurements: PreviewMeasurement[]): void => {
+  jest.mocked(measurePreviewSync).mockImplementation(() => {
+    steps.push('measure')
+
+    return measurements.shift() ?? null
+  })
 }
 
 /** One animator per container, every call recorded. */
@@ -129,7 +104,7 @@ const stubAnimators = (): FakeAnimator[] => {
       },
       cancel: (reason) => {
         fake.cancels.push(reason)
-        onCancel?.()
+        steps.push(reason === 'resync' ? 'cancel:resync' : 'cancel:hidden')
       },
       isAnimating: () => false,
       destroy: () => {
@@ -150,67 +125,95 @@ const single = (animators: FakeAnimator[]): FakeAnimator => {
   return animators[0]
 }
 
+/** A measurement with a target, as the preview would produce for a line. */
+const aimed = (target: number, topSpacer = 198, lineUnit = 40): PreviewMeasurement => ({
+  topSpacer,
+  target,
+  lineUnit
+})
+
+/** A measurement without a caret to follow. */
+const unaimed = (topSpacer = 198, lineUnit = 22): PreviewMeasurement => ({
+  topSpacer,
+  target: null,
+  lineUnit
+})
+
 describe('PreviewCursorSync', () => {
   beforeEach(() => {
     resetStatus()
-    onCancel = null
+    steps = []
   })
 
   it('renders nothing of its own', () => {
     stubAnimators()
+    stubMeasurements()
     const fixture = buildFixture()
     const { container: root } = render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
 
     expect(root.querySelector('*')).toBeNull()
   })
 
-  it('writes the spacers on mount, instantly and without moving the article', () => {
+  it('cancels the flight before the spacers are rewritten', () => {
     const animators = stubAnimators()
+    stubMeasurements(unaimed())
     const fixture = buildFixture()
 
     render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
 
-    expect(fixture.topSpacer.style.height).toBe('198px')
-    expect(fixture.bottomSpacer.style.height).toBe('200px')
-    // First sync without a cursor: no compensation, so the article stays put.
-    expect(fixture.container.scrollTop).toBe(500)
-    // Nothing to centre yet, so nothing is requested.
-    expect(single(animators).calls).toHaveLength(0)
+    expect(steps).toEqual(['cancel:resync', 'measure'])
+    expect(single(animators).cancels).toEqual(['resync'])
   })
 
-  it('cancels any flight before rewriting the spacers', () => {
+  it('measures the preview with the elements it was given and the current line', () => {
     const animators = stubAnimators()
+    stubMeasurements(unaimed())
     const fixture = buildFixture()
-    const heightsAtCancel: string[] = []
-    onCancel = () => heightsAtCancel.push(fixture.topSpacer.style.height)
 
     render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
 
-    const animator = single(animators)
+    const [args] = jest.mocked(measurePreviewSync).mock.calls[0] ?? []
 
-    expect(animator.cancels).toEqual(['resync'])
-    // The spacers still had their previous height when the flight was stopped.
-    expect(heightsAtCancel).toEqual([''])
+    expect(args).toEqual({
+      container: fixture.container,
+      article: fixture.article,
+      topSpacer: fixture.topSpacer,
+      bottomSpacer: fixture.bottomSpacer,
+      line: null
+    })
+    expect(animators).toHaveLength(1)
+  })
+
+  it('requests nothing on the first sync without a cursor', () => {
+    const animators = stubAnimators()
+    stubMeasurements(unaimed())
+    const fixture = buildFixture()
+
+    render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
+
+    // The first sync does not compensate the top spacer: the article must not
+    // jump when the preview mounts.
+    expect(single(animators).calls).toHaveLength(0)
   })
 
   it('compensates the top spacer on a later sync without a cursor', () => {
     const animators = stubAnimators()
+    // The content above shrank: T goes from 198 to 166 (32 px).
+    stubMeasurements(unaimed(198), unaimed(166))
     const fixture = buildFixture()
     const { rerender } = render(<PreviewCursorSync markdown="one" {...fixture.refs} />)
 
-    // The content above shrank: T goes from 198 to 166 (32 px).
-    stubRect(fixture.article.querySelector('p') as HTMLElement, 164, 40)
     rerender(<PreviewCursorSync markdown="two" {...fixture.refs} />)
 
-    expect(fixture.topSpacer.style.height).toBe('166px')
     // Moving the article with the spacers is a layout correction, not a caret
-    // jump: it is written at once. Without a target there is no measured row, so
-    // the fallback line unit travels along, unused.
-    expect(single(animators).calls).toEqual([{ target: 468, reason: 'layout', lineUnit: 22 }])
+    // jump: it is written at once and may be negative (jsdom never scrolled, so
+    // the live `scrollTop` the component reads is 0).
+    expect(single(animators).calls).toEqual([{ target: -32, reason: 'layout', lineUnit: 22 }])
   })
 
   it('asks the animator for a caret flight when the cursor line moves', () => {
     const animators = stubAnimators()
+    stubMeasurements(unaimed(), aimed(970))
     const fixture = buildFixture()
 
     render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
@@ -219,15 +222,12 @@ describe('PreviewCursorSync', () => {
       publishStatus({ cursor: { line: 1, column: 3, origin: 'keyboard' } })
     })
 
-    // Marker at 700 in viewport coordinates with the scroller at 500 → 1200 in
-    // content coordinates; its centre (1220) in the middle of 500 is 970.
-    const calls = single(animators).calls
-
-    expect(calls.at(-1)).toEqual({ target: 970, reason: 'caret', lineUnit: 40 })
+    expect(single(animators).calls).toEqual([{ target: 970, reason: 'caret', lineUnit: 40 }])
   })
 
   it('does not animate when the same line is re-synced by a markdown change', () => {
     const animators = stubAnimators()
+    stubMeasurements(unaimed(), aimed(970), aimed(970))
     const fixture = buildFixture()
     const { rerender } = render(<PreviewCursorSync markdown="one" {...fixture.refs} />)
 
@@ -237,19 +237,41 @@ describe('PreviewCursorSync', () => {
 
     rerender(<PreviewCursorSync markdown="two" {...fixture.refs} />)
 
-    const calls = single(animators).calls
-
-    expect(calls.at(-1)).toEqual({ target: 970, reason: 'layout', lineUnit: 40 })
+    expect(single(animators).calls.at(-1)).toEqual({
+      target: 970,
+      reason: 'layout',
+      lineUnit: 40
+    })
   })
 
   it('does not animate the first sync, even with a cursor already published', () => {
     const animators = stubAnimators()
+    stubMeasurements(aimed(970))
     const fixture = buildFixture()
     publishStatus({ cursor: { line: 1, column: 3, origin: 'keyboard' } })
 
     render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
 
     expect(single(animators).calls).toEqual([{ target: 970, reason: 'layout', lineUnit: 40 }])
+  })
+
+  it('animates a caret move after a pointer gesture settled the caret', () => {
+    const animators = stubAnimators()
+    stubMeasurements(unaimed(), aimed(1200))
+    const fixture = buildFixture()
+
+    render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
+
+    act(() => {
+      publishStatus({ cursor: { line: 7, column: 1, origin: 'pointer' } })
+    })
+
+    // Both origins are followable: the store only ever holds a settled caret.
+    expect(single(animators).calls.at(-1)).toEqual({
+      target: 1200,
+      reason: 'caret',
+      lineUnit: 40
+    })
   })
 
   it('does not animate a geometry change reported by the ResizeObserver', () => {
@@ -280,6 +302,8 @@ describe('PreviewCursorSync', () => {
 
     try {
       const animators = stubAnimators()
+      // The panel grew: the same caret line now needs a different destination.
+      stubMeasurements(unaimed(), aimed(970), aimed(830))
       const fixture = buildFixture()
 
       render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
@@ -288,38 +312,37 @@ describe('PreviewCursorSync', () => {
         publishStatus({ cursor: { line: 1, column: 3, origin: 'keyboard' } })
       })
 
-      // The panel grew: the same caret line now needs a different destination.
-      stubNumber(fixture.container, 'clientHeight', 600)
+      expect(single(animators).calls.at(-1)).toMatchObject({ target: 970, reason: 'caret' })
 
       act(() => {
         observerCallback?.()
       })
 
-      const calls = single(animators).calls
-
-      expect(calls.length).toBeGreaterThanOrEqual(2)
-      expect(calls.at(-1)?.reason).toBe('layout')
-      expect(calls.at(-1)?.target).not.toBe(calls.at(-2)?.target)
+      expect(single(animators).calls.at(-1)).toEqual({
+        target: 830,
+        reason: 'layout',
+        lineUnit: 40
+      })
     } finally {
       Reflect.deleteProperty(globalThis, 'ResizeObserver')
     }
   })
 
-  it('does nothing without a viewport, as in jsdom or a hidden pane', () => {
+  it('cancels instead of scrolling when there is no viewport to measure', () => {
     const animators = stubAnimators()
+    // A hidden pane, or jsdom itself: the measurement refuses to produce one.
+    stubMeasurements()
     const fixture = buildFixture()
-    stubNumber(fixture.container, 'clientHeight', 0)
 
     render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
 
-    expect(fixture.topSpacer.style.height).toBe('')
-    expect(fixture.container.scrollTop).toBe(500)
     expect(single(animators).calls).toHaveLength(0)
-    expect(single(animators).cancels).toEqual(['hidden'])
+    expect(single(animators).cancels).toEqual(['resync', 'hidden'])
   })
 
   it('keeps one animator per container and destroys it on unmount', () => {
     const animators = stubAnimators()
+    stubMeasurements(unaimed(), unaimed())
     const fixture = buildFixture()
     const { rerender, unmount } = render(<PreviewCursorSync markdown="one" {...fixture.refs} />)
 
@@ -358,6 +381,7 @@ describe('PreviewCursorSync', () => {
 
     try {
       stubAnimators()
+      stubMeasurements()
       const fixture = buildFixture()
       const { unmount } = render(<PreviewCursorSync markdown="# Title" {...fixture.refs} />)
 

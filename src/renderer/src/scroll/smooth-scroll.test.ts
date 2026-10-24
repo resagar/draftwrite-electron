@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import {
   browserFrameScheduler,
+  centerOffset,
   createScrollAnimator,
   DURATION,
   easeOutCubic,
@@ -114,6 +115,25 @@ describe('easeOutCubic', () => {
     eased.forEach((value, index) => {
       if (index > 0) expect(value).toBeGreaterThan(eased[index - 1])
     })
+  })
+})
+
+describe('centerOffset', () => {
+  it('puts the middle of the span in the middle of the viewport', () => {
+    expect(centerOffset(1000, 100, 500, 6000)).toBe(800)
+  })
+
+  it('clamps to the top of the document', () => {
+    expect(centerOffset(40, 100, 500, 6000)).toBe(0)
+    expect(centerOffset(-300, 100, 500, 6000)).toBe(0)
+  })
+
+  it('clamps to the last scrollable pixel', () => {
+    expect(centerOffset(5000, 100, 500, 2500)).toBe(2000)
+  })
+
+  it('stays at the top when the content is shorter than the viewport', () => {
+    expect(centerOffset(0, 100, 500, 400)).toBe(0)
   })
 })
 

@@ -24,6 +24,27 @@ export function easeOutCubic(t: number): number {
 }
 
 /**
+ * `scrollTop` that leaves a span vertically centered, clamped to the scrollable
+ * range: `top + height / 2 - viewportHeight / 2`.
+ *
+ * The caller decides which span to hand over — the editor adds its padding to
+ * `top`, the preview narrows a target taller than the viewport to its first
+ * row — so this is the only centering arithmetic in the app: both scrollers use
+ * it, which is what keeps their motion comparable.
+ */
+export function centerOffset(
+  top: number,
+  height: number,
+  viewportHeight: number,
+  scrollHeight: number
+): number {
+  const centered = top + height / 2 - viewportHeight / 2
+  const maxScrollTop = Math.max(0, scrollHeight - viewportHeight)
+
+  return Math.max(0, Math.min(maxScrollTop, centered))
+}
+
+/**
  * Movement above this delta is animated; anything at or below it is applied
  * at once. `lineUnit` is one typographic line of the destination (the editor's
  * default line height, one row of the preview target).

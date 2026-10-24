@@ -12,6 +12,7 @@ import type { SelectionRange } from '@codemirror/state'
 import { EditorView, ViewPlugin, type PluginValue, type ViewUpdate } from '@codemirror/view'
 import {
   browserFrameScheduler,
+  centerOffset,
   createScrollAnimator,
   type FrameScheduler,
   type ScrollAnimator,
@@ -54,14 +55,13 @@ export interface CenterGeometry extends CaretGeometry {
  * The padding belongs to the formula: the typewriter padding is what lets the
  * first line be centered at `scrollTop = 0` and the last one while there is
  * still room below it. With `paddingTop = (H - L) / 2` and a one line block
- * the result is the top of the block itself.
+ * the result is the top of the block itself. The clamping is the shared
+ * `centerOffset`, which the preview uses for the same job.
  */
 export function computeCenterTarget(geometry: CenterGeometry): number {
   const { paddingTop, block, viewportHeight, scrollHeight } = geometry
-  const maxScrollTop = Math.max(0, scrollHeight - viewportHeight)
-  const centered = paddingTop + block.top + block.height / 2 - viewportHeight / 2
 
-  return Math.max(0, Math.min(maxScrollTop, centered))
+  return centerOffset(paddingTop + block.top, block.height, viewportHeight, scrollHeight)
 }
 
 export interface TypewriterCenteringDeps {

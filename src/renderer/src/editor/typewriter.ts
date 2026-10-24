@@ -42,18 +42,23 @@ export function computeTypewriterPadding(
   }
 }
 
-export function typewriterPaddingStyle(editorHeight: number, lineHeight: number): string | null {
+/**
+ * The inline style that replaces the theme's vertical padding on `.cm-content`.
+ *
+ * It is declared even for `0/0` — a hidden editor (`clientHeight <= 0`, as in
+ * `preview` mode) or one no taller than a single line — because the typewriter
+ * owns the vertical axis: returning nothing would leave the theme's own
+ * vertical padding in place and the first line would not be centered. The
+ * horizontal padding is never declared, so it stays with the theme.
+ */
+export function typewriterPaddingStyle(editorHeight: number, lineHeight: number): string {
   const { top, bottom } = computeTypewriterPadding(editorHeight, lineHeight)
-
-  if (top === 0 && bottom === 0) return null
 
   return `padding-top: ${top}px; padding-bottom: ${bottom}px`
 }
 
-function typewriterPaddingAttrs(view: EditorView): { style: string } | null {
-  const style = typewriterPaddingStyle(view.scrollDOM.clientHeight, view.defaultLineHeight)
-
-  return style === null ? null : { style }
+function typewriterPaddingAttrs(view: EditorView): { style: string } {
+  return { style: typewriterPaddingStyle(view.scrollDOM.clientHeight, view.defaultLineHeight) }
 }
 
 /**

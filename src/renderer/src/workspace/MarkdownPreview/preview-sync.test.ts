@@ -1,17 +1,26 @@
-import { afterEach, describe, expect, it, jest } from '@jest/globals'
+import { describe, expect, it } from '@jest/globals'
 import {
   bottomSpacerHeight,
   centerScrollTop,
+  computeLineRect,
+  computeTarget,
   findBlockForLine,
   findTarget,
   keepContiguousRows,
-  lineRect,
-  measurePreviewSync,
+  parseLineHeight,
   readSourceBlocks,
+  resolveLineUnit,
   topSpacerHeight,
   type Rect,
   type SourceBlock
 } from './preview-sync'
+
+/**
+ * Pure arithmetic and plain DOM queries only: this suite passes rects and
+ * numbers around instead of faking layout. jsdom lays nothing out, so anything
+ * that reads a rect, a `clientHeight` or a `scrollTop` is verified with the
+ * headless harness or in the app, not here.
+ */
 
 const element = (): HTMLElement => document.createElement('div')
 
@@ -25,6 +34,14 @@ const block = (startLine: number, endLine: number, depth = 0, isFootnote = false
 
 const lines = (result: SourceBlock | null): [number, number] | null =>
   result === null ? null : [result.startLine, result.endLine]
+
+const row = (top: number, height = 16, left = 0, width = 200): Rect => ({
+  top,
+  bottom: top + height,
+  left,
+  width,
+  height
+})
 
 describe('readSourceBlocks', () => {
   it('reads the anchors in document order and measures their depth', () => {
@@ -210,14 +227,6 @@ describe('findTarget', () => {
   })
 })
 
-const row = (top: number, height = 16, left = 0, width = 200): Rect => ({
-  top,
-  bottom: top + height,
-  left,
-  width,
-  height
-})
-
 describe('keepContiguousRows', () => {
   it('keeps the wrapped rows of one source line', () => {
     const rows = [row(100), row(122.8), row(145.6)]
@@ -246,27 +255,9 @@ describe('keepContiguousRows', () => {
   })
 })
 
-describe('lineRect', () => {
-  // jsdom has no layout, so the rows of the range are injected. The test setup
-  // defines `getClientRects` as non-writable, so it is redefined, not spied.
-  const stubRows = (rows: Rect[]): void => {
-    Object.defineProperty(Range.prototype, 'getClientRects', {
-      configurable: true,
-      value: () => rows as unknown as DOMRectList
-    })
-  }
-
-  afterEach(() => {
-    stubRows([])
-  })
-
+describe('computeLineRect', () => {
   it('unions the visual rows of the line and keeps the height of its first row', () => {
-    const article = renderArticle()
-    const anchor = article.querySelector('[data-source-line="2"]') as HTMLElement
-    const next = article.querySelector<HTMLElement>('[data-source-line="3"]')
-    stubRows([row(100), row(124)])
-
-    expect(lineRect(anchor, next)).toEqual({
+    expect(computeLineRect([row(100), row(124)])).toEqual({
       top: 100,
       bottom: 140,
       left: 0,
@@ -276,23 +267,128 @@ describe('lineRect', () => {
     })
   })
 
-  it('falls back to the marker rect when the range has no rows', () => {
-    const article = renderArticle()
-    const anchor = article.querySelector('[data-source-line="2"]') as HTMLElement
-    stubRows([])
-
-    // jsdom reports a zero rect for every element.
-    expect(lineRect(anchor, null)).toMatchObject({ top: 0, height: 0, firstRowHeight: 0 })
+  it('takes the left and the width of the first row', () => {
+    expect(computeLineRect([row(100, 16, 40, 120), row(124, 16, 0, 200)])).toMatchObject({
+      left: 40,
+      width: 120
+    })
   })
 
-  it('measures the marker itself when it is not inside an inline block', () => {
-    document.body.innerHTML = '<article><div><span data-source-line="1"></span></div></article>'
-    const anchor = document.querySelector('[data-source-line="1"]') as HTMLElement
-    const spy = jest.spyOn(anchor, 'getBoundingClientRect')
+  it('drops the rows of another block before taking the union', () => {
+    const line = computeLineRect([row(100), row(122.8), row(300)])
 
-    lineRect(anchor, null)
+    expect(line?.top).toBe(100)
+    expect(line?.firstRowHeight).toBe(16)
+    // 122.8 + 16 - 100: the group at 300 is not part of this line.
+    expect(line?.height).toBeCloseTo(38.8, 10)
+  })
 
-    expect(spy).toHaveBeenCalled()
+  it('returns null when no row survived, so the caller uses the marker rect', () => {
+    expect(computeLineRect([])).toBeNull()
+    expect(computeLineRect([row(100, 0)])).toBeNull()
+  })
+})
+
+describe('computeTarget', () => {
+  it('moves the union of the rows into the scroller content coordinates', () => {
+    expect(
+      computeTarget({
+        rect: row(700),
+        rows: [row(700), row(724)],
+        containerTop: 100,
+        scrollTop: 500
+      })
+    ).toEqual({
+      top: 1100,
+      height: 40,
+      firstRowHeight: 16,
+      // One measured row: the floor of the motion threshold.
+      rowHeight: 16
+    })
+  })
+
+  it('keeps the text of a scrolled scroller in the same content coordinates', () => {
+    // The same line: 100 px lower in the viewport once the scroller moved 100
+    // more. Content coordinates do not depend on the scroll.
+    expect(
+      computeTarget({ rect: row(700), rows: [row(700)], containerTop: 100, scrollTop: 500 }).top
+    ).toBe(1100)
+    expect(
+      computeTarget({ rect: row(600), rows: [row(600)], containerTop: 100, scrollTop: 600 }).top
+    ).toBe(1100)
+  })
+
+  it('falls back to the rect of the target when no row could be read', () => {
+    expect(
+      computeTarget({ rect: row(700, 20), rows: [], containerTop: 100, scrollTop: 500 })
+    ).toEqual({ top: 1100, height: 20, firstRowHeight: 20, rowHeight: 0 })
+  })
+
+  it('reports no row for a block, whose rect is not one row', () => {
+    // An image-only paragraph 400 px tall.
+    const measured = computeTarget({ rect: row(300, 400), rows: [], containerTop: 0, scrollTop: 0 })
+
+    expect(measured).toMatchObject({ height: 400, rowHeight: 0 })
+  })
+})
+
+describe('parseLineHeight', () => {
+  it('reads a px value as it is', () => {
+    expect(parseLineHeight('24px', 16)).toBe(24)
+    expect(parseLineHeight('21.6px', 16)).toBe(21.6)
+  })
+
+  it('multiplies a unitless factor by the computed font size', () => {
+    expect(parseLineHeight('1.5', 16)).toBe(24)
+    expect(parseLineHeight('2', 14)).toBe(28)
+  })
+
+  it('cannot resolve normal: it depends on the font metrics', () => {
+    expect(parseLineHeight('normal', 16)).toBeNull()
+  })
+
+  it('cannot resolve an empty value or a unit it does not know', () => {
+    expect(parseLineHeight('', 16)).toBeNull()
+    expect(parseLineHeight('150%', 16)).toBeNull()
+    expect(parseLineHeight('2em', 16)).toBeNull()
+  })
+
+  it('rejects a value that is not a positive number', () => {
+    expect(parseLineHeight('0', 16)).toBeNull()
+    expect(parseLineHeight('-1.5', 16)).toBeNull()
+    expect(parseLineHeight('0px', 16)).toBeNull()
+    // A unitless factor needs a font size to multiply.
+    expect(parseLineHeight('1.5', 0)).toBeNull()
+  })
+})
+
+describe('resolveLineUnit', () => {
+  it('uses the measured row of a line target', () => {
+    expect(resolveLineUnit({ rowHeight: 16, blockLineHeight: 24, articleLineHeight: 22 })).toBe(16)
+  })
+
+  it('falls back to the line-height of the block for a target without rows', () => {
+    expect(resolveLineUnit({ rowHeight: 0, blockLineHeight: 24, articleLineHeight: 22 })).toBe(24)
+  })
+
+  it('falls back to the line-height of the article', () => {
+    expect(resolveLineUnit({ rowHeight: 0, blockLineHeight: null, articleLineHeight: 24 })).toBe(24)
+    expect(resolveLineUnit({ rowHeight: 0, articleLineHeight: 24 })).toBe(24)
+  })
+
+  it('falls back to 22 px when nothing resolves', () => {
+    expect(resolveLineUnit({ rowHeight: 0 })).toBe(22)
+    expect(resolveLineUnit({ rowHeight: 0, blockLineHeight: null, articleLineHeight: null })).toBe(
+      22
+    )
+  })
+
+  it('never turns a block taller than one row into the threshold', () => {
+    const measured = computeTarget({ rect: row(300, 400), rows: [], containerTop: 0, scrollTop: 0 })
+
+    // The block is 400 px tall; one row of it is still its line-height.
+    expect(resolveLineUnit({ rowHeight: measured.rowHeight, blockLineHeight: 24 })).toBe(24)
+    expect(resolveLineUnit({ rowHeight: measured.rowHeight })).toBe(22)
   })
 })
 
@@ -350,19 +446,21 @@ describe('spacer invariants', () => {
 
 describe('centerScrollTop', () => {
   it('puts the middle of the target in the middle of the viewport', () => {
-    expect(centerScrollTop({ top: 1000, height: 100, viewportHeight: 500, maxScroll: 5000 })).toBe(
-      800
-    )
+    expect(
+      centerScrollTop({ top: 1000, height: 100, viewportHeight: 500, scrollHeight: 6000 })
+    ).toBe(800)
   })
 
   it('clamps to the top of the document', () => {
-    expect(centerScrollTop({ top: 40, height: 100, viewportHeight: 500, maxScroll: 5000 })).toBe(0)
+    expect(centerScrollTop({ top: 40, height: 100, viewportHeight: 500, scrollHeight: 6000 })).toBe(
+      0
+    )
   })
 
   it('clamps to the maximum scroll', () => {
-    expect(centerScrollTop({ top: 5000, height: 100, viewportHeight: 500, maxScroll: 2000 })).toBe(
-      2000
-    )
+    expect(
+      centerScrollTop({ top: 5000, height: 100, viewportHeight: 500, scrollHeight: 2500 })
+    ).toBe(2000)
   })
 
   it('centres the first row of a target taller than the viewport', () => {
@@ -373,134 +471,12 @@ describe('centerScrollTop', () => {
         height: 1000,
         firstRowHeight: 20,
         viewportHeight: 500,
-        maxScroll: 5000
+        scrollHeight: 6000
       })
     ).toBe(760)
   })
 
-  it('never asks for a negative scroll', () => {
-    expect(centerScrollTop({ top: 0, height: 10, viewportHeight: 500, maxScroll: -100 })).toBe(0)
-  })
-})
-
-type StubRect = { top: number; height: number }
-
-const stubRect = (element: HTMLElement, { top, height }: StubRect): void => {
-  Object.defineProperty(element, 'getBoundingClientRect', {
-    configurable: true,
-    value: () => ({
-      top,
-      bottom: top + height,
-      height,
-      left: 0,
-      right: 0,
-      width: 0,
-      x: 0,
-      y: top,
-      toJSON: () => ({})
-    })
-  })
-}
-
-const stubNumber = (
-  element: HTMLElement,
-  property: 'clientHeight' | 'scrollHeight' | 'scrollTop',
-  value: number
-): void => {
-  Object.defineProperty(element, property, { configurable: true, value, writable: true })
-}
-
-const syncFixture = (): {
-  container: HTMLElement
-  article: HTMLElement
-  topSpacer: HTMLElement
-  bottomSpacer: HTMLElement
-} => {
-  document.body.innerHTML = `
-    <section>
-      <div data-preview-spacer="top"></div>
-      <article>
-        <p data-source-start-line="1" data-source-end-line="1"><span data-source-line="1"></span>text</p>
-        <hr data-source-start-line="5" data-source-end-line="5">
-      </article>
-      <div data-preview-spacer="bottom"></div>
-    </section>
-  `
-
-  const container = document.querySelector('section') as HTMLElement
-  const article = container.querySelector('article') as HTMLElement
-  const topSpacer = container.querySelector('[data-preview-spacer="top"]') as HTMLElement
-  const bottomSpacer = container.querySelector('[data-preview-spacer="bottom"]') as HTMLElement
-
-  stubRect(container, { top: 0, height: 500 })
-  stubNumber(container, 'clientHeight', 500)
-  stubNumber(container, 'scrollHeight', 5000)
-  stubNumber(container, 'scrollTop', 1000)
-  stubRect(article, { top: 100, height: 600 })
-  stubRect(article.querySelector('p') as HTMLElement, { top: 132, height: 40 })
-  stubRect(article.querySelector('hr') as HTMLElement, { top: 400, height: 20 })
-  stubRect(article.querySelector('[data-source-line="1"]') as HTMLElement, {
-    top: 700,
-    height: 40
-  })
-
-  return { container, article, topSpacer, bottomSpacer }
-}
-
-describe('measurePreviewSync', () => {
-  it('measures the spacers and the destination in content coordinates', () => {
-    const { container, article, topSpacer, bottomSpacer } = syncFixture()
-
-    const measurement = measurePreviewSync({
-      container,
-      article,
-      topSpacer,
-      bottomSpacer,
-      line: 1
-    })
-
-    // T = 250 - 32 - 20; B = 500 - (600 - 300).
-    expect(topSpacer.style.height).toBe('198px')
-    expect(bottomSpacer.style.height).toBe('200px')
-    expect(measurement).toEqual({ topSpacer: 198, target: 1470, lineUnit: 40 })
-    // The write belongs to the caller; measuring never scrolls.
-    expect(container.scrollTop).toBe(1000)
-  })
-
-  it('writes the spacers but no destination when there is no cursor line', () => {
-    const { container, article, topSpacer, bottomSpacer } = syncFixture()
-
-    const measurement = measurePreviewSync({
-      container,
-      article,
-      topSpacer,
-      bottomSpacer,
-      line: null
-    })
-
-    expect(measurement).toEqual({ topSpacer: 198, target: null, lineUnit: 22 })
-    expect(bottomSpacer.style.height).toBe('200px')
-  })
-
-  it('measures nothing without a viewport, as in jsdom or a hidden pane', () => {
-    const { container, article, topSpacer, bottomSpacer } = syncFixture()
-    stubNumber(container, 'clientHeight', 0)
-
-    expect(measurePreviewSync({ container, article, topSpacer, bottomSpacer, line: 1 })).toBeNull()
-    expect(topSpacer.style.height).toBe('')
-  })
-
-  it('zeroes the spacers for a document with no annotated blocks', () => {
-    const { container, article, topSpacer, bottomSpacer } = syncFixture()
-    article.innerHTML = '<p>plain</p>'
-    topSpacer.style.height = '50px'
-
-    expect(measurePreviewSync({ container, article, topSpacer, bottomSpacer, line: 1 })).toEqual({
-      topSpacer: 0,
-      target: null,
-      lineUnit: 22
-    })
-    expect(topSpacer.style.height).toBe('0px')
-    expect(bottomSpacer.style.height).toBe('0px')
+  it('never asks for a negative scroll when the content is shorter than the viewport', () => {
+    expect(centerScrollTop({ top: 0, height: 10, viewportHeight: 500, scrollHeight: 400 })).toBe(0)
   })
 })
