@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import {
   browserFrameScheduler,
+  caretAnchorOffset,
   centerOffset,
   createScrollAnimator,
   DURATION,
@@ -139,6 +140,21 @@ describe('centerOffset', () => {
 
   it('stays at the top when the content is shorter than the viewport', () => {
     expect(centerOffset(0, 100, 500, 400)).toBe(0)
+  })
+})
+
+describe('caretAnchorOffset', () => {
+  it('uses nine lines when the viewport has room for them', () => {
+    expect(caretAnchorOffset(22, 700)).toBe(198)
+  })
+
+  it('reduces the offset so the anchored line stays on screen', () => {
+    // H/2 - lineHeight/2, not nine lines.
+    expect(caretAnchorOffset(22, 300)).toBe(139)
+  })
+
+  it('is zero without a line height', () => {
+    expect(caretAnchorOffset(0, 700)).toBe(0)
   })
 })
 

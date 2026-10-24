@@ -210,7 +210,7 @@ describe('computeCenterTarget', () => {
         viewportHeight: 300,
         scrollHeight: 2034
       })
-    ).toBe(202)
+    ).toBe(124)
   })
 
   it('stays at the top when the document is shorter than the viewport', () => {

@@ -11,7 +11,7 @@
  * `data-source-end-line` anchors for blocks.
  */
 
-import { centerOffset } from '../../scroll/smooth-scroll'
+import { caretAnchorOffset, centerOffset } from '../../scroll/smooth-scroll'
 import {
   SOURCE_END_LINE_ATTRIBUTE,
   SOURCE_LINE_ATTRIBUTE,
@@ -327,9 +327,13 @@ export function keepContiguousRows(rects: Iterable<Rect>): Rect[] {
 export function topSpacerHeight(
   viewportHeight: number,
   firstTop: number,
-  firstHeight: number
+  firstHeight: number,
+  lineUnit = 0
 ): number {
-  return Math.max(0, viewportHeight / 2 - firstTop - firstHeight / 2)
+  return Math.max(
+    0,
+    viewportHeight / 2 - caretAnchorOffset(lineUnit, viewportHeight) - firstTop - firstHeight / 2
+  )
 }
 
 /**
@@ -357,10 +361,10 @@ export function bottomSpacerHeight(
  */
 export function topSpacerForLine(
   viewportHeight: number,
-  lineTop: number,
-  lineHeight: number
+  lineCenter: number,
+  lineUnit: number
 ): number {
-  return Math.max(0, viewportHeight / 2 - lineTop - lineHeight / 2)
+  return Math.max(0, viewportHeight / 2 - caretAnchorOffset(lineUnit, viewportHeight) - lineCenter)
 }
 
 /**
@@ -376,10 +380,13 @@ export function topSpacerForLine(
 export function bottomSpacerForLine(
   viewportHeight: number,
   articleHeight: number,
-  lineTop: number,
-  lineHeight: number
+  lineCenter: number,
+  lineUnit: number
 ): number {
-  return Math.max(0, viewportHeight / 2 + lineTop + lineHeight / 2 - articleHeight)
+  return Math.max(
+    0,
+    viewportHeight / 2 + caretAnchorOffset(lineUnit, viewportHeight) + lineCenter - articleHeight
+  )
 }
 
 /** Arguments of `centerScrollTop`, all in CSS pixels. */
@@ -393,6 +400,8 @@ export type CenterArgs = {
   viewportHeight: number
   /** Live `scrollHeight` of the scroller. */
   scrollHeight: number
+  /** One visual row of the target: the caret anchor is nine of these. */
+  lineUnit?: number
 }
 
 /**
@@ -407,11 +416,18 @@ export function centerScrollTop({
   height,
   firstRowHeight = height,
   viewportHeight,
-  scrollHeight
+  scrollHeight,
+  lineUnit = 0
 }: CenterArgs): number {
   const span = height > viewportHeight ? firstRowHeight : height
 
-  return centerOffset(top, span, viewportHeight, scrollHeight)
+  return centerOffset(
+    top,
+    span,
+    viewportHeight,
+    scrollHeight,
+    caretAnchorOffset(lineUnit, viewportHeight)
+  )
 }
 
 /** Fallback row height when nothing around the target can tell one (22 px). */
@@ -548,16 +564,19 @@ export function resolveLineUnit({
   blockLineHeight = null,
   articleLineHeight = null
 }: LineUnitArgs): number {
-  if (rowHeight > 0) {
-    return rowHeight
-  }
-
+  // The resolved CSS line-height is the typographic line; the measured row is
+  // the glyph box, which is shorter (16 px vs 21.125 px in the preview), so it
+  // is only a fallback. Using the glyph box would shorten the caret offset.
   if (blockLineHeight !== null && blockLineHeight > 0) {
     return blockLineHeight
   }
 
   if (articleLineHeight !== null && articleLineHeight > 0) {
     return articleLineHeight
+  }
+
+  if (rowHeight > 0) {
+    return rowHeight
   }
 
   return DEFAULT_LINE_UNIT
@@ -574,6 +593,13 @@ function readLineHeight(element: HTMLElement): number | null {
   const style = win.getComputedStyle(element)
 
   return parseLineHeight(style.lineHeight, Number.parseFloat(style.fontSize))
+}
+
+/** Typographic line of a marker: its inline block, the article, then 22 px. */
+function markerLineUnit(marker: HTMLElement, article: HTMLElement): number {
+  const source = marker.closest<HTMLElement>(INLINE_BLOCK) ?? marker.parentElement ?? marker
+
+  return readLineHeight(source) ?? readLineHeight(article) ?? DEFAULT_LINE_UNIT
 }
 
 /**
@@ -656,17 +682,28 @@ export function measurePreviewSync({
   // and last rendered line markers. The block rects stay as the fallback for
   // anchors that render no marked text (an image-only paragraph, an `hr`).
   const markers = article.querySelectorAll<HTMLElement>(`[${SOURCE_LINE_ATTRIBUTE}]`)
-  const firstMarkerRect = markers[0]?.getBoundingClientRect() ?? null
-  const lastMarkerRect = markers[markers.length - 1]?.getBoundingClientRect() ?? null
+  const firstMarker = markers[0] ?? null
+  const lastMarker = markers[markers.length - 1] ?? null
+  const firstMarkerRect = firstMarker?.getBoundingClientRect() ?? null
+  const lastMarkerRect = lastMarker?.getBoundingClientRect() ?? null
+  const firstLineCenter = firstMarkerRect
+    ? firstMarkerRect.top - articleRect.top + firstMarkerRect.height / 2
+    : 0
+  const lastLineCenter = lastMarkerRect
+    ? lastMarkerRect.top - articleRect.top + lastMarkerRect.height / 2
+    : 0
+  const firstLineUnit = firstMarker ? markerLineUnit(firstMarker, article) : DEFAULT_LINE_UNIT
+  const lastLineUnit = lastMarker ? markerLineUnit(lastMarker, article) : DEFAULT_LINE_UNIT
 
   const topHeight =
     firstMarkerRect === null
-      ? topSpacerHeight(viewportHeight, firstRect.top - articleRect.top, firstRect.height)
-      : topSpacerForLine(
+      ? topSpacerHeight(
           viewportHeight,
-          firstMarkerRect.top - articleRect.top,
-          firstMarkerRect.height
+          firstRect.top - articleRect.top,
+          firstRect.height,
+          DEFAULT_LINE_UNIT
         )
+      : topSpacerForLine(viewportHeight, firstLineCenter, firstLineUnit)
 
   // Both conditions must hold: the last block can reach the top edge, and the
   // last line can still be centred when its block is taller than the viewport.
@@ -674,12 +711,7 @@ export function measurePreviewSync({
     bottomSpacerHeight(viewportHeight, articleRect.height, lastRect.top - articleRect.top),
     lastMarkerRect === null
       ? 0
-      : bottomSpacerForLine(
-          viewportHeight,
-          articleRect.height,
-          lastMarkerRect.top - articleRect.top,
-          lastMarkerRect.height
-        )
+      : bottomSpacerForLine(viewportHeight, articleRect.height, lastLineCenter, lastLineUnit)
   )
 
   topSpacer.style.height = `${topHeight}px`
@@ -692,22 +724,23 @@ export function measurePreviewSync({
   }
 
   const measured = measureTarget(container, target)
+  const lineUnit = resolveLineUnit({
+    rowHeight: measured.rowHeight,
+    blockLineHeight: readLineHeight(lineHeightSource(target)),
+    articleLineHeight: readLineHeight(article)
+  })
   const destination = centerScrollTop({
     top: measured.top,
     height: measured.height,
     firstRowHeight: measured.firstRowHeight,
     viewportHeight,
-    scrollHeight: container.scrollHeight
+    scrollHeight: container.scrollHeight,
+    lineUnit
   })
 
   return {
     topSpacer: topHeight,
     target: destination,
-    lineUnit: resolveLineUnit({
-      rowHeight: measured.rowHeight,
-      // Both reads are layout reads: skipped when a row was measured already.
-      blockLineHeight: measured.rowHeight > 0 ? null : readLineHeight(lineHeightSource(target)),
-      articleLineHeight: measured.rowHeight > 0 ? null : readLineHeight(article)
-    })
+    lineUnit
   }
 }

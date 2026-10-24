@@ -1,6 +1,6 @@
 import { EditorState } from '@codemirror/state'
 import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
-import { CARET_OFFSET_LINES } from '../scroll/smooth-scroll'
+import { caretAnchorOffset } from '../scroll/smooth-scroll'
 import { typewriterAnimation, typewriterCenterScroll } from './typewriter-animation'
 
 /**
@@ -40,7 +40,10 @@ export function computeTypewriterPadding(
   }
 
   return {
-    top: Math.max(0, Math.round((editorHeight - lineHeight) / 2 - CARET_OFFSET_LINES * lineHeight)),
+    top: Math.max(
+      0,
+      Math.round((editorHeight - lineHeight) / 2 - caretAnchorOffset(lineHeight, editorHeight))
+    ),
     bottom: Math.ceil(editorHeight - lineHeight)
   }
 }

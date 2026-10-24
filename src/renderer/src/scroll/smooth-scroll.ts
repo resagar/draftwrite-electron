@@ -15,9 +15,24 @@ export const DURATION = 150
  * The editor sits below a toolbar and the window chrome, so the geometric
  * centre of its scroller is not the centre of the screen. Nine lines keeps the
  * caret where the writer perceives it as centred without hiding the line just
- * written. Applied by the editor; the preview keeps its own anchor.
+ * written. Applied by the editor and the preview.
  */
 export const CARET_OFFSET_LINES = 9
+
+/**
+ * Pixels above the middle to anchor the caret, limited so the anchored line
+ * still has room on screen.
+ *
+ * `CARET_OFFSET_LINES` is the product preference; `H/2 - lineHeight/2` is the
+ * furthest the anchor can go before the line's centre leaves the top edge. In a
+ * tall editor or preview the preference wins; in a short pane the offset is
+ * reduced and the line stays visible at the top.
+ */
+export function caretAnchorOffset(lineHeight: number, viewportHeight: number): number {
+  const maxOffset = Math.max(0, viewportHeight / 2 - lineHeight / 2)
+
+  return Math.min(CARET_OFFSET_LINES * lineHeight, maxOffset)
+}
 
 /** Sub-pixel and rounding tolerance, in CSS pixels. */
 export const SCROLL_EPSILON = 2

@@ -365,8 +365,12 @@ describe('parseLineHeight', () => {
 })
 
 describe('resolveLineUnit', () => {
-  it('uses the measured row of a line target', () => {
-    expect(resolveLineUnit({ rowHeight: 16, blockLineHeight: 24, articleLineHeight: 22 })).toBe(16)
+  it('prefers the resolved block line-height over the measured glyph row', () => {
+    expect(resolveLineUnit({ rowHeight: 16, blockLineHeight: 24, articleLineHeight: 22 })).toBe(24)
+  })
+
+  it('uses the real typographic line, not the 16 px glyph box', () => {
+    expect(resolveLineUnit({ rowHeight: 16, blockLineHeight: 21.125 })).toBe(21.125)
   })
 
   it('falls back to the line-height of the block for a target without rows', () => {
@@ -421,25 +425,32 @@ describe('bottomSpacerHeight', () => {
 })
 
 describe('topSpacerForLine', () => {
-  it('centres the first source line, not the whole first block', () => {
-    // H = 500, lineTop = 0, lineHeight = 20: 250 - 0 - 10.
-    expect(topSpacerForLine(500, 0, 20)).toBe(240)
+  it('anchors the first source line nine rows above the middle', () => {
+    // H = 500, lineCenter = 10, lineUnit = 20: 250 - 180 - 10.
+    expect(topSpacerForLine(500, 10, 20)).toBe(60)
   })
 
-  it('clamps to zero when the line is already at or below the centre', () => {
-    expect(topSpacerForLine(500, 400, 20)).toBe(0)
+  it('clamps to zero when the line is already at or below the anchor', () => {
+    expect(topSpacerForLine(500, 410, 20)).toBe(0)
   })
 })
 
 describe('bottomSpacerForLine', () => {
-  it('lets the last line centre inside a block taller than the viewport', () => {
-    // H = 362, A = 1601.625, lineTop = 1533.5, lineHeight = 22:
-    // 181 + 1533.5 + 11 - 1601.625.
-    expect(bottomSpacerForLine(362, 1601.625, 1533.5, 22)).toBeCloseTo(123.875, 3)
+  it('lets the last line centre at the anchor inside a tall block', () => {
+    // H = 362, A = 1601.625, lineCenter = 1544.5, lineUnit = 22:
+    // 181 + 170 (the offset clamps to H/2 - lineUnit/2) + 1544.5 - 1601.625.
+    expect(bottomSpacerForLine(362, 1601.625, 1544.5, 22)).toBeCloseTo(293.875, 3)
   })
 
   it('clamps to zero when the last line already has room', () => {
-    expect(bottomSpacerForLine(500, 1000, 400, 20)).toBe(0)
+    expect(bottomSpacerForLine(500, 1000, 410, 20)).toBe(0)
+  })
+})
+
+describe('topSpacerHeight with a line unit', () => {
+  it('subtracts the caret anchor from the block spacer', () => {
+    // H = 700, F = 32, h = 40, lineUnit = 22: 350 - 198 - 32 - 20.
+    expect(topSpacerHeight(700, 32, 40, 22)).toBe(100)
   })
 })
 
@@ -474,6 +485,32 @@ describe('centerScrollTop', () => {
     expect(
       centerScrollTop({ top: 1000, height: 100, viewportHeight: 500, scrollHeight: 6000 })
     ).toBe(800)
+  })
+
+  it('leaves the middle of the target nine lines above the middle', () => {
+    // 1000 + 11 - 350 + 198.
+    expect(
+      centerScrollTop({
+        top: 1000,
+        height: 22,
+        viewportHeight: 700,
+        scrollHeight: 6000,
+        lineUnit: 22
+      })
+    ).toBe(859)
+  })
+
+  it('reduces the anchor when the viewport cannot fit nine lines', () => {
+    // 1000 + 11 - 150 + (150 - 11).
+    expect(
+      centerScrollTop({
+        top: 1000,
+        height: 22,
+        viewportHeight: 300,
+        scrollHeight: 6000,
+        lineUnit: 22
+      })
+    ).toBe(1000)
   })
 
   it('clamps to the top of the document', () => {

@@ -12,7 +12,7 @@ import type { SelectionRange } from '@codemirror/state'
 import { EditorView, ViewPlugin, type PluginValue, type ViewUpdate } from '@codemirror/view'
 import {
   browserFrameScheduler,
-  CARET_OFFSET_LINES,
+  caretAnchorOffset,
   centerOffset,
   createScrollAnimator,
   type FrameScheduler,
@@ -68,7 +68,7 @@ export function computeCenterTarget(geometry: CenterGeometry): number {
     block.height,
     viewportHeight,
     scrollHeight,
-    CARET_OFFSET_LINES * lineHeight
+    caretAnchorOffset(lineHeight, viewportHeight)
   )
 }
 
