@@ -176,7 +176,7 @@ export function MarkdownPreview({ markdown }: { markdown: string }): JSX.Element
       <div ref={topSpacerRef} aria-hidden="true" data-preview-spacer="top" />
       <article
         ref={articleRef}
-        className="mx-auto max-w-[672px] p-8 text-[16px] leading-loose select-text"
+        className="mx-auto max-w-[874px] p-8 text-[16px] leading-loose select-text"
       >
         <ReactMarkdown
           remarkPlugins={PLUGINS}
