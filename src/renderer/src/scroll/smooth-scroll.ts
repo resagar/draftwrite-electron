@@ -13,11 +13,11 @@ export const DURATION = 150
  * Lines above the viewport centre where the caret is anchored.
  *
  * The editor sits below a toolbar and the window chrome, so the geometric
- * centre of its scroller is not the centre of the screen. Four lines keeps the
+ * centre of its scroller is not the centre of the screen. Nine lines keeps the
  * caret where the writer perceives it as centred without hiding the line just
  * written. Applied by the editor; the preview keeps its own anchor.
  */
-export const CARET_OFFSET_LINES = 4
+export const CARET_OFFSET_LINES = 9
 
 /** Sub-pixel and rounding tolerance, in CSS pixels. */
 export const SCROLL_EPSILON = 2

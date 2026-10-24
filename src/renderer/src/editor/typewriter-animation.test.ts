@@ -86,8 +86,8 @@ interface CenteringOptions {
 }
 
 /**
- * The geometry of the headless harness, without layout: a 430 px scroller, a
- * 24 px line, `padding-top: 107px` (203 minus the four line caret offset) and
+ * The geometry of the headless harness, without layout: a 700 px scroller, a
+ * 24 px line, `padding-top: 122px` (338 minus the nine line caret offset) and
  * `scrollHeight: 3009` (100 lines).
  */
 function mountCentering(options: CenteringOptions = {}): {
@@ -99,7 +99,7 @@ function mountCentering(options: CenteringOptions = {}): {
 } {
   const scroller = fakeScroller({
     scrollTop: options.scrollTop ?? 0,
-    clientHeight: options.clientHeight ?? 430,
+    clientHeight: options.clientHeight ?? 700,
     scrollHeight: options.scrollHeight ?? 3009
   })
   const scheduler = fakeScheduler(options.reducedMotion ?? false)
@@ -113,7 +113,7 @@ function mountCentering(options: CenteringOptions = {}): {
     measure: (head) => {
       measuredHeads.push(head)
 
-      return { paddingTop: options.paddingTop ?? 107, block }
+      return { paddingTop: options.paddingTop ?? 122, block }
     }
   })
 
@@ -132,10 +132,10 @@ describe('computeCenterTarget', () => {
   it('centers the first line with the top padding alone', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 107,
+        paddingTop: 122,
         lineHeight: 24,
         block: { top: 0, height: 24 },
-        viewportHeight: 430,
+        viewportHeight: 700,
         scrollHeight: 3009
       })
     ).toBe(0)
@@ -144,10 +144,10 @@ describe('computeCenterTarget', () => {
   it('centers a middle line on its block top', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 107,
+        paddingTop: 122,
         lineHeight: 24,
         block: { top: 1176, height: 24 },
-        viewportHeight: 430,
+        viewportHeight: 700,
         scrollHeight: 3009
       })
     ).toBe(1176)
@@ -156,11 +156,11 @@ describe('computeCenterTarget', () => {
   it('centers the last line while leaving room below it', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 107,
+        paddingTop: 122,
         lineHeight: 24,
         block: { top: 2376, height: 24 },
-        viewportHeight: 430,
-        scrollHeight: 3009
+        viewportHeight: 700,
+        scrollHeight: 3509
       })
     ).toBe(2376)
   })
@@ -168,10 +168,10 @@ describe('computeCenterTarget', () => {
   it('never scrolls above the top of the document', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 107,
+        paddingTop: 122,
         lineHeight: 24,
         block: { top: -100, height: 24 },
-        viewportHeight: 430,
+        viewportHeight: 700,
         scrollHeight: 3009
       })
     ).toBe(0)
@@ -180,22 +180,22 @@ describe('computeCenterTarget', () => {
   it('clamps to the last scrollable pixel', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 107,
+        paddingTop: 122,
         lineHeight: 24,
         block: { top: 2376, height: 24 },
-        viewportHeight: 430,
+        viewportHeight: 700,
         scrollHeight: 2430
       })
-    ).toBe(2000)
+    ).toBe(1730)
   })
 
   it('centers the whole block of a wrapped line', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 107,
+        paddingTop: 122,
         lineHeight: 24,
         block: { top: 100, height: 72 },
-        viewportHeight: 430,
+        viewportHeight: 700,
         scrollHeight: 3009
       })
     ).toBe(124)
@@ -204,22 +204,22 @@ describe('computeCenterTarget', () => {
   it('follows the padding the plugin actually wrote', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 42,
+        paddingTop: 0,
         lineHeight: 24,
         block: { top: 100, height: 72 },
         viewportHeight: 300,
         scrollHeight: 2034
       })
-    ).toBe(124)
+    ).toBe(202)
   })
 
   it('stays at the top when the document is shorter than the viewport', () => {
     expect(
       computeCenterTarget({
-        paddingTop: 107,
+        paddingTop: 122,
         lineHeight: 24,
         block: { top: 0, height: 24 },
-        viewportHeight: 430,
+        viewportHeight: 700,
         scrollHeight: 430
       })
     ).toBe(0)
@@ -239,21 +239,21 @@ describe('TypewriterCentering', () => {
   })
 
   it('treats a delta up to a sixth of the viewport as instant', () => {
-    const { centering, scheduler } = mountCentering({ block: { top: 71, height: 24 } })
+    const { centering, scheduler } = mountCentering({ block: { top: 116, height: 24 } })
 
     expect(centering.center(0)).toBe('instant')
     expect(scheduler.pending()).toBe(0)
   })
 
   it('animates a delta above a sixth of the viewport', () => {
-    const { centering, scroller, scheduler } = mountCentering({ block: { top: 72, height: 24 } })
+    const { centering, scroller, scheduler } = mountCentering({ block: { top: 117, height: 24 } })
 
     expect(centering.center(0)).toBe('animated')
     expect(scheduler.pending()).toBe(1)
 
     scheduler.advance(DURATION)
 
-    expect(scroller.scrollTop).toBe(72)
+    expect(scroller.scrollTop).toBe(117)
   })
 
   it('falls back to a whole line in a very short viewport', () => {
