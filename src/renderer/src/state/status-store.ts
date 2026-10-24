@@ -68,3 +68,21 @@ function getSnapshot(): EditorStatus {
 export function useEditorStatus(): EditorStatus {
   return useSyncExternalStore(subscribe, getSnapshot)
 }
+
+/**
+ * Source line the preview follows, or `null` when there is no caret yet.
+ *
+ * A primitive, not the cursor object: a change of column or of save state must
+ * not re-render the preview, and react-markdown parses inside its render.
+ */
+export function selectPreviewLine(status: EditorStatus): number | null {
+  return status.cursor?.line ?? null
+}
+
+function getPreviewLine(): number | null {
+  return selectPreviewLine(snapshot)
+}
+
+export function usePreviewLine(): number | null {
+  return useSyncExternalStore(subscribe, getPreviewLine)
+}

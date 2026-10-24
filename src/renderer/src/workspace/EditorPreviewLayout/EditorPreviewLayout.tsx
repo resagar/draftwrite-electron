@@ -33,11 +33,9 @@ export function EditorPreviewLayout({
           {editor}
         </div>
 
-        {showsPreview ? (
-          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-            <MarkdownPreview markdown={markdown} />
-          </div>
-        ) : null}
+        {/* The preview is the flex child and owns its scroll; wrapping it in
+            another scroller would split the viewport the sync measures. */}
+        {showsPreview ? <MarkdownPreview markdown={markdown} /> : null}
       </div>
     </>
   )

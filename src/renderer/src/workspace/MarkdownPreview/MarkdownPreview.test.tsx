@@ -128,3 +128,42 @@ describe('MarkdownPreview source line markers', () => {
     expect(markerLines(article)).toEqual(['1', '2', '3'])
   })
 })
+
+describe('MarkdownPreview scroller', () => {
+  it('is the scroller of the preview', () => {
+    render(<MarkdownPreview markdown="# Calm" />)
+    const section = screen.getByRole('region', { name: 'Preview' })
+
+    expect(section.className).toContain('overflow-y-auto')
+    expect(section.className).toContain('min-h-0')
+    expect(section.className).toContain('flex-1')
+    // Scroll anchoring would fight the measured `scrollTop`; smooth behaviour
+    // would animate every write.
+    expect(section.className).toContain('overscroll-contain')
+    expect(section.className).toContain('[overflow-anchor:none]')
+    expect(section.className).toContain('[scroll-behavior:auto]')
+  })
+
+  it('surrounds the article with empty, hidden spacers', () => {
+    render(<MarkdownPreview markdown="# Calm" />)
+    const section = screen.getByRole('region', { name: 'Preview' })
+    const top = section.querySelector('[data-preview-spacer="top"]')
+    const bottom = section.querySelector('[data-preview-spacer="bottom"]')
+
+    expect(top?.getAttribute('aria-hidden')).toBe('true')
+    expect(bottom?.getAttribute('aria-hidden')).toBe('true')
+    expect(top?.textContent).toBe('')
+    expect(bottom?.textContent).toBe('')
+    expect(section.firstElementChild).toBe(top)
+    expect(section.lastElementChild).not.toBe(top)
+    expect(bottom?.previousElementSibling?.tagName).toBe('ARTICLE')
+  })
+
+  it('does not crash without layout, a ResizeObserver or a cursor', () => {
+    // jsdom reports a zero clientHeight and has no ResizeObserver.
+    expect(typeof ResizeObserver).toBe('undefined')
+    expect(() =>
+      render(<MarkdownPreview markdown={'# Calm\n\nA line\nanother line'} />)
+    ).not.toThrow()
+  })
+})
