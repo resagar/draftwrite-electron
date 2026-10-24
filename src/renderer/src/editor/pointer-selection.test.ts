@@ -2,7 +2,12 @@ import { EditorState } from '@codemirror/state'
 import { EditorView, type ViewUpdate } from '@codemirror/view'
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals'
 import { articleEditorExtensions } from './extensions'
-import { isPointerGestureEnd, pointerGesture, pointerSelectionEnd } from './pointer-selection'
+import {
+  isCompatibilityMouse,
+  isPointerGestureEnd,
+  pointerGesture,
+  pointerSelectionEnd
+} from './pointer-selection'
 
 type Frame = { id: number; callback: FrameRequestCallback }
 
@@ -24,21 +29,60 @@ function dispatch(target: EventTarget, event: Event): void {
   target.dispatchEvent(event)
 }
 
-function mouseDown(target: EventTarget, button = 0): void {
-  dispatch(target, new MouseEvent('mousedown', { bubbles: true, cancelable: true, button }))
+/** `timeStamp` is read-only in jsdom, so the taps of a test need it defined. */
+function atTime<T extends Event>(event: T, timeStamp: number): T {
+  Object.defineProperty(event, 'timeStamp', { value: timeStamp })
+
+  return event
+}
+
+function mouseDown(target: EventTarget, button = 0, timeStamp?: number): void {
+  const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true, button })
+
+  dispatch(target, timeStamp === undefined ? event : atTime(event, timeStamp))
 }
 
 function mouseMove(target: EventTarget, buttons = 1): void {
   dispatch(target, new MouseEvent('mousemove', { bubbles: true, cancelable: true, buttons }))
 }
 
-function mouseUp(target: EventTarget): void {
-  dispatch(target, new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+function mouseUp(target: EventTarget, timeStamp?: number): void {
+  const event = new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 })
+
+  dispatch(target, timeStamp === undefined ? event : atTime(event, timeStamp))
 }
 
-function touchEnd(target: EventTarget): void {
-  // jsdom does not implement `TouchEvent`; the plugin only needs the name.
-  dispatch(target, new Event('touchend', { bubbles: true }))
+/**
+ * The compatibility pair a browser fires after a tap: `sourceCapabilities`
+ * answers for it, which is what Chromium implements. jsdom has neither, so it
+ * is defined on the event.
+ */
+function compatibilityMouseDown(target: EventTarget): void {
+  const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 })
+  Object.defineProperty(event, 'sourceCapabilities', {
+    value: { firesTouchEvents: true }
+  })
+  dispatch(target, event)
+}
+
+function compatibilityMouseUp(target: EventTarget): void {
+  const event = new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 })
+  Object.defineProperty(event, 'sourceCapabilities', {
+    value: { firesTouchEvents: true }
+  })
+  dispatch(target, event)
+}
+
+/**
+ * jsdom does not implement `TouchEvent`; the plugin only needs the name. CodeMirror
+ * has its own `touchstart` observer that reads `targetTouches`, so an empty list
+ * is defined for it.
+ */
+function touch(type: 'touchstart' | 'touchend', target: EventTarget, timeStamp = 1000): void {
+  const event = atTime(new Event(type, { bubbles: true }), timeStamp)
+  Object.defineProperty(event, 'targetTouches', { value: [] })
+  Object.defineProperty(event, 'changedTouches', { value: [] })
+  dispatch(target, event)
 }
 
 const mounted: EditorView[] = []
@@ -105,6 +149,30 @@ function centerTarget(update: ViewUpdate): { y: string; range?: { head: number }
 
   return targets[0]
 }
+
+describe('isCompatibilityMouse', () => {
+  const plain = { sourceCapabilities: null, timeStamp: 1000 }
+
+  it('recognises the pair a browser fires after a touch', () => {
+    expect(
+      isCompatibilityMouse({ sourceCapabilities: { firesTouchEvents: true }, timeStamp: 5000 }, 0)
+    ).toBe(true)
+  })
+
+  it('trusts a real mouse gesture after a touch once the window has passed', () => {
+    expect(isCompatibilityMouse({ ...plain, timeStamp: 1600 }, 1000)).toBe(false)
+    // The window is exclusive: exactly 500 ms later is a new gesture.
+    expect(isCompatibilityMouse({ ...plain, timeStamp: 1000 + 500 }, 1000)).toBe(false)
+  })
+
+  it('drops a mouse gesture inside the window of the last touch', () => {
+    expect(isCompatibilityMouse({ ...plain, timeStamp: 1200 }, 1000)).toBe(true)
+  })
+
+  it('never drops a mouse gesture when no touch happened before', () => {
+    expect(isCompatibilityMouse({ ...plain, timeStamp: 1 }, Number.NEGATIVE_INFINITY)).toBe(false)
+  })
+})
 
 describe('isPointerGestureEnd', () => {
   it('recognises the transaction that closes a pointer gesture', () => {
@@ -234,20 +302,68 @@ describe('pointerGesture', () => {
     expect(gestureEnds()).toHaveLength(1)
   })
 
-  it('does not repeat a touch gesture when the synthetic mouseup arrives', () => {
+  it('centers a tap that gets no compatibility mouse events', () => {
+    const { view, gestureEnds } = mountEditor()
+    const doc = view.contentDOM.ownerDocument
+    view.dispatch({ selection: { anchor: 6 } })
+
+    // A touch that scrolls or becomes a long press never produces the pair.
+    touch('touchstart', view.contentDOM, 1000)
+    touch('touchend', doc, 1010)
+    flushFrames()
+
+    expect(gestureEnds()).toHaveLength(1)
+    expect(centerTarget(gestureEnds()[0])).toMatchObject({ y: 'center', range: { head: 6 } })
+  })
+
+  it('centers a tap exactly once when the compatibility mouse pair arrives', () => {
     const { view, gestureEnds } = mountEditor()
     const doc = view.contentDOM.ownerDocument
 
-    // A tap ends as: touchstart, touchend, then the compatibility mouse events.
-    mouseDown(view.contentDOM)
-    touchEnd(view.contentDOM)
+    // The real order: touchstart → touchend → mousedown → mouseup.
+    touch('touchstart', view.contentDOM, 1000)
+    touch('touchend', doc, 1010)
     flushFrames()
     expect(gestureEnds()).toHaveLength(1)
 
-    mouseUp(doc)
+    compatibilityMouseDown(view.contentDOM)
+    compatibilityMouseUp(doc)
     flushFrames()
 
     expect(gestureEnds()).toHaveLength(1)
+  })
+
+  it('drops the compatibility pair by timestamp when the event cannot say it', () => {
+    const { view, gestureEnds } = mountEditor()
+    const doc = view.contentDOM.ownerDocument
+
+    touch('touchstart', view.contentDOM, 1000)
+    touch('touchend', doc, 1010)
+    flushFrames()
+    expect(gestureEnds()).toHaveLength(1)
+
+    // Same tap, without `sourceCapabilities`: still inside the guard window.
+    mouseDown(view.contentDOM, 0, 1120)
+    mouseUp(doc, 1130)
+    flushFrames()
+    expect(gestureEnds()).toHaveLength(1)
+
+    // A real press later on is a new gesture.
+    mouseDown(view.contentDOM, 0, 2000)
+    mouseUp(doc, 2010)
+    flushFrames()
+    expect(gestureEnds()).toHaveLength(2)
+  })
+
+  it('ignores a touch that starts outside the content', () => {
+    const { view, gestureEnds } = mountEditor()
+    const doc = view.contentDOM.ownerDocument
+
+    touch('touchstart', document.body, 1000)
+    touch('touchend', doc, 1010)
+    flushFrames()
+
+    expect(gestureEnds()).toHaveLength(0)
   })
 
   it('drops the listeners and the pending frame when the editor dies', () => {

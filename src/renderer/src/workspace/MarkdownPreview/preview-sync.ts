@@ -11,6 +11,7 @@
  * `data-source-end-line` anchors for blocks.
  */
 
+import { centerOffset } from '../../scroll/smooth-scroll'
 import {
   SOURCE_END_LINE_ATTRIBUTE,
   SOURCE_LINE_ATTRIBUTE,
@@ -238,18 +239,46 @@ function asLineRect(rect: Rect): LineRect {
 }
 
 /**
- * Rect of one source line: the union of the rows a `Range` covers, from the
- * marker just after it (`next`, when it is in the same block) or up to the end
- * of its block.
+ * Rect of one source line, built from the rows that render it: their union,
+ * plus the height of the first one.
  *
  * Column-free on purpose: the store publishes the line, not the caret position
  * inside a reflowed line, so the whole span of the line is what gets centred.
+ * `null` when no row survived the contiguity filter, so the caller can fall
+ * back to the rect of the marker.
  */
-export function lineRect(anchor: HTMLElement, next: HTMLElement | null): LineRect {
+export function computeLineRect(rows: Iterable<Rect>): LineRect | null {
+  const kept = keepContiguousRows(rows)
+
+  if (kept.length === 0) {
+    return null
+  }
+
+  const top = Math.min(...kept.map((row) => row.top))
+  const bottom = Math.max(...kept.map((row) => row.bottom))
+
+  return {
+    top,
+    bottom,
+    left: kept[0].left,
+    width: kept[0].width,
+    height: bottom - top,
+    firstRowHeight: kept[0].height
+  }
+}
+
+/**
+ * Rows the browser lays out for the text of one source line, from its marker up
+ * to the next marker of the same block (or the end of the block).
+ *
+ * Reads layout, so it is the thin adapter of `computeLineRect`: Jest has no
+ * layout to read and tests the arithmetic instead.
+ */
+function measureLineRows(anchor: HTMLElement, next: HTMLElement | null): DOMRect[] {
   const block = anchor.closest<HTMLElement>(INLINE_BLOCK)
 
   if (block === null) {
-    return asLineRect(anchor.getBoundingClientRect())
+    return []
   }
 
   const range = document.createRange()
@@ -261,23 +290,7 @@ export function lineRect(anchor: HTMLElement, next: HTMLElement | null): LineRec
     range.setEnd(block, block.childNodes.length)
   }
 
-  const rows = keepContiguousRows(range.getClientRects())
-
-  if (rows.length === 0) {
-    return asLineRect(anchor.getBoundingClientRect())
-  }
-
-  const top = Math.min(...rows.map((row) => row.top))
-  const bottom = Math.max(...rows.map((row) => row.bottom))
-
-  return {
-    top,
-    bottom,
-    left: rows[0].left,
-    width: rows[0].width,
-    height: bottom - top,
-    firstRowHeight: rows[0].height
-  }
+  return Array.from(range.getClientRects())
 }
 
 /**
@@ -344,27 +357,27 @@ export type CenterArgs = {
   /** Height of the first visual row; defaults to the whole span. */
   firstRowHeight?: number
   viewportHeight: number
-  /** `scrollHeight - clientHeight`, clamped by the caller to the live value. */
-  maxScroll: number
+  /** Live `scrollHeight` of the scroller. */
+  scrollHeight: number
 }
 
 /**
  * `scrollTop` that puts the middle of the target in the middle of the viewport.
  *
  * A span taller than the viewport cannot be centred with its caret visible, so
- * its first row is centred instead: deterministic, and free of column math.
+ * its first row is centred instead: deterministic, and free of column math. The
+ * arithmetic itself is the shared `centerOffset`, also used by the editor.
  */
 export function centerScrollTop({
   top,
   height,
   firstRowHeight = height,
   viewportHeight,
-  maxScroll
+  scrollHeight
 }: CenterArgs): number {
   const span = height > viewportHeight ? firstRowHeight : height
-  const target = top + span / 2 - viewportHeight / 2
 
-  return Math.min(Math.max(target, 0), Math.max(0, maxScroll))
+  return centerOffset(top, span, viewportHeight, scrollHeight)
 }
 
 /** Fallback row height when nothing around the target can tell one (22 px). */
@@ -374,7 +387,49 @@ const DEFAULT_LINE_UNIT = 22
 export type TargetMeasurement = {
   top: number
   height: number
+  /** Span to centre when the target is taller than the viewport. */
   firstRowHeight: number
+  /** One measured visual row, or 0 when the target has no rows of its own. */
+  rowHeight: number
+}
+
+/** A target as it can be measured, without touching the DOM. */
+export type TargetGeometry = {
+  /** Rect of the whole target, in viewport coordinates. */
+  rect: Rect
+  /** Visual rows of a line target; empty for a block, which has none. */
+  rows: readonly Rect[]
+  /** Top of the scroller's content box, in viewport coordinates. */
+  containerTop: number
+  /** Live `scrollTop` of the scroller. */
+  scrollTop: number
+}
+
+/**
+ * Where the target sits inside the scroller, in content coordinates: the
+ * coordinates that do not move while the user scrolls.
+ *
+ * The content top is recovered from the viewport distance, the container's top
+ * border and the live scroll, so the result stays valid for a scroll that
+ * happens before the write. The rows of a line win over its marker rect; a
+ * block has no rows, so its own rect stands for the span and `rowHeight` stays
+ * 0: the height of a block is never a row height.
+ */
+export function computeTarget({
+  rect,
+  rows,
+  containerTop,
+  scrollTop
+}: TargetGeometry): TargetMeasurement {
+  const line = computeLineRect(rows)
+  const span = line ?? asLineRect(rect)
+
+  return {
+    top: span.top - containerTop + scrollTop,
+    height: span.height,
+    firstRowHeight: span.firstRowHeight,
+    rowHeight: line?.firstRowHeight ?? 0
+  }
 }
 
 /** Marker right after `anchor` inside its inline block, if any. */
@@ -392,20 +447,117 @@ function nextMarker(anchor: HTMLElement): HTMLElement | null {
 }
 
 /**
- * Target rect in the scroller's content coordinates, which are stable while the
- * user scrolls: `rect.top` is relative to the viewport, so the distance from the
- * top of the content is recovered with the container rect, its border and its
- * current scroll.
+ * Element whose resolved `line-height` stands for one row of the target: the
+ * block itself, or the inline block the line renders in.
  */
-export function measureTarget(container: HTMLElement, target: PreviewTarget): TargetMeasurement {
-  const rect =
-    target.kind === 'block'
-      ? asLineRect(target.element.getBoundingClientRect())
-      : lineRect(target.anchor, nextMarker(target.anchor))
-  const containerRect = container.getBoundingClientRect()
-  const contentTop = rect.top - (containerRect.top + container.clientTop) + container.scrollTop
+function lineHeightSource(target: PreviewTarget): HTMLElement {
+  if (target.kind === 'block') {
+    return target.element
+  }
 
-  return { top: contentTop, height: rect.height, firstRowHeight: rect.firstRowHeight }
+  return (
+    target.anchor.closest<HTMLElement>(INLINE_BLOCK) ?? target.anchor.parentElement ?? target.anchor
+  )
+}
+
+/**
+ * Resolves a computed `line-height` to pixels.
+ *
+ * `normal` (the initial value) depends on the font metrics the browser used, so
+ * it cannot be resolved here and returns `null`; a unitless value is a factor of
+ * the font size; a `px` value is already the answer. Any other unit is left
+ * unresolved on purpose: the caller keeps walking the fallback chain.
+ */
+export function parseLineHeight(value: string, fontSize: number): number | null {
+  const text = value.trim()
+
+  if (text === '' || text === 'normal') {
+    return null
+  }
+
+  if (text.endsWith('px')) {
+    const pixels = Number.parseFloat(text)
+
+    return Number.isFinite(pixels) && pixels > 0 ? pixels : null
+  }
+
+  const factor = Number(text)
+
+  if (!Number.isFinite(factor) || factor <= 0 || !Number.isFinite(fontSize) || fontSize <= 0) {
+    return null
+  }
+
+  return factor * fontSize
+}
+
+/** What surrounds the target to tell the height of one of its rows. */
+export type LineUnitArgs = {
+  /** Height of a measured row, or 0 when the target has no rows (a block). */
+  rowHeight: number
+  /** Resolved `line-height` of the target block, when it could be read. */
+  blockLineHeight?: number | null
+  /** Resolved `line-height` of the article, when it could be read. */
+  articleLineHeight?: number | null
+}
+
+/**
+ * Height of one visual row of the target: the floor of the motion threshold.
+ *
+ * A measured row wins. A target without rows — a block anchor such as `hr` or an
+ * image-only paragraph — falls back to the resolved `line-height` of its block,
+ * then to the article's, and only then to 22 px. Never to the height of the
+ * block: an image taller than the viewport would raise the threshold to its own
+ * height and turn every caret move into an instant jump.
+ */
+export function resolveLineUnit({
+  rowHeight,
+  blockLineHeight = null,
+  articleLineHeight = null
+}: LineUnitArgs): number {
+  if (rowHeight > 0) {
+    return rowHeight
+  }
+
+  if (blockLineHeight !== null && blockLineHeight > 0) {
+    return blockLineHeight
+  }
+
+  if (articleLineHeight !== null && articleLineHeight > 0) {
+    return articleLineHeight
+  }
+
+  return DEFAULT_LINE_UNIT
+}
+
+/** Resolved `line-height` of an element, or `null` when it cannot be resolved. */
+function readLineHeight(element: HTMLElement): number | null {
+  const win = element.ownerDocument.defaultView
+
+  if (win === null) {
+    return null
+  }
+
+  const style = win.getComputedStyle(element)
+
+  return parseLineHeight(style.lineHeight, Number.parseFloat(style.fontSize))
+}
+
+/**
+ * Reads the DOM for one target. Thin on purpose: every number it produces comes
+ * out of `computeTarget`, which Jest exercises with plain rects.
+ */
+function measureTarget(container: HTMLElement, target: PreviewTarget): TargetMeasurement {
+  const containerRect = container.getBoundingClientRect()
+  const rows =
+    target.kind === 'line' ? measureLineRows(target.anchor, nextMarker(target.anchor)) : []
+  const rect = (target.kind === 'line' ? target.anchor : target.element).getBoundingClientRect()
+
+  return computeTarget({
+    rect,
+    rows,
+    containerTop: containerRect.top + container.clientTop,
+    scrollTop: container.scrollTop
+  })
 }
 
 /** Arguments of `measurePreviewSync`. All elements belong to the preview. */
@@ -427,7 +579,10 @@ export type PreviewMeasurement = {
   topSpacer: number
   /** Centre destination in content coordinates, or `null` without a target. */
   target: number | null
-  /** One visual row of the target, for the motion threshold of ticket 08. */
+  /**
+   * One visual row of the target, for the motion threshold: a measured row, the
+   * resolved `line-height`, or 22 px — never the height of a whole block.
+   */
   lineUnit: number
 }
 
@@ -488,12 +643,17 @@ export function measurePreviewSync({
     height: measured.height,
     firstRowHeight: measured.firstRowHeight,
     viewportHeight,
-    maxScroll: container.scrollHeight - container.clientHeight
+    scrollHeight: container.scrollHeight
   })
 
   return {
     topSpacer: topHeight,
     target: destination,
-    lineUnit: measured.firstRowHeight > 0 ? measured.firstRowHeight : DEFAULT_LINE_UNIT
+    lineUnit: resolveLineUnit({
+      rowHeight: measured.rowHeight,
+      // Both reads are layout reads: skipped when a row was measured already.
+      blockLineHeight: measured.rowHeight > 0 ? null : readLineHeight(lineHeightSource(target)),
+      articleLineHeight: measured.rowHeight > 0 ? null : readLineHeight(article)
+    })
   }
 }

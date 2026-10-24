@@ -105,22 +105,26 @@ describe('typewriterPaddingStyle', () => {
     expect(typewriterPaddingStyle(430, 24)).toBe('padding-top: 203px; padding-bottom: 406px')
   })
 
-  it('returns null when there is nothing to declare', () => {
-    expect(typewriterPaddingStyle(0, 24)).toBeNull()
-    expect(typewriterPaddingStyle(24, 24)).toBeNull()
+  it('declares an explicit 0/0 when the editor has no measurable height', () => {
+    // Hidden in `preview` mode: the theme's 16 px must not leak back in.
+    expect(typewriterPaddingStyle(0, 24)).toBe('padding-top: 0px; padding-bottom: 0px')
+    expect(typewriterPaddingStyle(-10, 24)).toBe('padding-top: 0px; padding-bottom: 0px')
+  })
+
+  it('declares an explicit 0/0 when the editor is not taller than one line', () => {
+    expect(typewriterPaddingStyle(24, 24)).toBe('padding-top: 0px; padding-bottom: 0px')
+    expect(typewriterPaddingStyle(20, 24)).toBe('padding-top: 0px; padding-bottom: 0px')
   })
 })
 
 /**
- * jsdom does not lay anything out, so the height of the scroller and the
- * measured line height are stubbed. That is enough to assert that the plugin
- * writes the padding on `.cm-content`; the real geometry belongs to the
- * headless harness.
+ * jsdom lays nothing out, so these tests assert the contract of the plugin — the
+ * style it writes on `.cm-content`, computed from the geometry it reads — and
+ * never a measured position. The numbers themselves are covered by
+ * `computeTypewriterPadding`; the real centering belongs to the headless harness
+ * and to the manual check in Electron.
  */
-function mountEditor(doc = 'one\ntwo'): {
-  view: EditorView
-  setHeight: (height: number) => void
-} {
+function mountEditor(doc = 'one\ntwo'): EditorView {
   const parent = document.createElement('div')
   document.body.appendChild(parent)
 
@@ -129,20 +133,7 @@ function mountEditor(doc = 'one\ntwo'): {
     parent
   })
 
-  let height = 0
-
-  Object.defineProperty(view, 'defaultLineHeight', { configurable: true, value: 24 })
-  Object.defineProperty(view.scrollDOM, 'clientHeight', {
-    configurable: true,
-    get: () => height
-  })
-
-  return {
-    view,
-    setHeight: (next: number) => {
-      height = next
-    }
-  }
+  return view
 }
 
 const mounted: EditorView[] = []
@@ -152,49 +143,37 @@ afterEach(() => {
 })
 
 describe('typewriter', () => {
-  it('writes the asymmetric padding on the content element', () => {
-    const { view, setHeight } = mountEditor()
+  it('writes the style the padding formula computes for the live geometry', () => {
+    const view = mountEditor()
     mounted.push(view)
-    setHeight(430)
 
     view.dispatch({ changes: { from: 0, insert: 'x' } })
 
-    expect(view.contentDOM.style.paddingTop).toBe('203px')
-    expect(view.contentDOM.style.paddingBottom).toBe('406px')
+    expect(view.contentDOM.style.cssText).toContain(
+      typewriterPaddingStyle(view.scrollDOM.clientHeight, view.defaultLineHeight)
+    )
+  })
+
+  it('always replaces the vertical padding of the theme', () => {
+    const view = mountEditor()
+    mounted.push(view)
+
+    view.dispatch({ changes: { from: 0, insert: 'x' } })
+
+    // jsdom has no layout, which is exactly the hidden editor case: the plugin
+    // still declares 0/0 instead of leaving the theme's own padding.
+    expect(view.contentDOM.style.paddingTop).toBe('0px')
+    expect(view.contentDOM.style.paddingBottom).toBe('0px')
   })
 
   it('keeps the horizontal padding for the theme', () => {
-    const { view, setHeight } = mountEditor()
+    const view = mountEditor()
     mounted.push(view)
-    setHeight(430)
 
     view.dispatch({ changes: { from: 0, insert: 'x' } })
 
     expect(view.contentDOM.style.paddingLeft).toBe('')
     expect(view.contentDOM.style.paddingRight).toBe('')
-  })
-
-  it('recomputes the padding when the editor changes height', () => {
-    const { view, setHeight } = mountEditor()
-    mounted.push(view)
-    setHeight(430)
-    view.dispatch({ changes: { from: 0, insert: 'x' } })
-
-    setHeight(600)
-    view.dispatch({ changes: { from: 0, insert: 'y' } })
-
-    expect(view.contentDOM.style.paddingTop).toBe('288px')
-    expect(view.contentDOM.style.paddingBottom).toBe('576px')
-  })
-
-  it('writes no padding while the editor is hidden', () => {
-    const { view } = mountEditor()
-    mounted.push(view)
-
-    view.dispatch({ changes: { from: 0, insert: 'x' } })
-
-    expect(view.contentDOM.style.paddingTop).toBe('')
-    expect(view.contentDOM.style.paddingBottom).toBe('')
   })
 })
 
