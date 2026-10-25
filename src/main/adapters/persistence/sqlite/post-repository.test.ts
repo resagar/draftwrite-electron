@@ -10,6 +10,7 @@ const basePost: Post = {
   topic: 'Launch note',
   text: 'Short body',
   state: 'pending',
+  scheduledAt: null,
   createdAt: '',
   updatedAt: ''
 }
@@ -60,13 +61,28 @@ describe('postRepository', () => {
       ...created,
       topic: 'Updated',
       text: 'New body',
-      state: 'scheduled'
+      state: 'scheduled',
+      scheduledAt: '2026-11-01T10:00'
     })
 
     expect(updated.topic).toBe('Updated')
     expect(updated.text).toBe('New body')
     expect(updated.state).toBe('scheduled')
+    expect(updated.scheduledAt).toBe('2026-11-01T10:00')
     expect(updated.createdAt).toBe(created.createdAt)
+  })
+
+  it('stores an absent scheduled date as null', async () => {
+    const repo = newPostRepository(db)
+    const created = await repo.create({
+      ...basePost,
+      state: 'scheduled',
+      scheduledAt: '2026-11-01T10:00'
+    })
+
+    const cleared = await repo.update({ ...created, state: 'pending', scheduledAt: null })
+
+    expect(cleared.scheduledAt).toBeNull()
   })
 
   it('reports not found when updating a missing post', async () => {

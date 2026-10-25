@@ -51,6 +51,7 @@ export const posts = sqliteTable(
     topic: text('topic').notNull(),
     text: text('text').notNull(),
     state: text('state').notNull().default('pending'),
+    scheduledAt: text('scheduled_at'),
     createdAt: text('created_at')
       .notNull()
       .default(sql`(datetime('now'))`),

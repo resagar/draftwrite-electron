@@ -31,6 +31,7 @@ export type Post = {
   Topic: string
   Text: string
   State: PostState
+  ScheduledAt: string | null
   CreatedAt: string
   UpdatedAt: string
 }

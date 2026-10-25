@@ -9,6 +9,7 @@ const emptyPost: Post = {
   topic: '',
   text: '',
   state: 'pending',
+  scheduledAt: null,
   createdAt: '',
   updatedAt: ''
 }
@@ -118,6 +119,23 @@ describe('postService', () => {
     )
 
     expect(repo.update).not.toHaveBeenCalled()
+  })
+
+  it('drops the scheduled date when the post stops being scheduled', async () => {
+    const { service, repo } = newServiceUnderTest()
+    repo.update.mockImplementation(async (post) => post)
+
+    await service.update({
+      ...emptyPost,
+      id: 'id-1',
+      topic: 'Launch',
+      state: 'published',
+      scheduledAt: '2026-11-01T10:00'
+    })
+
+    expect(repo.update).toHaveBeenCalledWith(
+      expect.objectContaining({ state: 'published', scheduledAt: null })
+    )
   })
 
   it('propagates not found on update', async () => {

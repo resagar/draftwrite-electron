@@ -175,6 +175,7 @@ describe('registerIpcHandlers', () => {
         topic: 'Launch note',
         text: 'Short body',
         state: 'pending',
+        scheduledAt: null,
         createdAt: '',
         updatedAt: ''
       }
@@ -202,7 +203,8 @@ describe('registerIpcHandlers', () => {
       id: 'post-1',
       topic: 'Launch',
       text: '',
-      state: 'archived'
+      state: 'archived',
+      scheduledAt: null
     })
 
     expect(result).toEqual({
@@ -211,6 +213,53 @@ describe('registerIpcHandlers', () => {
         code: 'errUnexpected',
         message: 'invalid payload: state must be one of pending, scheduled, published'
       }
+    })
+    expect(postRepo.update).not.toHaveBeenCalled()
+  })
+
+  it('accepts a scheduled date on update and keeps null as absence', async () => {
+    const { ipcMain, postRepo } = newHarness()
+    postRepo.update.mockImplementation(async (post) => post)
+
+    const scheduled = await invoke(ipcMain, postChannels.update, {
+      id: 'post-1',
+      topic: 'Launch',
+      text: '',
+      state: 'scheduled',
+      scheduledAt: '2026-11-01T10:00'
+    })
+
+    expect(scheduled).toMatchObject({
+      ok: true,
+      value: { state: 'scheduled', scheduledAt: '2026-11-01T10:00' }
+    })
+
+    const pending = await invoke(ipcMain, postChannels.update, {
+      id: 'post-1',
+      topic: 'Launch',
+      text: '',
+      state: 'pending',
+      scheduledAt: null
+    })
+
+    expect(pending).toMatchObject({ ok: true, value: { state: 'pending', scheduledAt: null } })
+  })
+
+  it('rejects a scheduled date that is not a string or null', async () => {
+    const { ipcMain, postRepo } = newHarness()
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    const result = await invoke(ipcMain, postChannels.update, {
+      id: 'post-1',
+      topic: 'Launch',
+      text: '',
+      state: 'scheduled',
+      scheduledAt: 42
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { code: 'errUnexpected', message: 'invalid payload: scheduledAt must be a string' }
     })
     expect(postRepo.update).not.toHaveBeenCalled()
   })

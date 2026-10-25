@@ -23,6 +23,7 @@ export function emptyPost(): Post {
     Topic: '',
     Text: '',
     State: 'pending',
+    ScheduledAt: null,
     CreatedAt: '',
     UpdatedAt: ''
   }

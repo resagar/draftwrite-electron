@@ -29,6 +29,14 @@ export function expectString(value: unknown, field: string): string {
   return value
 }
 
+/** Narrows a payload field to a string or null or fails the boundary. */
+export function expectNullableString(value: unknown, field: string): string | null {
+  if (value === null) {
+    return null
+  }
+  return expectString(value, field)
+}
+
 /** Narrows a payload field to an array of strings or fails the boundary. */
 export function expectStringArray(value: unknown, field: string): string[] {
   if (!Array.isArray(value)) {
@@ -101,17 +109,19 @@ export function parsePostCreatePayload(payload: unknown): Post {
     topic: expectString(record.topic, 'topic'),
     text: expectString(record.text, 'text'),
     state: 'pending',
+    scheduledAt: null,
     createdAt: '',
     updatedAt: ''
   }
 }
 
-/** Builds the post update input: the create fields plus the id and the state. */
+/** Builds the post update input: the create fields plus the id, state and scheduled date. */
 export function parsePostUpdatePayload(payload: unknown): Post {
   const record = expectRecord(payload)
   return {
     ...parsePostCreatePayload(record),
     id: expectString(record.id, 'id'),
-    state: expectPostState(record.state)
+    state: expectPostState(record.state),
+    scheduledAt: expectNullableString(record.scheduledAt, 'scheduledAt')
   }
 }

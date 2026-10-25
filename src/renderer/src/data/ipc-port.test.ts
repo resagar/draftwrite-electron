@@ -33,6 +33,7 @@ const postDTO: PostDTO = {
   topic: 'Launch note',
   text: 'Short body',
   state: 'pending',
+  scheduledAt: null,
   createdAt: '2024-10-14T10:00:00',
   updatedAt: '2024-10-14T10:00:00'
 }
@@ -226,6 +227,7 @@ describe('createIpcPort', () => {
         Topic: 'Launch note',
         Text: 'Short body',
         State: 'pending',
+        ScheduledAt: null,
         CreatedAt: '2024-10-14T10:00:00',
         UpdatedAt: '2024-10-14T10:00:00'
       }
@@ -245,7 +247,8 @@ describe('createIpcPort', () => {
     expect(dto).toMatchObject({
       topic: 'Launch note',
       text: 'Short body',
-      state: 'pending'
+      state: 'pending',
+      scheduledAt: null
     })
     expect(dto.id).toBe('')
     expect(dto.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
@@ -263,6 +266,7 @@ describe('createIpcPort', () => {
       Topic: 'Launch note',
       Text: 'New body',
       State: 'pending',
+      ScheduledAt: null,
       CreatedAt: '2024-10-14T10:00:00',
       UpdatedAt: '2024-10-15T10:00:00'
     })
@@ -274,6 +278,7 @@ describe('createIpcPort', () => {
       topic: 'Launch note',
       text: 'New body',
       state: 'pending',
+      scheduledAt: null,
       createdAt: '2024-10-14T10:00:00',
       updatedAt: '2024-10-15T10:00:00'
     })

@@ -12,6 +12,8 @@ export interface Post {
   topic: string
   text: string
   state: PostState
+  /** ISO 8601 date the post is meant to go out; only with `scheduled`. */
+  scheduledAt: string | null
   /** ISO 8601 timestamp; empty until the post is persisted. */
   createdAt: string
   /** ISO 8601 timestamp; empty until the post is persisted. */
@@ -25,6 +27,12 @@ function domainError(code: string, message: string): Error & { code: string } {
 /** Returned when the post has no topic to identify it. */
 export const errTopicRequired = domainError('errTopicRequired', 'post topic required')
 
+/** Returned when the scheduled date is not a valid ISO 8601 date. */
+export const errScheduledAtInvalid = domainError(
+  'errScheduledAtInvalid',
+  'post scheduled at is not a valid ISO 8601 date'
+)
+
 /**
  * Creates a post in `pending`. It generates the ID and validates the entity
  * invariants; the timestamps come from the database on persist. The state is
@@ -36,6 +44,7 @@ export function newPost(topic: string, text: string): Post {
     topic,
     text,
     state: 'pending',
+    scheduledAt: null,
     createdAt: '',
     updatedAt: ''
   })
@@ -43,22 +52,38 @@ export function newPost(topic: string, text: string): Post {
   return { ...post, id: randomUUID() }
 }
 
-/** Returns a copy with the topic and the text trimmed, so what gets stored is what was validated. */
+/** Returns a copy with the values trimmed and the date only kept while scheduled. */
 export function normalisePost(post: Post): Post {
   return {
     ...post,
     topic: post.topic.trim(),
-    text: post.text.trim()
+    text: post.text.trim(),
+    scheduledAt: post.state === 'scheduled' ? blankToNull(post.scheduledAt) : null
   }
+}
+
+/** Trims the date and treats an empty string as absence. */
+function blankToNull(value: string | null): string | null {
+  if (value === null) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return trimmed === '' ? null : trimmed
 }
 
 /**
  * Checks the domain invariants: only the topic is required, and a blank topic
- * counts as missing. It does not generate an ID, so both the constructor and
- * the update use case can enforce the same rules.
+ * counts as missing; a scheduled date, when present, must be a valid ISO 8601
+ * date. It does not generate an ID, so both the constructor and the update use
+ * case can enforce the same rules.
  */
 export function validatePost(post: Post): void {
   if (post.topic.trim() === '') {
     throw errTopicRequired
+  }
+
+  if (post.scheduledAt !== null && Number.isNaN(Date.parse(post.scheduledAt))) {
+    throw errScheduledAtInvalid
   }
 }

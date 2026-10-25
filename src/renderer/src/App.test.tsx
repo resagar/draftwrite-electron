@@ -150,6 +150,45 @@ describe('posts', () => {
   })
 })
 
+describe('post states', () => {
+  it('changes the state and keeps a date only while scheduled', async () => {
+    const fake = createFakePort({
+      stories: [],
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    const list = await screen.findByRole('listbox', { name: 'Posts' })
+    fireEvent.click(within(list).getByRole('option', { name: /Launch note/ }))
+    await screen.findByRole('region', { name: 'Post' })
+
+    fireEvent.change(screen.getByLabelText('State'), { target: { value: 'scheduled' } })
+    fireEvent.change(screen.getByLabelText('Scheduled at'), {
+      target: { value: '2026-11-01T10:00' }
+    })
+
+    await waitFor(
+      () => {
+        const last = fake.updatedPosts[fake.updatedPosts.length - 1]
+        expect(last?.State).toBe('scheduled')
+        expect(last?.ScheduledAt).toBe('2026-11-01T10:00')
+      },
+      { timeout: 3000 }
+    )
+    expect(within(list).getByText('Scheduled')).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText('State'), { target: { value: 'pending' } })
+
+    await waitFor(
+      () => expect(fake.updatedPosts[fake.updatedPosts.length - 1]?.State).toBe('pending'),
+      { timeout: 3000 }
+    )
+    expect(fake.updatedPosts[fake.updatedPosts.length - 1]?.ScheduledAt).toBeNull()
+    expect(screen.queryByLabelText('Scheduled at')).toBeNull()
+  })
+})
+
 describe('library', () => {
   it('announces the active library and switches to articles', async () => {
     renderApp(createFakePort({ stories: [makeStory()] }).port)

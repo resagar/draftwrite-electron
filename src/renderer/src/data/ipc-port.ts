@@ -66,6 +66,7 @@ function toPostDTO(post: Post): PostDTO {
     topic: post.Topic,
     text: post.Text,
     state: post.State,
+    scheduledAt: post.ScheduledAt,
     createdAt: post.CreatedAt,
     updatedAt: post.UpdatedAt
   }
@@ -111,7 +112,8 @@ export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort 
             ...backendOwnedFields(),
             topic: input.topic,
             text: input.text,
-            state: 'pending'
+            state: 'pending',
+            scheduledAt: null
           })
         )
       ),

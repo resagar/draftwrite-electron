@@ -33,6 +33,7 @@ export function makePost(overrides: Partial<Post> = {}): Post {
     Topic: 'A post',
     Text: 'The post text.',
     State: 'pending',
+    ScheduledAt: null,
     CreatedAt: '2024-10-14T10:00:00',
     UpdatedAt: '2024-10-14T10:00:00',
     ...overrides

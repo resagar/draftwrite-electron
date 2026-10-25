@@ -72,8 +72,18 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
     <section aria-label="Post editor" className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100">
       <PostBand
         topic={draft.Topic}
+        state={draft.State}
+        scheduledAt={draft.ScheduledAt}
         creating={creating}
         onTopic={(topic) => change({ ...draft, Topic: topic })}
+        onState={(state) =>
+          change({
+            ...draft,
+            State: state,
+            ScheduledAt: state === 'scheduled' ? draft.ScheduledAt : null
+          })
+        }
+        onScheduledAt={(scheduledAt) => change({ ...draft, ScheduledAt: scheduledAt })}
         onDiscard={() => dispatch({ type: 'create/cancel' })}
       />
 

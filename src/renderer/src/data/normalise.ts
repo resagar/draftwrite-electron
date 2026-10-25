@@ -40,6 +40,7 @@ export function toPost(wire: PostDTO): Post {
     Topic: wire.topic,
     Text: wire.text,
     State: wire.state,
+    ScheduledAt: wire.scheduledAt ?? null,
     CreatedAt: wire.createdAt,
     UpdatedAt: wire.updatedAt
   }
