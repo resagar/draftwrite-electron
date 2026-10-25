@@ -200,7 +200,9 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
             ID: `post-${posts.length + 1}`,
             Topic: input.topic,
             Text: input.text,
-            State: 'pending'
+            State: 'pending',
+            StoryID: input.storyId,
+            ArticleID: input.articleId
           })
           posts.unshift(created)
           return created

@@ -116,7 +116,9 @@ describe('posts', () => {
 
     await waitFor(() => expect(fake.calls.createPost).toBe(1), { timeout: 3000 })
 
-    expect(fake.createdPosts).toEqual([{ topic: 'Launch note', text: '' }])
+    expect(fake.createdPosts).toEqual([
+      { topic: 'Launch note', text: '', storyId: null, articleId: null }
+    ])
     expect(await screen.findByRole('option', { name: /Launch note/ })).toBeTruthy()
     expect(screen.getByRole('region', { name: 'Post' })).toBeTruthy()
   })
@@ -186,6 +188,88 @@ describe('post states', () => {
     )
     expect(fake.updatedPosts[fake.updatedPosts.length - 1]?.ScheduledAt).toBeNull()
     expect(screen.queryByLabelText('Scheduled at')).toBeNull()
+  })
+})
+
+describe('post source', () => {
+  const stories = [makeStory({ ID: 's1', Topic: 'Calm software', Text: 'Story body' })]
+  const articles = [
+    makeArticle({ ID: 'a1', StoryID: 's1', Title: 'Calm article', Text: 'Article body' })
+  ]
+
+  it('shows the source story of a post', async () => {
+    const fake = createFakePort({
+      stories,
+      articles,
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note', StoryID: 's1' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    const list = await screen.findByRole('listbox', { name: 'Posts' })
+    fireEvent.click(within(list).getByRole('option', { name: /Launch note/ }))
+
+    const pane = await screen.findByRole('region', { name: 'Source story' })
+
+    expect(within(pane).getByText('Calm software')).toBeTruthy()
+    expect(within(pane).getByText('Story body')).toBeTruthy()
+  })
+
+  it('shows the source article of a post', async () => {
+    const fake = createFakePort({
+      stories,
+      articles,
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note', ArticleID: 'a1' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    const list = await screen.findByRole('listbox', { name: 'Posts' })
+    fireEvent.click(within(list).getByRole('option', { name: /Launch note/ }))
+
+    const pane = await screen.findByRole('region', { name: 'Source article' })
+
+    expect(within(pane).getByText('Calm article')).toBeTruthy()
+    expect(within(pane).getByText('Article body')).toBeTruthy()
+  })
+
+  it('creates a post with a story source', async () => {
+    const fake = createFakePort({ stories, articles, posts: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    await screen.findByText('No posts yet')
+    fireEvent.click(screen.getByRole('button', { name: 'New Post' }))
+    await screen.findByRole('region', { name: 'Post editor' })
+
+    fireEvent.change(screen.getByLabelText('Source'), { target: { value: 'story:s1' } })
+    fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'Launch note' } })
+
+    await waitFor(() => expect(fake.calls.createPost).toBe(1), { timeout: 3000 })
+
+    expect(fake.createdPosts).toEqual([
+      { topic: 'Launch note', text: '', storyId: 's1', articleId: null }
+    ])
+  })
+
+  it('locks the source once the post leaves pending', async () => {
+    const fake = createFakePort({
+      stories,
+      articles,
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note', StoryID: 's1' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    const list = await screen.findByRole('listbox', { name: 'Posts' })
+    fireEvent.click(within(list).getByRole('option', { name: /Launch note/ }))
+    await screen.findByRole('region', { name: 'Post' })
+
+    expect(screen.getByLabelText<HTMLSelectElement>('Source').disabled).toBe(false)
+
+    fireEvent.change(screen.getByLabelText('State'), { target: { value: 'scheduled' } })
+
+    expect(screen.getByLabelText<HTMLSelectElement>('Source').disabled).toBe(true)
   })
 })
 

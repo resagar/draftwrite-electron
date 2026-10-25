@@ -110,6 +110,8 @@ export function parsePostCreatePayload(payload: unknown): Post {
     text: expectString(record.text, 'text'),
     state: 'pending',
     scheduledAt: null,
+    storyID: expectNullableString(record.storyID, 'storyID'),
+    articleID: expectNullableString(record.articleID, 'articleID'),
     createdAt: '',
     updatedAt: ''
   }

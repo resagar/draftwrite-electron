@@ -37,7 +37,7 @@ export function bootstrap(options: DataDirOptions = {}): Bootstrap {
     services: {
       story: newStoryService(storyRepo),
       article: newArticleService(articleRepo, storyRepo),
-      post: newPostService(postRepo)
+      post: newPostService(postRepo, storyRepo, articleRepo)
     },
     db
   }

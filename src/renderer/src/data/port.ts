@@ -18,6 +18,8 @@ export type NewArticle = {
 export type NewPost = {
   topic: string
   text: string
+  storyId: string | null
+  articleId: string | null
 }
 
 export type DataPort = {

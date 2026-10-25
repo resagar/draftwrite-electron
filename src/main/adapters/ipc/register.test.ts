@@ -42,7 +42,7 @@ function newHarness(): Harness {
   registerIpcHandlers(ipcMain, {
     story: newStoryService(storyRepo),
     article: newArticleService(articleRepo, storyRepo),
-    post: newPostService(postRepo)
+    post: newPostService(postRepo, storyRepo, articleRepo)
   })
   return { ipcMain, storyRepo, articleRepo, postRepo }
 }
@@ -165,6 +165,8 @@ describe('registerIpcHandlers', () => {
       topic: 'Launch note',
       text: 'Short body',
       state: 'published',
+      storyID: null,
+      articleID: null,
       junk: 'ignored'
     })
 
@@ -176,6 +178,8 @@ describe('registerIpcHandlers', () => {
         text: 'Short body',
         state: 'pending',
         scheduledAt: null,
+        storyID: null,
+        articleID: null,
         createdAt: '',
         updatedAt: ''
       }
@@ -186,7 +190,12 @@ describe('registerIpcHandlers', () => {
   it('answers post domain errors with their code and message', async () => {
     const { ipcMain, postRepo } = newHarness()
 
-    const result = await invoke(ipcMain, postChannels.create, { topic: '   ', text: '' })
+    const result = await invoke(ipcMain, postChannels.create, {
+      topic: '   ',
+      text: '',
+      storyID: null,
+      articleID: null
+    })
 
     expect(result).toEqual({
       ok: false,
@@ -204,7 +213,9 @@ describe('registerIpcHandlers', () => {
       topic: 'Launch',
       text: '',
       state: 'archived',
-      scheduledAt: null
+      scheduledAt: null,
+      storyID: null,
+      articleID: null
     })
 
     expect(result).toEqual({
@@ -219,6 +230,17 @@ describe('registerIpcHandlers', () => {
 
   it('accepts a scheduled date on update and keeps null as absence', async () => {
     const { ipcMain, postRepo } = newHarness()
+    postRepo.get.mockResolvedValue({
+      id: 'post-1',
+      topic: 'Launch',
+      text: '',
+      state: 'pending',
+      scheduledAt: null,
+      storyID: null,
+      articleID: null,
+      createdAt: '',
+      updatedAt: ''
+    })
     postRepo.update.mockImplementation(async (post) => post)
 
     const scheduled = await invoke(ipcMain, postChannels.update, {
@@ -226,7 +248,9 @@ describe('registerIpcHandlers', () => {
       topic: 'Launch',
       text: '',
       state: 'scheduled',
-      scheduledAt: '2026-11-01T10:00'
+      scheduledAt: '2026-11-01T10:00',
+      storyID: null,
+      articleID: null
     })
 
     expect(scheduled).toMatchObject({
@@ -239,7 +263,9 @@ describe('registerIpcHandlers', () => {
       topic: 'Launch',
       text: '',
       state: 'pending',
-      scheduledAt: null
+      scheduledAt: null,
+      storyID: null,
+      articleID: null
     })
 
     expect(pending).toMatchObject({ ok: true, value: { state: 'pending', scheduledAt: null } })
@@ -254,12 +280,83 @@ describe('registerIpcHandlers', () => {
       topic: 'Launch',
       text: '',
       state: 'scheduled',
-      scheduledAt: 42
+      scheduledAt: 42,
+      storyID: null,
+      articleID: null
     })
 
     expect(result).toEqual({
       ok: false,
       error: { code: 'errUnexpected', message: 'invalid payload: scheduledAt must be a string' }
+    })
+    expect(postRepo.update).not.toHaveBeenCalled()
+  })
+
+  it('answers post:create with the chosen source', async () => {
+    const { ipcMain, postRepo, storyRepo } = newHarness()
+    storyRepo.get.mockResolvedValue({
+      id: 's1',
+      topic: 'Calm software',
+      titles: [],
+      tags: [],
+      text: '',
+      createdAt: '',
+      updatedAt: ''
+    })
+    postRepo.create.mockImplementation(async (post) => post)
+
+    const result = await invoke(ipcMain, postChannels.create, {
+      topic: 'Launch',
+      text: '',
+      storyID: 's1',
+      articleID: null
+    })
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: { storyID: 's1', articleID: null }
+    })
+    expect(storyRepo.get).toHaveBeenCalledWith('s1')
+  })
+
+  it('rejects a post that points at a story and an article', async () => {
+    const { ipcMain, postRepo } = newHarness()
+    postRepo.create.mockImplementation(async (post) => post)
+
+    const result = await invoke(ipcMain, postChannels.create, {
+      topic: 'Launch',
+      text: '',
+      storyID: 's1',
+      articleID: 'a1'
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        code: 'errSourceAmbiguous',
+        message: 'post source must be a story or an article, not both'
+      }
+    })
+    expect(postRepo.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects a source that is not a string or null', async () => {
+    const { ipcMain, postRepo } = newHarness()
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    const result = await invoke(ipcMain, postChannels.update, {
+      id: 'post-1',
+      topic: 'Launch',
+      text: '',
+      state: 'pending',
+      scheduledAt: null,
+      storyID: 42,
+      articleID: null
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { code: 'errUnexpected', message: 'invalid payload: storyID must be a string' }
     })
     expect(postRepo.update).not.toHaveBeenCalled()
   })

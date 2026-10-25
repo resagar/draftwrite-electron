@@ -24,6 +24,8 @@ export function emptyPost(): Post {
     Text: '',
     State: 'pending',
     ScheduledAt: null,
+    StoryID: null,
+    ArticleID: null,
     CreatedAt: '',
     UpdatedAt: ''
   }

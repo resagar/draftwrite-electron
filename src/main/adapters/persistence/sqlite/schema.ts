@@ -52,6 +52,8 @@ export const posts = sqliteTable(
     text: text('text').notNull(),
     state: text('state').notNull().default('pending'),
     scheduledAt: text('scheduled_at'),
+    storyID: text('story_id').references(() => stories.id, { onDelete: 'set null' }),
+    articleID: text('article_id').references(() => articles.id, { onDelete: 'set null' }),
     createdAt: text('created_at')
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -60,6 +62,7 @@ export const posts = sqliteTable(
       .default(sql`(datetime('now'))`)
   },
   (table) => [
-    check('posts_state_check', sql`${table.state} in ('pending', 'scheduled', 'published')`)
+    check('posts_state_check', sql`${table.state} in ('pending', 'scheduled', 'published')`),
+    check('posts_source_check', sql`${table.storyID} is null or ${table.articleID} is null`)
   ]
 )

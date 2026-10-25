@@ -2,36 +2,15 @@ import { BookOpen } from 'lucide-react'
 import type { JSX } from 'react'
 import { useLibrary } from '../../state/library-context'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
-import type { LoadStatus } from '../../state/use-list'
-import type { Story } from '../../data/types'
 import { EmptyState } from '../../ui/EmptyState/EmptyState'
 import { ArticleEditor } from '../ArticleEditor/ArticleEditor'
 import { ArticlePane } from '../ArticlePane/ArticlePane'
 import { PostEditor } from '../PostEditor/PostEditor'
 import { PostPane } from '../PostPane/PostPane'
+import { storySource } from '../source-state'
 import { StoryEditor } from '../StoryEditor/StoryEditor'
 import { StoryEditorPane } from '../StoryEditorPane/StoryEditorPane'
 import { SourcePane, type SourceState } from '../SourcePane/SourcePane'
-
-function sourceStory(storyId: string, story: Story | null, status: LoadStatus): SourceState {
-  if (story !== null) {
-    return { kind: 'ready', content: { kind: 'story', story } }
-  }
-
-  if (storyId === '') {
-    return { kind: 'empty' }
-  }
-
-  if (status === 'loading') {
-    return { kind: 'loading', sourceId: storyId }
-  }
-
-  if (status === 'error') {
-    return { kind: 'error', sourceId: storyId }
-  }
-
-  return { kind: 'missing', sourceId: storyId }
-}
 
 export function Workspace(): JSX.Element {
   const {
@@ -67,12 +46,14 @@ export function Workspace(): JSX.Element {
   if (creatingArticle || article !== null) {
     const storyId = creatingArticle ? (creatingStoryId ?? '') : (article?.StoryID ?? '')
     const story = storyById(storyId)
-    const source = sourceStory(storyId, story, storiesStatus)
+    const source: SourceState =
+      storyId === '' ? { kind: 'empty' } : storySource(storyId, story, storiesStatus)
 
     return (
       <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
         <SourcePane
           source={source}
+          subject="article"
           creating={creatingArticle}
           expanded={storyPaneExpanded}
           onToggle={() => dispatch({ type: 'storyPane/toggle' })}

@@ -10,11 +10,13 @@ import { publishUnsavedDraft } from '../../state/status-store'
 import { useDraftPersistence } from '../../state/use-draft-persistence'
 import { useEditorStatus } from '../../state/use-editor-status'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
-import { useWorkspaceDispatch } from '../../state/workspace-context'
+import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
 import { PostBand } from '../PostBand/PostBand'
+import { SourcePane } from '../SourcePane/SourcePane'
+import { postSource } from '../source-state'
 
 type PostEditorProps = {
   stored: Post | null
@@ -26,7 +28,18 @@ function hasContent(post: Post): boolean {
 
 export function PostEditor({ stored }: PostEditorProps): JSX.Element {
   const port = useDataPort()
-  const { upsertPost } = useLibrary()
+  const {
+    stories,
+    articles,
+    articleById,
+    storyById,
+    storiesStatus,
+    articlesStatus,
+    reloadStories,
+    reloadArticles,
+    upsertPost
+  } = useLibrary()
+  const { storyPaneExpanded } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
   const creating = stored === null
@@ -38,7 +51,13 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
   const { status, error, schedule, saveNow } = useDraftPersistence<Post>({
     initialStatus: creating ? 'incomplete' : 'saved',
     canPersist,
-    create: (value) => port.createPost({ topic: value.Topic, text: value.Text }),
+    create: (value) =>
+      port.createPost({
+        topic: value.Topic,
+        text: value.Text,
+        storyId: value.StoryID,
+        articleId: value.ArticleID
+      }),
     update: (value) => port.updatePost(value),
     onStored: (value, wasCreated) => {
       upsertPost(value)
@@ -53,6 +72,12 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
   })
 
   const { publishCursor } = useEditorStatus({ text: draft.Text, status })
+  const source = postSource(draft.StoryID, draft.ArticleID, {
+    storyById,
+    articleById,
+    storiesStatus,
+    articlesStatus
+  })
 
   useEffect(() => {
     registerSave(saveNow)
@@ -74,6 +99,10 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
         topic={draft.Topic}
         state={draft.State}
         scheduledAt={draft.ScheduledAt}
+        storyId={draft.StoryID}
+        articleId={draft.ArticleID}
+        stories={stories}
+        articles={articles}
         creating={creating}
         onTopic={(topic) => change({ ...draft, Topic: topic })}
         onState={(state) =>
@@ -84,21 +113,37 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
           })
         }
         onScheduledAt={(scheduledAt) => change({ ...draft, ScheduledAt: scheduledAt })}
+        onSource={(storyId, articleId) =>
+          change({ ...draft, StoryID: storyId, ArticleID: articleId })
+        }
         onDiscard={() => dispatch({ type: 'create/cancel' })}
       />
 
-      <EditorPreviewLayout
-        toolbar={<EditorToolbar view={view} />}
-        editor={
-          <TextEditor
-            value={draft.Text}
-            onChange={(text) => change({ ...draft, Text: text })}
-            onCursorChange={publishCursor}
-            onCreate={setView}
+      <div className="flex min-h-0 flex-1">
+        <SourcePane
+          source={source}
+          subject="post"
+          creating={creating}
+          expanded={storyPaneExpanded}
+          onToggle={() => dispatch({ type: 'storyPane/toggle' })}
+          onRetry={draft.StoryID !== null ? reloadStories : reloadArticles}
+        />
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <EditorPreviewLayout
+            toolbar={<EditorToolbar view={view} />}
+            editor={
+              <TextEditor
+                value={draft.Text}
+                onChange={(text) => change({ ...draft, Text: text })}
+                onCursorChange={publishCursor}
+                onCreate={setView}
+              />
+            }
+            markdown={draft.Text}
           />
-        }
-        markdown={draft.Text}
-      />
+        </div>
+      </div>
 
       {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}
     </section>

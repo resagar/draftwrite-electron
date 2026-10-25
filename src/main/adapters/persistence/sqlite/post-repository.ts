@@ -18,7 +18,9 @@ export function newPostRepository(db: AppDatabase): PostRepository {
           topic: post.topic,
           text: post.text,
           state: post.state,
-          scheduledAt: post.scheduledAt
+          scheduledAt: post.scheduledAt,
+          storyID: post.storyID,
+          articleID: post.articleID
         })
         .returning()
         .get()
@@ -43,6 +45,8 @@ export function newPostRepository(db: AppDatabase): PostRepository {
           text: post.text,
           state: post.state,
           scheduledAt: post.scheduledAt,
+          storyID: post.storyID,
+          articleID: post.articleID,
           updatedAt: sql`datetime('now')`
         })
         .where(eq(posts.id, post.id))
@@ -68,6 +72,8 @@ function toPost(row: PostRow | undefined): Post {
     text: row.text,
     state: row.state as PostState,
     scheduledAt: row.scheduledAt ?? null,
+    storyID: row.storyID ?? null,
+    articleID: row.articleID ?? null,
     createdAt: parseDatabaseTime(row.createdAt),
     updatedAt: parseDatabaseTime(row.updatedAt)
   }

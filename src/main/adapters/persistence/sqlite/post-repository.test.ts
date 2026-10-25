@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it } from '@jest/globals'
+import { eq } from 'drizzle-orm'
 import type { Post } from '../../../post/model'
 import { errNotFound } from '../../../post/repository'
 import { openDatabase, type AppDatabase } from '../../../db'
 import { newPostRepository } from './post-repository'
-import { posts } from './schema'
+import { articles, posts, stories } from './schema'
 
 const basePost: Post = {
   id: 'post-1',
@@ -11,6 +12,8 @@ const basePost: Post = {
   text: 'Short body',
   state: 'pending',
   scheduledAt: null,
+  storyID: null,
+  articleID: null,
   createdAt: '',
   updatedAt: ''
 }
@@ -20,6 +23,18 @@ let db: AppDatabase
 beforeEach(() => {
   db = openDatabase(':memory:')
 })
+
+function insertStory(id: string): void {
+  db.insert(stories)
+    .values({ id, topic: `topic-${id}`, titles: '', text: '' })
+    .run()
+}
+
+function insertArticle(id: string, storyID: string): void {
+  db.insert(articles)
+    .values({ id, storyID, title: `title-${id}`, subtitle: '', target: '', text: '' })
+    .run()
+}
 
 describe('postRepository', () => {
   it('creates a post and returns the stored timestamps', async () => {
@@ -94,6 +109,56 @@ describe('postRepository', () => {
   it('rejects an unknown state at the database level', () => {
     expect(() =>
       db.insert(posts).values({ id: 'post-3', topic: 'Topic', text: '', state: 'archived' }).run()
+    ).toThrow()
+  })
+
+  it('stores a story source and clears it when the story is deleted', async () => {
+    const repo = newPostRepository(db)
+    insertStory('s1')
+
+    const created = await repo.create({ ...basePost, storyID: 's1' })
+
+    expect(created.storyID).toBe('s1')
+    expect(created.articleID).toBeNull()
+
+    db.delete(stories).where(eq(stories.id, 's1')).run()
+
+    const after = await repo.get(created.id)
+    expect(after.storyID).toBeNull()
+  })
+
+  it('stores an article source and clears it when the article is deleted', async () => {
+    const repo = newPostRepository(db)
+    insertStory('s1')
+    insertArticle('a1', 's1')
+
+    const created = await repo.create({ ...basePost, articleID: 'a1' })
+
+    expect(created.articleID).toBe('a1')
+    expect(created.storyID).toBeNull()
+
+    db.delete(articles).where(eq(articles.id, 'a1')).run()
+
+    const after = await repo.get(created.id)
+    expect(after.articleID).toBeNull()
+  })
+
+  it('rejects a post with a story and an article at the database level', () => {
+    insertStory('s1')
+    insertArticle('a1', 's1')
+
+    expect(() =>
+      db
+        .insert(posts)
+        .values({
+          id: 'post-4',
+          topic: 'Topic',
+          text: '',
+          state: 'pending',
+          storyID: 's1',
+          articleID: 'a1'
+        })
+        .run()
     ).toThrow()
   })
 })

@@ -1,15 +1,20 @@
 import type { JSX } from 'react'
-import type { PostState } from '../../data/types'
+import type { Article, PostState, Story } from '../../data/types'
 import { cn } from '../../lib/cn'
 
 type PostBandProps = {
   topic: string
   state: PostState
   scheduledAt: string | null
+  storyId: string | null
+  articleId: string | null
+  stories: Story[]
+  articles: Article[]
   creating: boolean
   onTopic: (topic: string) => void
   onState: (state: PostState) => void
   onScheduledAt: (scheduledAt: string | null) => void
+  onSource: (storyId: string | null, articleId: string | null) => void
   onDiscard: () => void
 }
 
@@ -21,13 +26,31 @@ export function PostBand({
   topic,
   state,
   scheduledAt,
+  storyId,
+  articleId,
+  stories,
+  articles,
   creating,
   onTopic,
   onState,
   onScheduledAt,
+  onSource,
   onDiscard
 }: PostBandProps): JSX.Element {
   const missingTopic = topic.trim() === ''
+  const sourceLocked = state !== 'pending'
+  const sourceValue =
+    storyId !== null ? `story:${storyId}` : articleId !== null ? `article:${articleId}` : ''
+
+  const changeSource = (value: string): void => {
+    if (value.startsWith('story:')) {
+      onSource(value.slice('story:'.length), null)
+    } else if (value.startsWith('article:')) {
+      onSource(null, value.slice('article:'.length))
+    } else {
+      onSource(null, null)
+    }
+  }
 
   return (
     <div className="space-y-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
@@ -72,23 +95,55 @@ export function PostBand({
         ) : null}
       </div>
 
-      {state === 'scheduled' ? (
-        <div className="flex items-center gap-2">
-          <label htmlFor="post-scheduled-at" className={label}>
-            Scheduled at
-          </label>
-          <input
-            id="post-scheduled-at"
-            type="datetime-local"
-            value={scheduledAt ?? ''}
-            onChange={(event) =>
-              onScheduledAt(event.target.value === '' ? null : event.target.value)
-            }
-            className={cn(field, 'shrink-0')}
-          />
-          <span className="text-2xs text-base-content/60">Optional</span>
-        </div>
-      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="post-source" className={label}>
+          Source
+        </label>
+        <select
+          id="post-source"
+          value={sourceValue}
+          disabled={sourceLocked}
+          onChange={(event) => changeSource(event.target.value)}
+          className={cn(field, 'min-w-0 max-w-[280px] shrink-0 disabled:opacity-70')}
+        >
+          <option value="">No source</option>
+          <optgroup label="Stories">
+            {stories.map((story) => (
+              <option key={story.ID} value={`story:${story.ID}`}>
+                {story.Topic}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="Articles">
+            {articles.map((article) => (
+              <option key={article.ID} value={`article:${article.ID}`}>
+                {article.Title}
+              </option>
+            ))}
+          </optgroup>
+        </select>
+        {sourceLocked ? (
+          <span className="text-2xs text-base-content/60">Locked while the post is {state}.</span>
+        ) : null}
+
+        {state === 'scheduled' ? (
+          <>
+            <label htmlFor="post-scheduled-at" className={label}>
+              Scheduled at
+            </label>
+            <input
+              id="post-scheduled-at"
+              type="datetime-local"
+              value={scheduledAt ?? ''}
+              onChange={(event) =>
+                onScheduledAt(event.target.value === '' ? null : event.target.value)
+              }
+              className={cn(field, 'shrink-0')}
+            />
+            <span className="text-2xs text-base-content/60">Optional</span>
+          </>
+        ) : null}
+      </div>
 
       {missingTopic ? (
         <p role="status" className="text-2xs text-warning">

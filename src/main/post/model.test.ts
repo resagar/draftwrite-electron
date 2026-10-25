@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals'
 import {
   errScheduledAtInvalid,
+  errSourceAmbiguous,
   errTopicRequired,
   newPost,
   normalisePost,
@@ -14,6 +15,8 @@ const emptyPost: Post = {
   text: '',
   state: 'pending',
   scheduledAt: null,
+  storyID: null,
+  articleID: null,
   createdAt: '',
   updatedAt: ''
 }
@@ -30,17 +33,36 @@ function captureError(fn: () => unknown): unknown {
 
 describe('newPost', () => {
   it('creates a pending post from the given values', () => {
-    const post = newPost('  launch note  ', '  Short body  ')
+    const post = newPost('  launch note  ', '  Short body  ', null, null)
 
     expect(post.id).not.toBe('')
     expect(post.topic).toBe('launch note')
     expect(post.text).toBe('Short body')
     expect(post.state).toBe('pending')
     expect(post.scheduledAt).toBeNull()
+    expect(post.storyID).toBeNull()
+    expect(post.articleID).toBeNull()
+  })
+
+  it('accepts a story or an article as the source', () => {
+    expect(newPost('launch', '', 'story-1', null)).toMatchObject({
+      storyID: 'story-1',
+      articleID: null
+    })
+    expect(newPost('launch', '', null, 'article-1')).toMatchObject({
+      storyID: null,
+      articleID: 'article-1'
+    })
+  })
+
+  it('rejects a story and an article at the same time', () => {
+    expect(captureError(() => newPost('launch', '', 'story-1', 'article-1'))).toBe(
+      errSourceAmbiguous
+    )
   })
 
   it('only requires a topic', () => {
-    const post = newPost('launch note', '')
+    const post = newPost('launch note', '', null, null)
 
     expect(post.id).not.toBe('')
     expect(post.topic).toBe('launch note')
@@ -48,8 +70,8 @@ describe('newPost', () => {
   })
 
   it('rejects a missing or blank topic', () => {
-    expect(captureError(() => newPost('', 'text'))).toBe(errTopicRequired)
-    expect(captureError(() => newPost('   ', 'text'))).toBe(errTopicRequired)
+    expect(captureError(() => newPost('', 'text', null, null))).toBe(errTopicRequired)
+    expect(captureError(() => newPost('   ', 'text', null, null))).toBe(errTopicRequired)
   })
 })
 
@@ -77,6 +99,11 @@ describe('normalisePost', () => {
       normalisePost({ ...emptyPost, state: 'scheduled', scheduledAt: '   ' }).scheduledAt
     ).toBeNull()
   })
+
+  it('trims the source ids and treats an empty string as absence', () => {
+    expect(normalisePost({ ...emptyPost, storyID: '  story-1  ' }).storyID).toBe('story-1')
+    expect(normalisePost({ ...emptyPost, articleID: '   ' }).articleID).toBeNull()
+  })
 })
 
 describe('validatePost', () => {
@@ -98,5 +125,11 @@ describe('validatePost', () => {
         scheduledAt: '2026-11-01T10:00'
       })
     ).not.toThrow()
+  })
+
+  it('rejects a post with a story and an article', () => {
+    expect(() =>
+      validatePost({ ...emptyPost, topic: 'launch', storyID: 's1', articleID: 'a1' })
+    ).toThrow(errSourceAmbiguous)
   })
 })

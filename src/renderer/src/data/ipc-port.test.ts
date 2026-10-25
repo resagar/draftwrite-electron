@@ -34,6 +34,8 @@ const postDTO: PostDTO = {
   text: 'Short body',
   state: 'pending',
   scheduledAt: null,
+  storyID: null,
+  articleID: null,
   createdAt: '2024-10-14T10:00:00',
   updatedAt: '2024-10-14T10:00:00'
 }
@@ -228,6 +230,8 @@ describe('createIpcPort', () => {
         Text: 'Short body',
         State: 'pending',
         ScheduledAt: null,
+        StoryID: null,
+        ArticleID: null,
         CreatedAt: '2024-10-14T10:00:00',
         UpdatedAt: '2024-10-14T10:00:00'
       }
@@ -239,7 +243,12 @@ describe('createIpcPort', () => {
     const create = jest.spyOn(api.post, 'create')
     const port = createIpcPort(api)
 
-    const created = await port.createPost({ topic: 'Launch note', text: 'Short body' })
+    const created = await port.createPost({
+      topic: 'Launch note',
+      text: 'Short body',
+      storyId: null,
+      articleId: null
+    })
 
     expect(create).toHaveBeenCalledTimes(1)
     const [dto] = create.mock.calls[0]
@@ -248,7 +257,9 @@ describe('createIpcPort', () => {
       topic: 'Launch note',
       text: 'Short body',
       state: 'pending',
-      scheduledAt: null
+      scheduledAt: null,
+      storyID: null,
+      articleID: null
     })
     expect(dto.id).toBe('')
     expect(dto.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
@@ -267,6 +278,8 @@ describe('createIpcPort', () => {
       Text: 'New body',
       State: 'pending',
       ScheduledAt: null,
+      StoryID: null,
+      ArticleID: null,
       CreatedAt: '2024-10-14T10:00:00',
       UpdatedAt: '2024-10-15T10:00:00'
     })
@@ -279,6 +292,8 @@ describe('createIpcPort', () => {
       text: 'New body',
       state: 'pending',
       scheduledAt: null,
+      storyID: null,
+      articleID: null,
       createdAt: '2024-10-14T10:00:00',
       updatedAt: '2024-10-15T10:00:00'
     })

@@ -32,6 +32,8 @@ export type Post = {
   Text: string
   State: PostState
   ScheduledAt: string | null
+  StoryID: string | null
+  ArticleID: string | null
   CreatedAt: string
   UpdatedAt: string
 }
