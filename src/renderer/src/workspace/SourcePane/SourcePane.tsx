@@ -11,15 +11,17 @@ import { Resizer } from '../../ui/Resizer/Resizer'
 import { usePanelResizer } from '../../ui/Resizer/use-resizer'
 import { TagChip } from '../../ui/TagChip/TagChip'
 
-export type SourceStoryState =
-  | { kind: 'ready'; storyId: string; story: Story }
-  | { kind: 'empty' }
-  | { kind: 'loading'; storyId: string }
-  | { kind: 'error'; storyId: string }
-  | { kind: 'missing'; storyId: string }
+export type SourceContent = { kind: 'story'; story: Story }
 
-type StoryPaneProps = {
-  source: SourceStoryState
+export type SourceState =
+  | { kind: 'empty' }
+  | { kind: 'loading'; sourceId: string }
+  | { kind: 'error'; sourceId: string }
+  | { kind: 'missing'; sourceId: string }
+  | { kind: 'ready'; content: SourceContent }
+
+type SourcePaneProps = {
+  source: SourceState
   creating: boolean
   expanded: boolean
   onToggle: () => void
@@ -58,18 +60,23 @@ function CopySourceAction({ text }: { text: string | null }): JSX.Element {
   )
 }
 
-export function StoryPane({
+export function SourcePane({
   source,
   creating,
   expanded,
   onToggle,
   onRetry
-}: StoryPaneProps): JSX.Element {
+}: SourcePaneProps): JSX.Element {
   const [animating, setAnimating] = useState(false)
   const contentId = useId()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
-  const storyId = source.kind === 'empty' ? '' : source.storyId
+  const storyId =
+    source.kind === 'empty'
+      ? ''
+      : source.kind === 'ready'
+        ? source.content.story.ID
+        : source.sourceId
   const { size, resizerProps } = usePanelResizer({
     storageKey: 'story',
     defaultSize: 360,
@@ -133,7 +140,7 @@ export function StoryPane({
             <div className="flex shrink-0 items-center gap-2">
               <CopySourceAction
                 key={storyId}
-                text={source.kind === 'ready' ? source.story.Text : null}
+                text={source.kind === 'ready' ? source.content.story.Text : null}
               />
               {creating ? null : (
                 <button
@@ -201,33 +208,33 @@ export function StoryPane({
                 ? 'The selected story is no longer available. Choose another story for this article.'
                 : 'The story this article came from no longer exists.'}
             </p>
-          ) : (
+          ) : source.kind === 'ready' ? (
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5 select-text">
               <h3 className="text-[14px] leading-loose font-semibold text-secondary">
-                {source.story.Topic}
+                {source.content.story.Topic}
               </h3>
 
-              {source.story.Titles.length > 0 ? (
+              {source.content.story.Titles.length > 0 ? (
                 <ul className="space-y-0.5 text-[14px] leading-loose text-base-content/80">
-                  {source.story.Titles.map((title) => (
+                  {source.content.story.Titles.map((title) => (
                     <li key={title}>{title}</li>
                   ))}
                 </ul>
               ) : null}
 
-              {source.story.Tags.length > 0 ? (
+              {source.content.story.Tags.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-1">
-                  {source.story.Tags.map((tag) => (
+                  {source.content.story.Tags.map((tag) => (
                     <TagChip key={tag} tag={tag} />
                   ))}
                 </div>
               ) : null}
 
               <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
-                {source.story.Text}
+                {source.content.story.Text}
               </pre>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

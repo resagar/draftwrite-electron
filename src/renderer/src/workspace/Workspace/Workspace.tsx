@@ -9,11 +9,11 @@ import { ArticleEditor } from '../ArticleEditor/ArticleEditor'
 import { ArticlePane } from '../ArticlePane/ArticlePane'
 import { StoryEditor } from '../StoryEditor/StoryEditor'
 import { StoryEditorPane } from '../StoryEditorPane/StoryEditorPane'
-import { StoryPane, type SourceStoryState } from '../StoryPane/StoryPane'
+import { SourcePane, type SourceState } from '../SourcePane/SourcePane'
 
-function sourceStory(storyId: string, story: Story | null, status: LoadStatus): SourceStoryState {
+function sourceStory(storyId: string, story: Story | null, status: LoadStatus): SourceState {
   if (story !== null) {
-    return { kind: 'ready', storyId, story }
+    return { kind: 'ready', content: { kind: 'story', story } }
   }
 
   if (storyId === '') {
@@ -21,14 +21,14 @@ function sourceStory(storyId: string, story: Story | null, status: LoadStatus): 
   }
 
   if (status === 'loading') {
-    return { kind: 'loading', storyId }
+    return { kind: 'loading', sourceId: storyId }
   }
 
   if (status === 'error') {
-    return { kind: 'error', storyId }
+    return { kind: 'error', sourceId: storyId }
   }
 
-  return { kind: 'missing', storyId }
+  return { kind: 'missing', sourceId: storyId }
 }
 
 export function Workspace(): JSX.Element {
@@ -55,7 +55,7 @@ export function Workspace(): JSX.Element {
 
     return (
       <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
-        <StoryPane
+        <SourcePane
           source={source}
           creating={creatingArticle}
           expanded={storyPaneExpanded}
