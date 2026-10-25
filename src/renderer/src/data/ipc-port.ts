@@ -2,11 +2,12 @@ import type {
   ArticleDTO,
   DraftwriteApi,
   IpcResult,
+  PostDTO,
   StoryDTO
 } from '../../../main/adapters/ipc/contract'
-import { toArticle, toArticles, toStories, toStory } from './normalise'
+import { toArticle, toArticles, toPost, toPosts, toStories, toStory } from './normalise'
 import type { DataPort } from './port'
-import type { Article, Story } from './types'
+import type { Article, Post, Story } from './types'
 
 /** Error carried by a failed `IpcResult`, re-hydrated at the port boundary. */
 export class IpcError extends Error {
@@ -59,10 +60,22 @@ function toArticleDTO(article: Article): ArticleDTO {
   }
 }
 
+function toPostDTO(post: Post): PostDTO {
+  return {
+    id: post.ID,
+    topic: post.Topic,
+    text: post.Text,
+    state: post.State,
+    createdAt: post.CreatedAt,
+    updatedAt: post.UpdatedAt
+  }
+}
+
 export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort {
   return {
     listStories: async () => toStories(unwrap(await api.story.list())),
     listArticles: async () => toArticles(unwrap(await api.article.list())),
+    listPosts: async () => toPosts(unwrap(await api.post.list())),
     createStory: async (input) =>
       toStory(
         unwrap(
@@ -91,6 +104,18 @@ export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort 
       ),
     updateArticle: async (article) =>
       toArticle(unwrap(await api.article.update(toArticleDTO(article)))),
+    createPost: async (input) =>
+      toPost(
+        unwrap(
+          await api.post.create({
+            ...backendOwnedFields(),
+            topic: input.topic,
+            text: input.text,
+            state: 'pending'
+          })
+        )
+      ),
+    updatePost: async (post) => toPost(unwrap(await api.post.update(toPostDTO(post)))),
     deleteStory: async (id) => {
       unwrap(await api.story.delete(id))
     },

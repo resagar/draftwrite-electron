@@ -19,7 +19,8 @@ export function useContextualCreate(): ContextualCreate {
   const { story, hasStories } = useStoryInContext()
   const navigate = useWorkspaceNavigation()
 
-  const kind: CreateKind = library === 'stories' ? 'story' : 'article'
+  const kind: CreateKind =
+    library === 'stories' ? 'story' : library === 'articles' ? 'article' : 'post'
   const label = CREATE_LABELS[kind]
 
   // An Article is born from a Story, so there is nothing to create until one exists.
@@ -33,7 +34,9 @@ export function useContextualCreate(): ContextualCreate {
     navigate(
       kind === 'story'
         ? { type: 'create/start', kind: 'story' }
-        : { type: 'create/start', kind: 'article', storyId: story?.ID }
+        : kind === 'article'
+          ? { type: 'create/start', kind: 'article', storyId: story?.ID }
+          : { type: 'create/start', kind: 'post' }
     )
   }, [story?.ID, disabled, kind, navigate])
 

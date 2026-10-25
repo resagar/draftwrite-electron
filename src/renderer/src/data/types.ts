@@ -23,3 +23,14 @@ export type Article = {
   CreatedAt: string
   UpdatedAt: string
 }
+
+export type PostState = 'pending' | 'scheduled' | 'published'
+
+export type Post = {
+  ID: string
+  Topic: string
+  Text: string
+  State: PostState
+  CreatedAt: string
+  UpdatedAt: string
+}

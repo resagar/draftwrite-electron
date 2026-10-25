@@ -1,7 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { articleChannels, storyChannels } from '../main/adapters/ipc/contract'
-import type { ArticleDTO, DraftwriteApi, IpcResult, StoryDTO } from '../main/adapters/ipc/contract'
+import { articleChannels, postChannels, storyChannels } from '../main/adapters/ipc/contract'
+import type {
+  ArticleDTO,
+  DraftwriteApi,
+  IpcResult,
+  PostDTO,
+  StoryDTO
+} from '../main/adapters/ipc/contract'
 
 /**
  * Forwards a call to its channel and returns the envelope as is. The
@@ -28,6 +34,12 @@ const draftwrite: DraftwriteApi = {
     list: () => invoke<ArticleDTO[]>(articleChannels.list),
     update: (article: ArticleDTO) => invoke<ArticleDTO>(articleChannels.update, article),
     delete: (id: string) => invoke<void>(articleChannels.delete, id)
+  },
+  post: {
+    create: (post: PostDTO) => invoke<PostDTO>(postChannels.create, post),
+    get: (id: string) => invoke<PostDTO>(postChannels.get, id),
+    list: () => invoke<PostDTO[]>(postChannels.list),
+    update: (post: PostDTO) => invoke<PostDTO>(postChannels.update, post)
   }
 }
 

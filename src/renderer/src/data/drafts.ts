@@ -1,4 +1,4 @@
-import type { Article, Story } from './types'
+import type { Article, Post, Story } from './types'
 
 export function emptyStory(): Story {
   return { ID: '', Topic: '', Titles: [], Tags: [], Text: '', CreatedAt: '', UpdatedAt: '' }
@@ -12,6 +12,17 @@ export function emptyArticle(storyId: string): Article {
     Subtitle: '',
     Target: '',
     Text: '',
+    CreatedAt: '',
+    UpdatedAt: ''
+  }
+}
+
+export function emptyPost(): Post {
+  return {
+    ID: '',
+    Topic: '',
+    Text: '',
+    State: 'pending',
     CreatedAt: '',
     UpdatedAt: ''
   }

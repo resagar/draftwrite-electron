@@ -7,6 +7,8 @@ import type { Story } from '../../data/types'
 import { EmptyState } from '../../ui/EmptyState/EmptyState'
 import { ArticleEditor } from '../ArticleEditor/ArticleEditor'
 import { ArticlePane } from '../ArticlePane/ArticlePane'
+import { PostEditor } from '../PostEditor/PostEditor'
+import { PostPane } from '../PostPane/PostPane'
 import { StoryEditor } from '../StoryEditor/StoryEditor'
 import { StoryEditorPane } from '../StoryEditorPane/StoryEditorPane'
 import { SourcePane, type SourceState } from '../SourcePane/SourcePane'
@@ -32,15 +34,29 @@ function sourceStory(storyId: string, story: Story | null, status: LoadStatus): 
 }
 
 export function Workspace(): JSX.Element {
-  const { creating, creatingStoryId, selectedArticleId, selectedStoryId, storyPaneExpanded } =
-    useWorkspace()
+  const {
+    creating,
+    creatingStoryId,
+    selectedArticleId,
+    selectedStoryId,
+    selectedPostId,
+    storyPaneExpanded
+  } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
-  const { articleById, storyById, storiesStatus, reloadStories } = useLibrary()
+  const { articleById, storyById, postById, storiesStatus, reloadStories } = useLibrary()
 
   if (creating === 'story') {
     return (
       <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
         <StoryEditor stored={null} />
+      </section>
+    )
+  }
+
+  if (creating === 'post') {
+    return (
+      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+        <PostEditor stored={null} />
       </section>
     )
   }
@@ -83,6 +99,16 @@ export function Workspace(): JSX.Element {
     return (
       <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
         <StoryEditorPane story={story} />
+      </section>
+    )
+  }
+
+  const post = postById(selectedPostId)
+
+  if (post !== null) {
+    return (
+      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+        <PostPane post={post} />
       </section>
     )
   }

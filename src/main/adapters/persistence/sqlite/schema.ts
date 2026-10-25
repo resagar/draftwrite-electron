@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
+import { check, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 
 /**
  * Database schema, mirror of the initial SQL migration that lives in
@@ -42,4 +42,23 @@ export const articles = sqliteTable(
       .default(sql`(datetime('now'))`)
   },
   (table) => [unique().on(table.storyID, table.title)]
+)
+
+export const posts = sqliteTable(
+  'posts',
+  {
+    id: text('id').primaryKey(),
+    topic: text('topic').notNull(),
+    text: text('text').notNull(),
+    state: text('state').notNull().default('pending'),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(datetime('now'))`),
+    updatedAt: text('updated_at')
+      .notNull()
+      .default(sql`(datetime('now'))`)
+  },
+  (table) => [
+    check('posts_state_check', sql`${table.state} in ('pending', 'scheduled', 'published')`)
+  ]
 )

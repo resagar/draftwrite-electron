@@ -1,7 +1,7 @@
 import { EditorView } from '@codemirror/view'
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, jest } from '@jest/globals'
-import { makeArticle, makeStory } from './data/fake/factories'
+import { makeArticle, makePost, makeStory } from './data/fake/factories'
 import { createFakePort } from './data/fake/fake-port'
 import { createDeferred } from './test/deferred'
 import { renderApp } from './test/render-app'
@@ -81,6 +81,72 @@ describe('zen mode', () => {
       screen.getByRole('button', { name: 'Toggle sidebar' }).getAttribute('aria-pressed')
     ).toBe('true')
     expect(zenButton().getAttribute('aria-pressed')).toBe('false')
+  })
+})
+
+describe('posts', () => {
+  it('offers a third library that lists the stored posts', async () => {
+    const fake = createFakePort({
+      stories: [],
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note', Text: 'Short body' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+
+    const list = await screen.findByRole('listbox', { name: 'Posts' })
+
+    expect(within(list).getByRole('option', { name: /Launch note/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Posts' }).getAttribute('aria-current')).toBe('page')
+  })
+
+  it('creates a post once it has a topic, and opens it', async () => {
+    const fake = createFakePort({ stories: [], posts: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    await screen.findByText('No posts yet')
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Post' }))
+
+    expect(await screen.findByRole('region', { name: 'Post editor' })).toBeTruthy()
+    expect(fake.calls.createPost).toBe(0)
+
+    fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'Launch note' } })
+
+    await waitFor(() => expect(fake.calls.createPost).toBe(1), { timeout: 3000 })
+
+    expect(fake.createdPosts).toEqual([{ topic: 'Launch note', text: '' }])
+    expect(await screen.findByRole('option', { name: /Launch note/ })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Post' })).toBeTruthy()
+  })
+
+  it('writes nothing and says so while the topic is blank', async () => {
+    const fake = createFakePort({ stories: [], posts: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    await screen.findByText('No posts yet')
+    fireEvent.click(screen.getByRole('button', { name: 'New Post' }))
+
+    expect(await screen.findByText(/A topic is required/)).toBeTruthy()
+    expect(fake.calls.createPost).toBe(0)
+  })
+
+  it('reopens a stored post from the list', async () => {
+    const fake = createFakePort({
+      stories: [],
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note', Text: 'Short body' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    const list = await screen.findByRole('listbox', { name: 'Posts' })
+
+    fireEvent.click(within(list).getByRole('option', { name: /Launch note/ }))
+
+    expect(await screen.findByRole('region', { name: 'Post' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Post editor' })).toBeTruthy()
   })
 })
 

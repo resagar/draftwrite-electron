@@ -20,7 +20,7 @@ describe('openDatabase', () => {
   it('applies the initial migration on an in-memory database', () => {
     const db = openDatabase(':memory:')
 
-    expect(listTables(db)).toEqual(['__drizzle_migrations', 'articles', 'stories'])
+    expect(listTables(db)).toEqual(['__drizzle_migrations', 'articles', 'posts', 'stories'])
 
     insertStory(db, 'story-1', 'a lighthouse')
     const [story] = db.select().from(stories).all()

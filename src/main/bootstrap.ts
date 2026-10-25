@@ -1,9 +1,11 @@
 import { mkdirSync } from 'node:fs'
 import { newArticleRepository } from './adapters/persistence/sqlite/article-repository'
+import { newPostRepository } from './adapters/persistence/sqlite/post-repository'
 import { newStoryRepository } from './adapters/persistence/sqlite/story-repository'
 import { newArticleService, type ArticleService } from './article/service'
 import { openDatabase, type AppDatabase } from './db'
 import { resolveDataDir, resolveDatabasePath, type DataDirOptions } from './platform/data-dir'
+import { newPostService, type PostService } from './post/service'
 import { newStoryService, type StoryService } from './story/service'
 
 /** Wired application: the services the IPC boundary exposes and the database. */
@@ -11,6 +13,7 @@ export interface Bootstrap {
   services: {
     story: StoryService
     article: ArticleService
+    post: PostService
   }
   db: AppDatabase
 }
@@ -28,11 +31,13 @@ export function bootstrap(options: DataDirOptions = {}): Bootstrap {
   const db = openDatabase(resolveDatabasePath(options))
   const storyRepo = newStoryRepository(db)
   const articleRepo = newArticleRepository(db)
+  const postRepo = newPostRepository(db)
 
   return {
     services: {
       story: newStoryService(storyRepo),
-      article: newArticleService(articleRepo, storyRepo)
+      article: newArticleService(articleRepo, storyRepo),
+      post: newPostService(postRepo)
     },
     db
   }

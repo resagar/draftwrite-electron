@@ -9,11 +9,11 @@ import {
 } from 'react'
 import type { SortDirection } from '../data/library'
 
-export type Library = 'stories' | 'articles'
+export type Library = 'stories' | 'articles' | 'posts'
 
 export type ViewMode = 'edit' | 'split' | 'preview'
 
-export type CreateKind = 'story' | 'article'
+export type CreateKind = 'story' | 'article' | 'post'
 
 export type DeleteRequest =
   { kind: 'delete-story'; storyId: string } | { kind: 'delete-article'; articleId: string }
@@ -22,6 +22,7 @@ export type WorkspaceState = {
   library: Library
   selectedStoryId: string | null
   selectedArticleId: string | null
+  selectedPostId: string | null
   tagFilter: string | null
   sortDirection: SortDirection
   viewMode: ViewMode
@@ -42,6 +43,8 @@ export type WorkspaceAction =
   | { type: 'story/deleted'; storyId: string }
   | { type: 'article/select'; articleId: string | null }
   | { type: 'article/deleted'; articleId: string }
+  | { type: 'post/select'; postId: string | null }
+  | { type: 'post/deleted'; postId: string }
   | { type: 'filter/tag'; tag: string | null }
   | { type: 'sort/toggle' }
   | { type: 'viewMode/select'; viewMode: ViewMode }
@@ -60,6 +63,7 @@ export const initialWorkspaceState: WorkspaceState = {
   library: 'stories',
   selectedStoryId: null,
   selectedArticleId: null,
+  selectedPostId: null,
   tagFilter: null,
   sortDirection: 'desc',
   viewMode: 'split',
@@ -82,6 +86,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         ...state,
         selectedStoryId: action.storyId,
         selectedArticleId: null,
+        selectedPostId: null,
         creating: null,
         creatingStoryId: null
       }
@@ -91,6 +96,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return {
         ...state,
         selectedArticleId: action.articleId,
+        selectedPostId: null,
         creating: null,
         creatingStoryId: null
       }
@@ -99,6 +105,17 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return state.selectedArticleId === action.articleId
         ? { ...state, selectedArticleId: null }
         : state
+    case 'post/select':
+      return {
+        ...state,
+        selectedPostId: action.postId,
+        selectedStoryId: null,
+        selectedArticleId: null,
+        creating: null,
+        creatingStoryId: null
+      }
+    case 'post/deleted':
+      return state.selectedPostId === action.postId ? { ...state, selectedPostId: null } : state
     case 'filter/tag':
       return { ...state, tagFilter: action.tag }
     case 'sort/toggle':

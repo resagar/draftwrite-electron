@@ -1,19 +1,24 @@
-import { makeArticle, makeStory } from './factories'
-import type { DataPort, NewArticle, NewStory } from '../port'
-import type { Article, Story } from '../types'
+import { makeArticle, makePost, makeStory } from './factories'
+import type { DataPort, NewArticle, NewPost, NewStory } from '../port'
+import type { Article, Post, Story } from '../types'
 
 export type FakePortOptions = {
   stories?: Story[]
   articles?: Article[]
+  posts?: Post[]
   listStoriesFailures?: number
   listArticlesFailures?: number
+  listPostsFailures?: number
   listStoriesGate?: Promise<void>
   listArticlesGate?: Promise<void>
+  listPostsGate?: Promise<void>
   createStoryFailures?: number
   updateStoryFailures?: number
   updateStoryGate?: Promise<void>
   createArticleFailures?: number
   updateArticleFailures?: number
+  createPostFailures?: number
+  updatePostFailures?: number
   deleteStoryFailures?: number
   deleteArticleFailures?: number
 }
@@ -23,10 +28,13 @@ export type FakePort = {
   calls: {
     listStories: number
     listArticles: number
+    listPosts: number
     createStory: number
     updateStory: number
     createArticle: number
     updateArticle: number
+    createPost: number
+    updatePost: number
     deleteStory: number
     deleteArticle: number
   }
@@ -34,6 +42,8 @@ export type FakePort = {
   updatedStories: Story[]
   createdArticles: NewArticle[]
   updatedArticles: Article[]
+  createdPosts: NewPost[]
+  updatedPosts: Post[]
   deletedStoryIds: string[]
   deletedArticleIds: string[]
 }
@@ -66,29 +76,38 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
   const calls = {
     listStories: 0,
     listArticles: 0,
+    listPosts: 0,
     createStory: 0,
     updateStory: 0,
     createArticle: 0,
     updateArticle: 0,
+    createPost: 0,
+    updatePost: 0,
     deleteStory: 0,
     deleteArticle: 0
   }
 
   const stories = [...(options.stories ?? [])]
   const articles = [...(options.articles ?? [])]
+  const posts = [...(options.posts ?? [])]
   const createdStories: NewStory[] = []
   const updatedStories: Story[] = []
   const createdArticles: NewArticle[] = []
   const updatedArticles: Article[] = []
+  const createdPosts: NewPost[] = []
+  const updatedPosts: Post[] = []
   const deletedStoryIds: string[] = []
   const deletedArticleIds: string[] = []
 
   const listStoryCounter = { remaining: options.listStoriesFailures ?? 0 }
   const listArticleCounter = { remaining: options.listArticlesFailures ?? 0 }
+  const listPostCounter = { remaining: options.listPostsFailures ?? 0 }
   const createStoryCounter = { remaining: options.createStoryFailures ?? 0 }
   const updateStoryCounter = { remaining: options.updateStoryFailures ?? 0 }
   const createArticleCounter = { remaining: options.createArticleFailures ?? 0 }
   const updateArticleCounter = { remaining: options.updateArticleFailures ?? 0 }
+  const createPostCounter = { remaining: options.createPostFailures ?? 0 }
+  const updatePostCounter = { remaining: options.updatePostFailures ?? 0 }
   const deleteStoryCounter = { remaining: options.deleteStoryFailures ?? 0 }
   const deleteArticleCounter = { remaining: options.deleteArticleFailures ?? 0 }
 
@@ -98,6 +117,8 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     updatedStories,
     createdArticles,
     updatedArticles,
+    createdPosts,
+    updatedPosts,
     deletedStoryIds,
     deletedArticleIds,
     port: {
@@ -108,6 +129,10 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
       async listArticles() {
         calls.listArticles += 1
         return load(() => [...articles], listArticleCounter, options.listArticlesGate)
+      },
+      async listPosts() {
+        calls.listPosts += 1
+        return load(() => [...posts], listPostCounter, options.listPostsGate)
       },
       createStory(input) {
         calls.createStory += 1
@@ -166,6 +191,31 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
           }
           return article
         }, updateArticleCounter)
+      },
+      createPost(input) {
+        calls.createPost += 1
+        return write(() => {
+          createdPosts.push(input)
+          const created = makePost({
+            ID: `post-${posts.length + 1}`,
+            Topic: input.topic,
+            Text: input.text,
+            State: 'pending'
+          })
+          posts.unshift(created)
+          return created
+        }, createPostCounter)
+      },
+      updatePost(post) {
+        calls.updatePost += 1
+        return write(() => {
+          updatedPosts.push(post)
+          const index = posts.findIndex((current) => current.ID === post.ID)
+          if (index >= 0) {
+            posts[index] = post
+          }
+          return post
+        }, updatePostCounter)
       },
       deleteStory(id) {
         calls.deleteStory += 1

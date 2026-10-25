@@ -1,4 +1,5 @@
 import type { Article } from '../../article/model'
+import { postStates, type Post, type PostState } from '../../post/model'
 import type { Story } from '../../story/model'
 
 /**
@@ -82,4 +83,35 @@ export function parseArticleCreatePayload(payload: unknown): Article {
 export function parseArticleUpdatePayload(payload: unknown): Article {
   const record = expectRecord(payload)
   return { ...parseArticleCreatePayload(record), id: expectString(record.id, 'id') }
+}
+
+/** Narrows a payload field to one of the post states or fails the boundary. */
+export function expectPostState(value: unknown): PostState {
+  if (typeof value === 'string' && (postStates as readonly string[]).includes(value)) {
+    return value as PostState
+  }
+  throw new Error(`invalid payload: state must be one of ${postStates.join(', ')}`)
+}
+
+/** Builds the post create input; the state is always `pending`. */
+export function parsePostCreatePayload(payload: unknown): Post {
+  const record = expectRecord(payload)
+  return {
+    id: '',
+    topic: expectString(record.topic, 'topic'),
+    text: expectString(record.text, 'text'),
+    state: 'pending',
+    createdAt: '',
+    updatedAt: ''
+  }
+}
+
+/** Builds the post update input: the create fields plus the id and the state. */
+export function parsePostUpdatePayload(payload: unknown): Post {
+  const record = expectRecord(payload)
+  return {
+    ...parsePostCreatePayload(record),
+    id: expectString(record.id, 'id'),
+    state: expectPostState(record.state)
+  }
 }

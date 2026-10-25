@@ -1,4 +1,4 @@
-import type { Article, Story } from '../types'
+import type { Article, Post, Story } from '../types'
 
 export function makeStory(overrides: Partial<Story> = {}): Story {
   return {
@@ -21,6 +21,18 @@ export function makeArticle(overrides: Partial<Article> = {}): Article {
     Subtitle: 'A subtitle',
     Target: 'A target',
     Text: 'The article text.',
+    CreatedAt: '2024-10-14T10:00:00',
+    UpdatedAt: '2024-10-14T10:00:00',
+    ...overrides
+  }
+}
+
+export function makePost(overrides: Partial<Post> = {}): Post {
+  return {
+    ID: 'post-1',
+    Topic: 'A post',
+    Text: 'The post text.',
+    State: 'pending',
     CreatedAt: '2024-10-14T10:00:00',
     UpdatedAt: '2024-10-14T10:00:00',
     ...overrides

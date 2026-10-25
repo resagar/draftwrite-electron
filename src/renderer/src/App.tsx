@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { JSX } from 'react'
 import { ArticleList } from './list/ArticleList/ArticleList'
+import { PostList } from './list/PostList/PostList'
 import { StoryList } from './list/StoryList/StoryList'
 import { Sidebar } from './sidebar/Sidebar/Sidebar'
 import { AppShell } from './shell/AppShell/AppShell'
@@ -54,7 +55,15 @@ function AppLayout(): JSX.Element {
     <>
       <AppShell
         sidebar={<Sidebar />}
-        list={library === 'stories' ? <StoryList /> : <ArticleList />}
+        list={
+          library === 'stories' ? (
+            <StoryList />
+          ) : library === 'articles' ? (
+            <ArticleList />
+          ) : (
+            <PostList />
+          )
+        }
         workspace={<Workspace />}
       />
 

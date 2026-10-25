@@ -1,5 +1,5 @@
-import type { ArticleDTO, StoryDTO } from '../../../main/adapters/ipc/contract'
-import type { Article, Story } from './types'
+import type { ArticleDTO, PostDTO, StoryDTO } from '../../../main/adapters/ipc/contract'
+import type { Article, Post, Story } from './types'
 
 export function toStory(wire: StoryDTO): Story {
   return {
@@ -32,4 +32,19 @@ export function toArticle(wire: ArticleDTO): Article {
 
 export function toArticles(wire: ArticleDTO[]): Article[] {
   return (wire ?? []).map(toArticle)
+}
+
+export function toPost(wire: PostDTO): Post {
+  return {
+    ID: wire.id,
+    Topic: wire.topic,
+    Text: wire.text,
+    State: wire.state,
+    CreatedAt: wire.createdAt,
+    UpdatedAt: wire.updatedAt
+  }
+}
+
+export function toPosts(wire: PostDTO[]): Post[] {
+  return (wire ?? []).map(toPost)
 }

@@ -1,4 +1,5 @@
 import type { Article } from '../../article/model'
+import type { Post } from '../../post/model'
 import type { Story } from '../../story/model'
 
 /**
@@ -12,6 +13,9 @@ export type StoryDTO = Story
 
 /** An article travels over the boundary as the domain entity, untouched. */
 export type ArticleDTO = Article
+
+/** A post travels over the boundary as the domain entity, untouched. */
+export type PostDTO = Post
 
 /** Error payload of a failed result. */
 export interface IpcError {
@@ -42,6 +46,14 @@ export const articleChannels = {
   delete: 'article:delete'
 } as const
 
+/** Channel names of the post use cases. */
+export const postChannels = {
+  create: 'post:create',
+  get: 'post:get',
+  list: 'post:list',
+  update: 'post:update'
+} as const
+
 /**
  * Minimal structural view of Electron's `ipcMain`, so the registration can be
  * exercised without Electron (see the fake in `register.test.ts`).
@@ -69,5 +81,11 @@ export interface DraftwriteApi {
     list(): Promise<IpcResult<ArticleDTO[]>>
     update(article: ArticleDTO): Promise<IpcResult<ArticleDTO>>
     delete(id: string): Promise<IpcResult<void>>
+  }
+  post: {
+    create(post: PostDTO): Promise<IpcResult<PostDTO>>
+    get(id: string): Promise<IpcResult<PostDTO>>
+    list(): Promise<IpcResult<PostDTO[]>>
+    update(post: PostDTO): Promise<IpcResult<PostDTO>>
   }
 }

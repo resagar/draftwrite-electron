@@ -1,4 +1,4 @@
-import { FileText, Inbox } from 'lucide-react'
+import { FileText, Inbox, Send } from 'lucide-react'
 import type { JSX, ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
@@ -47,6 +47,11 @@ export function LibraryNav({ collapsed }: LibraryNavProps): JSX.Element {
         'articles',
         'Articles',
         <FileText aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-secondary" />
+      )}
+      {renderEntry(
+        'posts',
+        'Posts',
+        <Send aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-warning" />
       )}
     </nav>
   )
