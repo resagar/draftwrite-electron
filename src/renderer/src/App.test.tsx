@@ -273,6 +273,29 @@ describe('post source', () => {
   })
 })
 
+describe('deleting a post', () => {
+  it('deletes the post after the confirmation', async () => {
+    const fake = createFakePort({
+      stories: [],
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    const list = await screen.findByRole('listbox', { name: 'Posts' })
+
+    fireEvent.click(within(list).getByRole('button', { name: 'Delete post “Launch note”' }))
+
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete post' }))
+
+    await waitFor(() => expect(fake.calls.deletePost).toBe(1), { timeout: 3000 })
+    expect(fake.deletedPostIds).toEqual(['p1'])
+    await waitFor(() => expect(screen.queryByRole('option', { name: /Launch note/ })).toBeNull())
+    expect(await screen.findByText('No posts yet')).toBeTruthy()
+  })
+})
+
 describe('library', () => {
   it('announces the active library and switches to articles', async () => {
     renderApp(createFakePort({ stories: [makeStory()] }).port)

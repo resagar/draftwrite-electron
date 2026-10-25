@@ -16,6 +16,7 @@ export interface PostService {
   get(id: string): Promise<Post>
   list(): Promise<Post[]>
   update(post: Post): Promise<Post>
+  delete(id: string): Promise<void>
 }
 
 /**
@@ -80,6 +81,9 @@ export function newPostService(
       }
 
       return repo.update(normalised)
+    },
+    async delete(id) {
+      return repo.delete(id)
     }
   }
 }

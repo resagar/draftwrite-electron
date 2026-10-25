@@ -34,4 +34,5 @@ export type DataPort = {
   updatePost(post: Post): Promise<Post>
   deleteStory(id: string): Promise<void>
   deleteArticle(id: string): Promise<void>
+  deletePost(id: string): Promise<void>
 }

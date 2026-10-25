@@ -26,9 +26,9 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 
 - `src/main/main.ts` - composition root (lifecycle de Electron: instancia única, ventana y registro de los handlers IPC); el arranque de la BD vive en `bootstrap.ts`
 - `src/main/bootstrap.ts` - resuelve el directorio de datos (modo 0700), abre la BD y construye repositorios y servicios; `main.ts` lo usa para el wiring
-- `src/main/<domain>/` - feature/dominio: `model.ts` (entidades y value objects, dominio puro), `repository.ts` (puerto del repositorio), `service.ts` (puerto + implementación del servicio de aplicación), `fake.ts` (dobles de test). Dominios actuales: `story/`, `article/`
+- `src/main/<domain>/` - feature/dominio: `model.ts` (entidades y value objects, dominio puro), `repository.ts` (puerto del repositorio), `service.ts` (puerto + implementación del servicio de aplicación), `fake.ts` (dobles de test). Dominios actuales: `story/`, `article/`, `post/`
 - `src/main/platform/` - helpers de plataforma (p. ej. la ruta XDG de la BD), sin dependencias de Electron
-- `src/main/adapters/ipc/` - adapter de entrada (el equivalente de `adapters/wails/` del Go): `contract.ts` (DTOs, canales e `IpcResult`), `register.ts` (registro de los handlers `ipcMain.handle`), `story-service.ts` y `article-service.ts` (wrappers de los servicios de aplicación), `errors.ts` y `validate.ts` (frontera: errores y payloads)
+- `src/main/adapters/ipc/` - adapter de entrada (el equivalente de `adapters/wails/` del Go): `contract.ts` (DTOs, canales e `IpcResult`), `register.ts` (registro de los handlers `ipcMain.handle`), `story-service.ts`, `article-service.ts` y `post-service.ts` (wrappers de los servicios de aplicación), `errors.ts` y `validate.ts` (frontera: errores y payloads)
 - `src/main/adapters/persistence/sqlite/` - adapter de salida: `schema.ts` Drizzle, `migrations/` de drizzle-kit y los repositorios
 - `src/preload/index.ts` - `contextBridge`: expone la API tipada al renderer
 - `src/renderer/` - app React; su único punto de acceso a datos es `src/renderer/src/data/ipc-port.ts`

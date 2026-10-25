@@ -60,7 +60,7 @@ describe('registerIpcHandlers', () => {
     jest.restoreAllMocks()
   })
 
-  it('registers exactly the fifteen channels of the contract', () => {
+  it('registers exactly the sixteen channels of the contract', () => {
     const { ipcMain } = newHarness()
     const expected = [
       ...Object.values(storyChannels),
@@ -68,7 +68,7 @@ describe('registerIpcHandlers', () => {
       ...Object.values(postChannels)
     ].sort()
 
-    expect(ipcMain.handlers.size).toBe(15)
+    expect(ipcMain.handlers.size).toBe(16)
     expect([...ipcMain.handlers.keys()].sort()).toEqual(expected)
   })
 
@@ -359,5 +359,15 @@ describe('registerIpcHandlers', () => {
       error: { code: 'errUnexpected', message: 'invalid payload: storyID must be a string' }
     })
     expect(postRepo.update).not.toHaveBeenCalled()
+  })
+
+  it('deletes a post over its channel', async () => {
+    const { ipcMain, postRepo } = newHarness()
+    postRepo.delete.mockResolvedValue(undefined)
+
+    const result = await invoke(ipcMain, postChannels.delete, 'post-1')
+
+    expect(result).toEqual({ ok: true, value: undefined })
+    expect(postRepo.delete).toHaveBeenCalledWith('post-1')
   })
 })

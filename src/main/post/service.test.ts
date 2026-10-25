@@ -257,4 +257,20 @@ describe('postService', () => {
     expect(storyRepo.get).not.toHaveBeenCalled()
     expect(repo.update).toHaveBeenCalledTimes(1)
   })
+
+  it('deletes a post', async () => {
+    const { service, repo } = newServiceUnderTest()
+    repo.delete.mockResolvedValue(undefined)
+
+    await service.delete('id-1')
+
+    expect(repo.delete).toHaveBeenCalledWith('id-1')
+  })
+
+  it('propagates not found on delete', async () => {
+    const { service, repo } = newServiceUnderTest()
+    repo.delete.mockRejectedValue(errNotFound)
+
+    await expect(service.delete('missing')).rejects.toBe(errNotFound)
+  })
 })

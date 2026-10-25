@@ -53,6 +53,11 @@ export function newPostRepository(db: AppDatabase): PostRepository {
         .returning()
         .get()
       return toPost(row)
+    },
+
+    async delete(id) {
+      // Deleting a missing id is silent: the statement simply affects no rows.
+      db.delete(posts).where(eq(posts.id, id)).run()
     }
   }
 }

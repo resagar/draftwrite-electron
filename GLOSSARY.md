@@ -6,14 +6,26 @@ App de escritorio para escritores: organiza historias (`Story`) y los artículos
 
 **Story**:
 Unidad de organización de escritura: un tema que la identifica, con títulos candidatos, tags y un texto base. Solo el tema es obligatorio; lo demás puede estar vacío. Es la unidad padre de los Articles.
-_Avoid_: historia, post, entrada
+_Avoid_: historia, entrada
 
 **Article**:
 Pieza de escritura derivada de exactamente una Story: un título propio, y opcionalmente subtítulo, objetivo y texto.
-_Avoid_: post, entrada, nota
+_Avoid_: entrada, nota
+
+**Post**:
+Publicación corta para redes sociales: un topic obligatorio, un texto opcional, un estado editorial y, opcionalmente, una Story o un Article como fuente (nunca ambos).
+_Avoid_: nota, tweet, entrada
+
+**PostState**:
+El estado editorial de un Post: `pending`, `scheduled` o `published`. Todo Post nace `pending` y las transiciones son libres.
+_Avoid_: status
+
+**ScheduledAt**:
+La fecha ISO 8601 opcional de un Post programado. Solo existe mientras el estado es `scheduled`; al salir de ese estado se limpia.
+_Avoid_: fecha de publicación, publishAt
 
 **Topic**:
-El tema que identifica a una Story; único en todo el sistema y obligatorio: una Story no existe sin él.
+El tema que identifica a una Story (obligatorio y único en todo el sistema) o el resumen corto que identifica a un Post (obligatorio y sin unicidad): ninguna de las dos entidades existe sin él.
 _Avoid_: asunto
 
 **Titles**:

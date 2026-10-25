@@ -51,7 +51,8 @@ export const postChannels = {
   create: 'post:create',
   get: 'post:get',
   list: 'post:list',
-  update: 'post:update'
+  update: 'post:update',
+  delete: 'post:delete'
 } as const
 
 /**
@@ -87,5 +88,6 @@ export interface DraftwriteApi {
     get(id: string): Promise<IpcResult<PostDTO>>
     list(): Promise<IpcResult<PostDTO[]>>
     update(post: PostDTO): Promise<IpcResult<PostDTO>>
+    delete(id: string): Promise<IpcResult<void>>
   }
 }

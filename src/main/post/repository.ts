@@ -19,4 +19,5 @@ export interface PostRepository {
   get(id: string): Promise<Post>
   list(): Promise<Post[]>
   update(post: Post): Promise<Post>
+  delete(id: string): Promise<void>
 }

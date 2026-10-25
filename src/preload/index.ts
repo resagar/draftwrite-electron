@@ -39,7 +39,8 @@ const draftwrite: DraftwriteApi = {
     create: (post: PostDTO) => invoke<PostDTO>(postChannels.create, post),
     get: (id: string) => invoke<PostDTO>(postChannels.get, id),
     list: () => invoke<PostDTO[]>(postChannels.list),
-    update: (post: PostDTO) => invoke<PostDTO>(postChannels.update, post)
+    update: (post: PostDTO) => invoke<PostDTO>(postChannels.update, post),
+    delete: (id: string) => invoke<void>(postChannels.delete, id)
   }
 }
 

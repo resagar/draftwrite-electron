@@ -12,17 +12,17 @@ El contrato viaja por una cadena de delegación, sin generación de código:
 src/renderer/src/data/ipc-port.ts (DataPort)
   → src/preload/index.ts (contextBridge → window.draftwrite)
     → src/main/adapters/ipc/register.ts (ipcMain.handle)
-      → src/main/adapters/ipc/{story-service,article-service}.ts (wrappers: validación y envoltura)
+      → src/main/adapters/ipc/{story-service,article-service,post-service}.ts (wrappers: validación y envoltura)
         → src/main/<domain>/service.ts (servicios de aplicación)
           → src/main/adapters/persistence/sqlite/ (repositorios)
 ```
 
-Los canales son 11: `story:create`, `story:get`, `story:list`, `story:update`, `story:delete`,
-`article:create`, `article:get`, `article:listByStory`, `article:list`, `article:update` y
-`article:delete`.
+Los canales son 16: `story:create`, `story:get`, `story:list`, `story:update`, `story:delete`,
+`article:create`, `article:get`, `article:listByStory`, `article:list`, `article:update`,
+`article:delete`, `post:create`, `post:get`, `post:list`, `post:update` y `post:delete`.
 
-El contrato se mantiene a mano en `src/main/adapters/ipc/contract.ts` (`StoryDTO`, `ArticleDTO` y las
-firmas); se verifica con `pnpm typecheck` y los tests.
+El contrato se mantiene a mano en `src/main/adapters/ipc/contract.ts` (`StoryDTO`, `ArticleDTO`,
+`PostDTO` y las firmas); se verifica con `pnpm typecheck` y los tests.
 
 Los wrappers de `src/main/adapters/ipc/` no contienen reglas de negocio: validan la forma del payload en la
 frontera (`validate.ts`), envuelven el resultado (`errors.ts`) y delegan al servicio de aplicación
@@ -57,6 +57,12 @@ id: string · topic: string · titles: string[] · tags: string[] · text: strin
 
 ```
 id: string · storyID: string · title: string · subtitle: string · target: string · text: string · createdAt: string · updatedAt: string
+```
+
+`PostDTO` (entidad independiente, con fuente opcional):
+
+```
+id: string · topic: string · text: string · state: 'pending' | 'scheduled' | 'published' · scheduledAt: string | null · storyID: string | null · articleID: string | null · createdAt: string · updatedAt: string
 ```
 
 Los timestamps viajan como string ISO 8601 y los asigna el backend. Los errores de dominio llegan
@@ -182,6 +188,67 @@ update(article: ArticleDTO): Promise<ArticleDTO>
   - El resto de campos sí son actualizables.
 - Errores: `errStoryIDImmutable | errNotFound | errTitleTaken` y los centinelas de validación del
   modelo (requeridos / longitud).
+
+### delete
+
+```
+delete(id: string): Promise<void>
+```
+
+- Silencioso: si el id no existe, no hay error (idempotente).
+
+## postService
+
+Entidad independiente con estado editorial y fuente opcional. No depende de otro dominio, pero
+verifica la fuente cuando la tiene.
+
+### create
+
+```
+create(post: PostDTO): Promise<PostDTO>
+```
+
+- Recibe la entidad completa; el `id` lo genera el dominio (`newPost()`).
+- `topic`: obligatorio, recortado; en blanco → `errTopicRequired`. Sin unicidad.
+- `text`: opcional; una cadena vacía es válida (ADR-0005).
+- `state`: el dominio fuerza `pending` al crear; el payload no puede imponer otro.
+- `scheduledAt`: siempre `null` al crear.
+- `storyID` / `articleID`: opcionales y excluyentes; ambos a la vez → `errSourceAmbiguous`.
+  Si se indica una fuente, debe existir → `errSourceNotFound`.
+- Errores: `errTopicRequired | errSourceAmbiguous | errSourceNotFound`.
+- Retorno: `PostDTO` con `id` generado (UUID v4) y estado `pending`.
+
+### get
+
+```
+get(id: string): Promise<PostDTO>
+```
+
+- Errores: `errNotFound`.
+
+### list
+
+```
+list(): Promise<PostDTO[]>
+```
+
+- Devuelve todos los posts, en orden descendente por fecha de creación.
+
+### update
+
+```
+update(post: PostDTO): Promise<PostDTO>
+```
+
+- Recibe la entidad completa; `id` obligatorio.
+- Flujo (ADR-0003): valida → lee el almacenado → compara → persiste.
+- `state` y `scheduledAt`: las transiciones son libres. Si el estado no es `scheduled`, `scheduledAt`
+  se guarda como `null`; con `scheduled`, la fecha es opcional pero debe ser ISO 8601 →
+  `errScheduledAtInvalid`.
+- `storyID` / `articleID`: solo cambian si el estado **almacenado** es `pending` → `errSourceLocked`
+  (desprogramar y reasignar la fuente pide dos guardados). Si cambian, la nueva fuente debe existir →
+  `errSourceNotFound`. Con ambas a la vez → `errSourceAmbiguous`.
+- Errores: `errTopicRequired | errSourceAmbiguous | errSourceLocked | errScheduledAtInvalid | errSourceNotFound | errNotFound`.
 
 ### delete
 

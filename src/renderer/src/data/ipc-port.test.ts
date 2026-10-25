@@ -66,7 +66,8 @@ function createFakeApi(overrides: ApiOverrides = {}): DraftwriteApi {
     create: async (input) => ({ ok: true, value: input }),
     get: async () => ({ ok: false, error: { code: 'errNotFound', message: 'post not found' } }),
     list: async () => ({ ok: true, value: [] }),
-    update: async (input) => ({ ok: true, value: input })
+    update: async (input) => ({ ok: true, value: input }),
+    delete: async () => ({ ok: true, value: undefined })
   }
 
   return {

@@ -127,6 +127,9 @@ export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort 
     },
     deleteArticle: async (id) => {
       unwrap(await api.article.delete(id))
+    },
+    deletePost: async (id) => {
+      unwrap(await api.post.delete(id))
     }
   }
 }

@@ -161,4 +161,14 @@ describe('postRepository', () => {
         .run()
     ).toThrow()
   })
+
+  it('deletes a post and stays silent for a missing id', async () => {
+    const repo = newPostRepository(db)
+    await repo.create(basePost)
+
+    await repo.delete('post-1')
+
+    await expect(repo.get('post-1')).rejects.toBe(errNotFound)
+    await expect(repo.delete('missing')).resolves.toBeUndefined()
+  })
 })

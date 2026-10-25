@@ -13,7 +13,7 @@ export interface IpcServices {
   post: PostService
 }
 
-/** Registers the 15 handlers of the contract: story first, then article and post. */
+/** Registers the 16 handlers of the contract: story first, then article and post. */
 export function registerIpcHandlers(ipcMain: IpcHandlerRegistry, services: IpcServices): void {
   registerStoryHandlers(ipcMain, services.story)
   registerArticleHandlers(ipcMain, services.article)

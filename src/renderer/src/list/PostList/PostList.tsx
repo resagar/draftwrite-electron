@@ -1,4 +1,4 @@
-import { Send } from 'lucide-react'
+import { Send, Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
 import { formatRelativeDate } from '../../data/format'
 import type { PostState } from '../../data/types'
@@ -6,8 +6,9 @@ import { cn } from '../../lib/cn'
 import { CREATE_LABELS } from '../../lib/create-labels'
 import { useLibrary } from '../../state/library-context'
 import { useWorkspaceNavigation } from '../../state/use-navigation'
-import { useWorkspace } from '../../state/workspace-context'
+import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { ErrorState } from '../../ui/ErrorState/ErrorState'
+import { IconButton } from '../../ui/IconButton/IconButton'
 import { SkeletonList } from '../../ui/Skeleton/Skeleton'
 import { ListColumn } from '../ListColumn/ListColumn'
 import { ListEmpty } from '../ListEmpty/ListEmpty'
@@ -30,6 +31,7 @@ const STATE_BADGES: Record<PostState, string> = {
 export function PostList(): JSX.Element {
   const { posts, postsStatus, reloadPosts } = useLibrary()
   const { selectedPostId, zenMode } = useWorkspace()
+  const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
 
   if (postsStatus === 'loading') {
@@ -112,6 +114,20 @@ export function PostList(): JSX.Element {
               ) : null}
             </div>
           </>
+        )}
+        renderAction={(post) => (
+          <IconButton
+            label={`Delete post “${post.Topic}”`}
+            tone="danger"
+            onClick={() =>
+              dispatch({
+                type: 'dialog/open',
+                request: { kind: 'delete-post', postId: post.ID }
+              })
+            }
+          >
+            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+          </IconButton>
         )}
       />
     </ListColumn>

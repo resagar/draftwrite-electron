@@ -21,6 +21,7 @@ export type FakePortOptions = {
   updatePostFailures?: number
   deleteStoryFailures?: number
   deleteArticleFailures?: number
+  deletePostFailures?: number
 }
 
 export type FakePort = {
@@ -37,6 +38,7 @@ export type FakePort = {
     updatePost: number
     deleteStory: number
     deleteArticle: number
+    deletePost: number
   }
   createdStories: NewStory[]
   updatedStories: Story[]
@@ -46,6 +48,7 @@ export type FakePort = {
   updatedPosts: Post[]
   deletedStoryIds: string[]
   deletedArticleIds: string[]
+  deletedPostIds: string[]
 }
 
 type Counter = { remaining: number }
@@ -84,7 +87,8 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     createPost: 0,
     updatePost: 0,
     deleteStory: 0,
-    deleteArticle: 0
+    deleteArticle: 0,
+    deletePost: 0
   }
 
   const stories = [...(options.stories ?? [])]
@@ -98,6 +102,7 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
   const updatedPosts: Post[] = []
   const deletedStoryIds: string[] = []
   const deletedArticleIds: string[] = []
+  const deletedPostIds: string[] = []
 
   const listStoryCounter = { remaining: options.listStoriesFailures ?? 0 }
   const listArticleCounter = { remaining: options.listArticlesFailures ?? 0 }
@@ -110,6 +115,7 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
   const updatePostCounter = { remaining: options.updatePostFailures ?? 0 }
   const deleteStoryCounter = { remaining: options.deleteStoryFailures ?? 0 }
   const deleteArticleCounter = { remaining: options.deleteArticleFailures ?? 0 }
+  const deletePostCounter = { remaining: options.deletePostFailures ?? 0 }
 
   return {
     calls,
@@ -121,6 +127,7 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     updatedPosts,
     deletedStoryIds,
     deletedArticleIds,
+    deletedPostIds,
     port: {
       async listStories() {
         calls.listStories += 1
@@ -218,6 +225,16 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
           }
           return post
         }, updatePostCounter)
+      },
+      deletePost(id) {
+        calls.deletePost += 1
+        return write(() => {
+          deletedPostIds.push(id)
+          const index = posts.findIndex((post) => post.ID === id)
+          if (index >= 0) {
+            posts.splice(index, 1)
+          }
+        }, deletePostCounter)
       },
       deleteStory(id) {
         calls.deleteStory += 1

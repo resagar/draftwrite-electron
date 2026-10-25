@@ -16,7 +16,9 @@ export type ViewMode = 'edit' | 'split' | 'preview'
 export type CreateKind = 'story' | 'article' | 'post'
 
 export type DeleteRequest =
-  { kind: 'delete-story'; storyId: string } | { kind: 'delete-article'; articleId: string }
+  | { kind: 'delete-story'; storyId: string }
+  | { kind: 'delete-article'; articleId: string }
+  | { kind: 'delete-post'; postId: string }
 
 export type WorkspaceState = {
   library: Library

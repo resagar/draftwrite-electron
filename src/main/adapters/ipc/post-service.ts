@@ -19,4 +19,7 @@ export function registerPostHandlers(ipcMain: IpcHandlerRegistry, service: PostS
   ipcMain.handle(postChannels.update, (_event, payload) =>
     toIpcResult(() => service.update(parsePostUpdatePayload(payload)))
   )
+  ipcMain.handle(postChannels.delete, (_event, id) =>
+    toIpcResult(() => service.delete(expectString(id, 'id')))
+  )
 }
