@@ -1,5 +1,4 @@
 import type { ViewUpdate } from '@codemirror/view'
-import { isPointerGestureEnd } from '../pointer-selection'
 import type { CursorOrigin } from '../../state/status-store'
 
 /** The part of a `ViewUpdate` the origin is decided from. */
@@ -8,22 +7,11 @@ export type CursorUpdate = Pick<ViewUpdate, 'docChanged' | 'selectionSet' | 'tra
 /**
  * Where a caret came from, or `null` when the update must not be published.
  *
- * `EditorStatus.cursor` holds settled carets only, so the preview never has to
- * know about a gesture in progress:
- *
- * - the gesture-closing transaction (see `pointer-selection.ts`) is `pointer`;
- * - any document change is `keyboard` (typing, paste, undo, the format toolbar);
- * - a pointer selection that has not settled yet — the drag itself, or a
- *   pointer selection originated outside the content — is `null`;
- * - any other selection change is `keyboard` (arrows, Home/End, PageUp/Down);
- * - an update with neither a document nor a selection change is `null`: focus,
- *   scroll, geometry and resize must not move the preview.
+ * The status bar reads the published line and column, so every settled caret
+ * publishes: typing and key commands as `keyboard`, pointer selections as
+ * `pointer`. Focus, scroll, geometry and resize changes publish nothing.
  */
 export function cursorOrigin(update: CursorUpdate): CursorOrigin | null {
-  if (isPointerGestureEnd(update)) {
-    return 'pointer'
-  }
-
   if (update.docChanged) {
     return 'keyboard'
   }
@@ -36,5 +24,5 @@ export function cursorOrigin(update: CursorUpdate): CursorOrigin | null {
     transaction.isUserEvent('select.pointer')
   )
 
-  return pointerSelection ? null : 'keyboard'
+  return pointerSelection ? 'pointer' : 'keyboard'
 }

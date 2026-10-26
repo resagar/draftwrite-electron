@@ -36,6 +36,7 @@ function Harness(): JSX.Element {
         toolbar={<div>toolbar</div>}
         editor={<div>editor</div>}
         markdown={'# Calm'}
+        view={null}
       />
     </WorkspaceProvider>
   )

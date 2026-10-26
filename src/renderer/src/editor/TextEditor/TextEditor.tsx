@@ -29,9 +29,8 @@ export function TextEditor({
       onCreateEditor={(view) => onCreate(view)}
       onChange={(next) => onChange(next)}
       onUpdate={(update) => {
-        // Focus, scroll and geometry updates have no origin: publishing them
-        // would move the preview without the caret moving, and a pointer
-        // selection in progress is not a settled caret yet.
+        // Focus, scroll and geometry updates have no origin: only document and
+        // selection changes publish the caret the status bar shows.
         const origin = cursorOrigin(update)
         if (origin === null) return
 

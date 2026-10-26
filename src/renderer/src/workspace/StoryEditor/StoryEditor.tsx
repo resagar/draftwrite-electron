@@ -106,6 +106,7 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
           />
         }
         markdown={draft.Text}
+        view={view}
       />
 
       {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}

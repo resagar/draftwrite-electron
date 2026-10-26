@@ -1,6 +1,5 @@
 import { EditorState, type TransactionSpec } from '@codemirror/state'
 import { describe, expect, it } from '@jest/globals'
-import { pointerSelectionEnd } from '../pointer-selection'
 import { cursorOrigin, type CursorUpdate } from './cursor-origin'
 
 const DOC = 'one\ntwo\nthree\nfour'
@@ -54,34 +53,19 @@ describe('cursorOrigin', () => {
     ).toBe('keyboard')
   })
 
-  it('publishes nothing for a pointer selection that has not settled yet', () => {
-    expect(
-      cursorOrigin(updateFor({ selection: { anchor: 4 }, userEvent: 'select.pointer' }))
-    ).toBeNull()
+  it('reports a pointer selection as pointer', () => {
+    expect(cursorOrigin(updateFor({ selection: { anchor: 4 }, userEvent: 'select.pointer' }))).toBe(
+      'pointer'
+    )
   })
 
-  it('publishes nothing while a drag moves the caret', () => {
+  it('reports every move of a drag as pointer', () => {
     const state = EditorState.create({ doc: DOC })
     const transactions = [4, 6, 8, 10].map((anchor) =>
       state.update({ selection: { anchor }, userEvent: 'select.pointer' })
     )
 
-    expect(cursorOrigin({ docChanged: false, selectionSet: true, transactions })).toBeNull()
-  })
-
-  it('reports the gesture-closing transaction as pointer', () => {
-    expect(cursorOrigin(updateFor({ annotations: pointerSelectionEnd.of(4) }))).toBe('pointer')
-  })
-
-  it('prefers the gesture end even when the closing transaction also edits', () => {
-    expect(
-      cursorOrigin(
-        updateFor({
-          changes: { from: 0, insert: 'X' },
-          annotations: pointerSelectionEnd.of(4)
-        })
-      )
-    ).toBe('pointer')
+    expect(cursorOrigin({ docChanged: false, selectionSet: true, transactions })).toBe('pointer')
   })
 
   it('reports an edit carrying a pointer user event as keyboard', () => {
@@ -94,15 +78,5 @@ describe('cursorOrigin', () => {
         })
       )
     ).toBe('keyboard')
-  })
-
-  it('finds the gesture-end annotation among several transactions', () => {
-    const state = EditorState.create({ doc: DOC })
-    const dragging = state.update({ selection: { anchor: 6 }, userEvent: 'select.pointer' })
-    const settled = state.update({ annotations: pointerSelectionEnd.of(6) })
-
-    expect(
-      cursorOrigin({ docChanged: false, selectionSet: true, transactions: [dragging, settled] })
-    ).toBe('pointer')
   })
 })

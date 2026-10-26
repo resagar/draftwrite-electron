@@ -16,7 +16,7 @@ export type EditorStatus = {
   words: number
   characters: number
   readingMinutes: number
-  /** Always a settled caret: the editor never publishes one mid-gesture. */
+  /** Caret last published by the editor, for the status bar. */
   cursor: EditorCursor | null
 }
 
@@ -77,25 +77,4 @@ function getSnapshot(): EditorStatus {
 
 export function useEditorStatus(): EditorStatus {
   return useSyncExternalStore(subscribe, getSnapshot)
-}
-
-/**
- * Source line the preview follows, or `null` when there is no caret yet.
- *
- * A primitive, not the cursor object: a change of column or of save state must
- * not re-render the preview, and react-markdown parses inside its render.
- *
- * Both origins are followable, because `EditorStatus.cursor` only ever holds a
- * settled caret: a caret typed, keyed or left where a click or a drag ended.
- */
-export function selectPreviewLine(status: EditorStatus): number | null {
-  return status.cursor?.line ?? null
-}
-
-function getPreviewLine(): number | null {
-  return selectPreviewLine(snapshot)
-}
-
-export function usePreviewLine(): number | null {
-  return useSyncExternalStore(subscribe, getPreviewLine)
 }

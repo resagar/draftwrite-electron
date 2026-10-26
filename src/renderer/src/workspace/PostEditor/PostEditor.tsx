@@ -141,6 +141,7 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
               />
             }
             markdown={draft.Text}
+            view={view}
           />
         </div>
       </div>

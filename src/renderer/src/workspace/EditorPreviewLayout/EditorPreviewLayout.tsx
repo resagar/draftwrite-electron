@@ -1,3 +1,4 @@
+import type { EditorView } from '@codemirror/view'
 import { useRef, type JSX, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { useWorkspace } from '../../state/workspace-context'
@@ -9,12 +10,15 @@ type EditorPreviewLayoutProps = {
   toolbar: ReactNode
   editor: ReactNode
   markdown: string
+  /** The CodeMirror view, for the proportional scroll sync with the preview. */
+  view: EditorView | null
 }
 
 export function EditorPreviewLayout({
   toolbar,
   editor,
-  markdown
+  markdown,
+  view
 }: EditorPreviewLayoutProps): JSX.Element {
   const { viewMode } = useWorkspace()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -54,7 +58,7 @@ export function EditorPreviewLayout({
 
         {/* The preview is the flex child and owns its scroll; wrapping it in
             another scroller would split the viewport the sync measures. */}
-        {showsPreview ? <MarkdownPreview markdown={markdown} /> : null}
+        {showsPreview ? <MarkdownPreview markdown={markdown} editorView={view} /> : null}
       </div>
     </>
   )

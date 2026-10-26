@@ -1,6 +1,6 @@
 import { EditorView } from '@codemirror/view'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals'
+import { describe, expect, it } from '@jest/globals'
 import { useEffect } from 'react'
 import App from './App'
 import { makeArticle, makeStory } from './data/fake/factories'
@@ -11,13 +11,9 @@ import { useEditorStatus, type EditorCursor } from './state/status-store'
 
 // Four lines, so every gesture below lands on a different one.
 const TEXT = 'one\ntwo\nthree\nfour'
-const LINE_THREE = 10
-const LINE_FOUR = 16
 
 /**
  * Records every caret the store hands out, exactly as the status bar reads it.
- * The store is the seam: it is where "which carets are settled" is decided, and
- * the preview reads the same value through `usePreviewLine`.
  */
 function CursorProbe({ log }: { log: EditorCursor[] }): null {
   const { cursor } = useEditorStatus()
@@ -68,98 +64,40 @@ function articleView(): EditorView {
   return view
 }
 
-/**
- * One of the transactions CodeMirror dispatches while the pointer is held: a
- * pointer-originated selection change with no gesture end.
- */
-function dragTo(head: number): void {
+function selectAt(head: number, userEvent?: string): void {
   act(() => {
-    articleView().dispatch({ selection: { anchor: head }, userEvent: 'select.pointer' })
-  })
-}
-
-// jsdom's frame clock runs in real time. Capturing it here keeps the test
-// deterministic: the gesture-end frame is the queue this flushes.
-let frames: FrameRequestCallback[] = []
-
-function flushFrames(): void {
-  const pending = frames
-  frames = []
-
-  act(() => {
-    for (const callback of pending) callback(0)
-  })
-}
-
-function pressMouse(): void {
-  act(() => {
-    fireEvent.mouseDown(articleView().contentDOM)
-  })
-}
-
-function releaseMouse(): void {
-  act(() => {
-    fireEvent.mouseUp(articleView().contentDOM.ownerDocument)
+    articleView().dispatch({ selection: { anchor: head }, userEvent })
   })
 }
 
 describe('cursor publication', () => {
-  const realRequestAnimationFrame = window.requestAnimationFrame
-  const realCancelAnimationFrame = window.cancelAnimationFrame
-
-  beforeEach(() => {
-    frames = []
-    window.requestAnimationFrame = (callback: FrameRequestCallback): number => {
-      frames.push(callback)
-
-      return frames.length
-    }
-    window.cancelAnimationFrame = (): void => {
-      frames = []
-    }
-  })
-
-  afterEach(() => {
-    window.requestAnimationFrame = realRequestAnimationFrame
-    window.cancelAnimationFrame = realCancelAnimationFrame
-  })
-
-  it('publishes nothing while nothing changes, then the settled click once at release', async () => {
+  it('publishes nothing when the article opens', async () => {
     const log = await openArticle()
 
-    pressMouse()
     expect(log).toHaveLength(0)
+  })
 
-    // The click landed on the third line: CodeMirror's pointer selection, which
-    // is not a settled caret yet.
-    dragTo(LINE_THREE)
-    expect(log).toHaveLength(0)
+  it('publishes a caret moved by a pointer selection', async () => {
+    const log = await openArticle()
 
-    releaseMouse()
-    // Still nothing: the gesture closes one frame later, once the selection is
-    // final even when the click landed inside an existing one.
-    expect(log).toHaveLength(0)
-
-    flushFrames()
+    selectAt(10, 'select.pointer')
 
     expect(log).toEqual([{ line: 3, column: 3, origin: 'pointer' }])
   })
 
-  it('publishes nothing during a drag and publishes once, with the final line, on release', async () => {
+  it('publishes every move of a drag', async () => {
     const log = await openArticle()
 
-    pressMouse()
-    for (const head of [5, 8, LINE_THREE, LINE_FOUR]) {
-      dragTo(head)
+    for (const head of [5, 8, 10, 16]) {
+      selectAt(head, 'select.pointer')
     }
-    expect(log).toHaveLength(0)
 
-    releaseMouse()
-    expect(log).toHaveLength(0)
-
-    flushFrames()
-
-    expect(log).toEqual([{ line: 4, column: 3, origin: 'pointer' }])
+    expect(log).toEqual([
+      { line: 2, column: 2, origin: 'pointer' },
+      { line: 3, column: 1, origin: 'pointer' },
+      { line: 3, column: 3, origin: 'pointer' },
+      { line: 4, column: 3, origin: 'pointer' }
+    ])
   })
 
   it('publishes a caret moved by typing as keyboard', async () => {
@@ -180,9 +118,7 @@ describe('cursor publication', () => {
     const log = await openArticle()
     const view = articleView()
 
-    act(() => {
-      view.dispatch({ selection: { anchor: 2 } })
-    })
+    selectAt(2)
     log.length = 0
 
     act(() => {
@@ -196,9 +132,7 @@ describe('cursor publication', () => {
     const log = await openArticle()
     const view = articleView()
 
-    act(() => {
-      view.dispatch({ selection: { anchor: 2 } })
-    })
+    selectAt(2)
     log.length = 0
 
     act(() => {
@@ -210,7 +144,6 @@ describe('cursor publication', () => {
     act(() => {
       view.contentDOM.scrollTop = 40
     })
-    flushFrames()
 
     expect(log).toHaveLength(0)
   })
