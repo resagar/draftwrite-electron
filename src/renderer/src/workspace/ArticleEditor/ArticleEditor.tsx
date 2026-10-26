@@ -1,9 +1,10 @@
 import type { EditorView } from '@codemirror/view'
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react'
 import { emptyArticle } from '../../data/drafts'
 import { useDataPort } from '../../data/port-context'
 import type { Article } from '../../data/types'
 import { TextEditor } from '../../editor/TextEditor/TextEditor'
+import { usePublishArticleTarget } from '../../state/article-target-context'
 import { useLibrary } from '../../state/library-context'
 import { registerSave } from '../../state/save-registry'
 import { publishUnsavedDraft } from '../../state/status-store'
@@ -74,6 +75,7 @@ export function ArticleEditor({
   })
 
   const { publishCursor } = useEditorStatus({ text: draft.Text, status })
+  const publishTarget = usePublishArticleTarget()
 
   useEffect(() => {
     registerSave(saveNow)
@@ -89,6 +91,27 @@ export function ArticleEditor({
     schedule(next)
   }
 
+  const latestDraft = useRef(draft)
+  const latestChange = useRef(change)
+
+  useEffect(() => {
+    latestDraft.current = draft
+    latestChange.current = change
+  })
+
+  // The target panel lives beside the editor, so the draft is projected to it
+  // instead of duplicated. The save keeps using the latest draft and writer,
+  // otherwise a stale copy would blank the fields typed since the projection.
+  useEffect(() => {
+    publishTarget({
+      articleId: draft.ID,
+      value: draft.Target,
+      save: (next) => latestChange.current({ ...latestDraft.current, Target: next })
+    })
+  }, [publishTarget, draft.ID, draft.Target])
+
+  useEffect(() => () => publishTarget(null), [publishTarget])
+
   return (
     <section
       aria-label="Article editor"
@@ -99,7 +122,6 @@ export function ArticleEditor({
         storyId={draft.StoryID}
         title={draft.Title}
         subtitle={draft.Subtitle}
-        target={draft.Target}
         creating={creating}
         onStory={(storyId) => {
           change({ ...draft, StoryID: storyId })
@@ -109,7 +131,6 @@ export function ArticleEditor({
         }}
         onTitle={(title) => change({ ...draft, Title: title })}
         onSubtitle={(subtitle) => change({ ...draft, Subtitle: subtitle })}
-        onTarget={(target) => change({ ...draft, Target: target })}
         onDiscard={() => dispatch({ type: 'create/cancel' })}
       />
 

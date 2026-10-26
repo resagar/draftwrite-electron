@@ -1,5 +1,6 @@
 import { BookOpen } from 'lucide-react'
 import type { JSX } from 'react'
+import { ArticleTargetProvider } from '../../state/article-target-context'
 import { useLibrary } from '../../state/library-context'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { EmptyState } from '../../ui/EmptyState/EmptyState'
@@ -11,6 +12,7 @@ import { storySource } from '../source-state'
 import { StoryEditor } from '../StoryEditor/StoryEditor'
 import { StoryEditorPane } from '../StoryEditorPane/StoryEditorPane'
 import { SourcePane, type SourceState } from '../SourcePane/SourcePane'
+import { ArticleTargetFooter } from '../TargetPanel/ArticleTargetFooter'
 
 export function Workspace(): JSX.Element {
   const {
@@ -50,27 +52,30 @@ export function Workspace(): JSX.Element {
       storyId === '' ? { kind: 'empty' } : storySource(storyId, story, storiesStatus)
 
     return (
-      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
-        <SourcePane
-          source={source}
-          subject="article"
-          creating={creatingArticle}
-          expanded={storyPaneExpanded}
-          onToggle={() => dispatch({ type: 'storyPane/toggle' })}
-          onRetry={reloadStories}
-        />
-        {creatingArticle ? (
-          <ArticleEditor
-            stored={null}
-            initialStoryId={storyId}
-            onStoryChange={(nextStoryId) =>
-              dispatch({ type: 'create/story', storyId: nextStoryId })
-            }
+      <ArticleTargetProvider>
+        <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+          <SourcePane
+            source={source}
+            subject="article"
+            creating={creatingArticle}
+            expanded={storyPaneExpanded}
+            onToggle={() => dispatch({ type: 'storyPane/toggle' })}
+            onRetry={reloadStories}
+            footer={<ArticleTargetFooter />}
           />
-        ) : article !== null ? (
-          <ArticlePane article={article} story={story} />
-        ) : null}
-      </section>
+          {creatingArticle ? (
+            <ArticleEditor
+              stored={null}
+              initialStoryId={storyId}
+              onStoryChange={(nextStoryId) =>
+                dispatch({ type: 'create/story', storyId: nextStoryId })
+              }
+            />
+          ) : article !== null ? (
+            <ArticlePane article={article} story={story} />
+          ) : null}
+        </section>
+      </ArticleTargetProvider>
     )
   }
 

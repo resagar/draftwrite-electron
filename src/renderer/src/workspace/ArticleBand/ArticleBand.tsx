@@ -7,12 +7,10 @@ type ArticleBandProps = {
   storyId: string
   title: string
   subtitle: string
-  target: string
   creating: boolean
   onStory: (storyId: string) => void
   onTitle: (title: string) => void
   onSubtitle: (subtitle: string) => void
-  onTarget: (target: string) => void
   onDiscard: () => void
 }
 
@@ -21,12 +19,10 @@ export function ArticleBand({
   storyId,
   title,
   subtitle,
-  target,
   creating,
   onStory,
   onTitle,
   onSubtitle,
-  onTarget,
   onDiscard
 }: ArticleBandProps): JSX.Element {
   const field =
@@ -100,32 +96,16 @@ export function ArticleBand({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="min-w-[180px] flex-1 space-y-1">
-          <label
-            htmlFor="article-subtitle"
-            className="text-2xs tracking-wider text-base-content/60"
-          >
-            Subtitle
-          </label>
-          <input
-            id="article-subtitle"
-            value={subtitle}
-            onChange={(event) => onSubtitle(event.target.value)}
-            className={cn(field, 'w-full')}
-          />
-        </div>
-        <div className="min-w-[180px] flex-1 space-y-1">
-          <label htmlFor="article-target" className="text-2xs tracking-wider text-base-content/60">
-            Target
-          </label>
-          <input
-            id="article-target"
-            value={target}
-            onChange={(event) => onTarget(event.target.value)}
-            className={cn(field, 'w-full')}
-          />
-        </div>
+      <div className="space-y-1">
+        <label htmlFor="article-subtitle" className="text-2xs tracking-wider text-base-content/60">
+          Subtitle
+        </label>
+        <input
+          id="article-subtitle"
+          value={subtitle}
+          onChange={(event) => onSubtitle(event.target.value)}
+          className={cn(field, 'w-full')}
+        />
       </div>
     </div>
   )

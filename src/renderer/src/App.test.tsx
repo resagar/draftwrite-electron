@@ -940,6 +940,243 @@ describe('editing an article', () => {
   })
 })
 
+describe('article target', () => {
+  const stories = [makeStory({ ID: 's1', Topic: 'Calm software' })]
+  const articles = [
+    makeArticle({
+      ID: 'a1',
+      StoryID: 's1',
+      Title: 'The architecture of calm',
+      Target: 'Convince the reader',
+      Text: 'The article text.'
+    })
+  ]
+
+  const openArticle = async (): Promise<ReturnType<typeof createFakePort>> => {
+    const fake = createFakePort({ stories, articles })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    return fake
+  }
+
+  it('shows the target below the source story', async () => {
+    await openArticle()
+
+    const source = screen.getByRole('region', { name: 'Source story' })
+    const target = within(source).getByRole('region', { name: 'Target' })
+
+    expect(within(target).getByText('Convince the reader')).toBeTruthy()
+    expect(within(target).getByRole('button', { name: 'Edit target' })).toBeTruthy()
+  })
+
+  it('saves an edited target through the autosave without touching the article text', async () => {
+    const fake = await openArticle()
+    const target = within(screen.getByRole('region', { name: 'Source story' })).getByRole(
+      'region',
+      {
+        name: 'Target'
+      }
+    )
+
+    fireEvent.click(within(target).getByRole('button', { name: 'Edit target' }))
+    fireEvent.change(within(target).getByRole('textbox', { name: 'Target' }), {
+      target: { value: 'Make the reader think' }
+    })
+    fireEvent.click(within(target).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(fake.calls.updateArticle).toBe(1), { timeout: 3000 })
+
+    expect(fake.updatedArticles[0]?.Target).toBe('Make the reader think')
+    expect(fake.updatedArticles[0]?.Title).toBe('The architecture of calm')
+    expect(fake.updatedArticles[0]?.Text).toBe('The article text.')
+  })
+
+  it('cancels an edit without writing and restores the previous target', async () => {
+    const fake = await openArticle()
+    const target = within(screen.getByRole('region', { name: 'Source story' })).getByRole(
+      'region',
+      {
+        name: 'Target'
+      }
+    )
+
+    fireEvent.click(within(target).getByRole('button', { name: 'Edit target' }))
+    fireEvent.change(within(target).getByRole('textbox', { name: 'Target' }), {
+      target: { value: 'Throw this away' }
+    })
+    fireEvent.click(within(target).getByRole('button', { name: 'Cancel' }))
+
+    expect(within(target).getByText('Convince the reader')).toBeTruthy()
+    expect(within(target).queryByRole('textbox', { name: 'Target' })).toBeNull()
+    expect(fake.calls.updateArticle).toBe(0)
+  })
+
+  it('adds a target to an article that does not have one', async () => {
+    const fake = createFakePort({
+      stories,
+      articles: [
+        makeArticle({
+          ID: 'a1',
+          StoryID: 's1',
+          Title: 'The architecture of calm',
+          Target: '',
+          Text: 'The article text.'
+        })
+      ]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    const target = within(screen.getByRole('region', { name: 'Source story' })).getByRole(
+      'region',
+      {
+        name: 'Target'
+      }
+    )
+
+    expect(within(target).getByText('No target yet.')).toBeTruthy()
+
+    fireEvent.click(within(target).getByRole('button', { name: 'Add target' }))
+    fireEvent.change(within(target).getByRole('textbox', { name: 'Target' }), {
+      target: { value: 'A first target' }
+    })
+    fireEvent.click(within(target).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(fake.calls.updateArticle).toBe(1), { timeout: 3000 })
+    expect(fake.updatedArticles[0]?.Target).toBe('A first target')
+  })
+
+  it('persists a cleared target and returns to the empty state', async () => {
+    const fake = await openArticle()
+    const target = within(screen.getByRole('region', { name: 'Source story' })).getByRole(
+      'region',
+      { name: 'Target' }
+    )
+
+    fireEvent.click(within(target).getByRole('button', { name: 'Edit target' }))
+    fireEvent.change(within(target).getByRole('textbox', { name: 'Target' }), {
+      target: { value: '   ' }
+    })
+    fireEvent.click(within(target).getByRole('button', { name: 'Save' }))
+
+    expect(within(target).getByText('No target yet.')).toBeTruthy()
+    await waitFor(() => expect(fake.calls.updateArticle).toBe(1), { timeout: 3000 })
+    expect(fake.updatedArticles[0]?.Target).toBe('')
+  })
+
+  it('keeps a target defined while creating until the article can be saved', async () => {
+    const fake = createFakePort({ stories, articles: [] })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    await screen.findByText('No articles yet')
+    fireEvent.click(screen.getByRole('button', { name: 'New Article' }))
+    await screen.findByRole('region', { name: 'Article editor' })
+
+    const target = within(screen.getByRole('region', { name: 'Source story' })).getByRole(
+      'region',
+      {
+        name: 'Target'
+      }
+    )
+
+    fireEvent.click(within(target).getByRole('button', { name: 'Add target' }))
+    fireEvent.change(within(target).getByRole('textbox', { name: 'Target' }), {
+      target: { value: 'Persuade the reader' }
+    })
+    fireEvent.click(within(target).getByRole('button', { name: 'Save' }))
+
+    expect(fake.calls.createArticle).toBe(0)
+
+    fireEvent.change(screen.getByLabelText('Story'), { target: { value: 's1' } })
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Calm' } })
+
+    await waitFor(() => expect(fake.calls.createArticle).toBe(1), { timeout: 3000 })
+    expect(fake.createdArticles[0]?.target).toBe('Persuade the reader')
+  })
+
+  it('drops an edit in progress when another article is opened', async () => {
+    const fake = createFakePort({
+      stories,
+      articles: [
+        makeArticle({
+          ID: 'a1',
+          StoryID: 's1',
+          Title: 'The architecture of calm',
+          Target: 'Convince the reader',
+          Text: 'The article text.'
+        }),
+        makeArticle({
+          ID: 'a2',
+          StoryID: 's1',
+          Title: 'The quiet editor',
+          Target: 'Describe the editor',
+          Text: 'Another article.'
+        })
+      ]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
+    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    const source = screen.getByRole('region', { name: 'Source story' })
+    const target = within(source).getByRole('region', { name: 'Target' })
+
+    fireEvent.click(within(target).getByRole('button', { name: 'Edit target' }))
+    fireEvent.change(within(target).getByRole('textbox', { name: 'Target' }), {
+      target: { value: 'Never saved' }
+    })
+
+    fireEvent.click(screen.getByRole('option', { name: /The quiet editor/ }))
+    await screen.findByRole('textbox', { name: 'Article text' })
+
+    const nextTarget = within(screen.getByRole('region', { name: 'Source story' })).getByRole(
+      'region',
+      { name: 'Target' }
+    )
+
+    expect(within(nextTarget).getByText('Describe the editor')).toBeTruthy()
+    expect(within(nextTarget).queryByRole('textbox', { name: 'Target' })).toBeNull()
+    expect(fake.calls.updateArticle).toBe(0)
+  })
+
+  it('hides with the source pane and comes back when it is expanded', async () => {
+    await openArticle()
+
+    const source = screen.getByRole('region', { name: 'Source story' })
+
+    fireEvent.click(within(source).getByRole('button', { name: 'Toggle source story' }))
+    expect(screen.queryByRole('region', { name: 'Target' })).toBeNull()
+
+    fireEvent.click(within(source).getByRole('button', { name: 'Toggle source story' }))
+    expect(screen.getByRole('region', { name: 'Target' })).toBeTruthy()
+  })
+
+  it('does not appear on the post screen', async () => {
+    const fake = createFakePort({
+      stories: [],
+      posts: [makePost({ ID: 'p1', Topic: 'Launch note', Text: 'Short body' })]
+    })
+
+    renderApp(fake.port)
+    fireEvent.click(screen.getByRole('button', { name: 'Posts' }))
+    fireEvent.click(await screen.findByRole('option', { name: /Launch note/ }))
+    await screen.findByRole('region', { name: 'Post editor' })
+
+    expect(screen.queryByRole('region', { name: 'Target' })).toBeNull()
+    expect(screen.queryByRole('textbox', { name: 'Target' })).toBeNull()
+  })
+})
+
 describe('view modes', () => {
   const stories = [makeStory({ ID: 's1', Topic: 'Calm software' })]
   const markdown = '# Calm\n\n**sturdy** and ~~old~~\n\n| a | b |\n| - | - |\n| 1 | 2 |'
