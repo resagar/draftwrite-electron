@@ -20,16 +20,16 @@ Además, al llegar al máximo en el editor la última línea queda en el borde s
 - `buildPreviewLineIndex` lee una vez la posición de cada marcador y de cada bloque, en coordenadas de contenido del preview.
 - `anchorForLine` resuelve la línea de origen a un top del preview: marcador exacto, marcador más cercano del bloque que la contiene, o marcador más cercano del documento.
 - `entryAtTop` resuelve el top del preview a la última línea renderizada en o por encima del viewport (búsqueda binaria sobre los marcadores ordenados).
-- `editorToPreview` usa la línea superior del editor como referencia e interpola dentro de ella: desde el padding superior hasta la primera línea, y desde el top de la línea de referencia hasta el top de la siguiente. Así el movimiento es continuo y en cada frontera el preview cae exacto sobre la misma línea.
+- `editorToPreview` usa la línea superior del editor como referencia e interpola dentro de ella: desde el padding superior hasta la primera línea, y desde el top de la línea de referencia hasta el top de la siguiente. Así el movimiento es continuo y en cada frontera el preview cae exacto sobre la misma línea. Si la línea superior es la última del documento, devuelve el máximo del preview: la última línea de origen puede ocupar varias filas visuales y lo que debe quedar arriba es la última fila.
 - `previewToEditor` es la inversa: resuelve la última línea renderizada en o por encima del viewport e interpola dentro de su bloque del editor.
-- `bindLineScrollSync` conecta ambos scrollers en las dos direcciones. El lado conducido se mueve con una animación de catch-up de 150 ms (`SmoothTarget`, ease-out cúbico) que se retargetea desde la posición viva, así que la rueda no produce saltos. `prefers-reduced-motion` escribe el destino de golpe.
-- Los eventos del scroller animado se ignoran mientras la animación está activa, y el eco final se consume con el último valor escrito. `wheel`/`touchstart`/`pointerdown` cancelan la animación del lado que el usuario toma.
+- `bindLineScrollSync` conecta ambos scrollers en las dos direcciones y escribe el destino **sincrónicamente en el mismo evento `scroll`**, sin animación ni lag: los dos paneles se mueven juntos. La velocidad relativa dentro de la línea la fija el propio mapeo (span renderizado / altura del bloque del editor) y en cada frontera cae exacto sobre la misma línea.
+- Una escritura programática se recuerda para que su evento `scroll` no conduzca al otro lado.
 - El índice se reconstruye con `ResizeObserver` y cuando cambia el Markdown, nunca en cada evento `scroll`.
 
 ### Scroll inferior
 
 - El editor conserva `padding-bottom = H − L` (`scroll-past-end.ts`).
-- El preview mide el espaciador inferior con el **último marcador `data-source-line` renderizado**, el mismo ancla que usa el sync. Con `line-height` del último bloque el espaciador podía quedar corto y la última línea se quedaba abajo.
+- El preview mide el espaciador inferior con la **última fila visual renderizada** (`Range.getClientRects()` sobre el artículo), no con el último marcador de línea de origen: una línea larga puede envolver en varias filas y la que el lector ve abajo es la última. Con el último marcador el espaciador podía quedarse corto.
 - `PreviewBottomSpace` avisa cuando cambia la altura y `MarkdownPreview` reaplica la alineación (`binding.realign()`), de modo que un editor ya en el máximo sube su última línea al top sin volver a scrollear.
 - No hay espaciador superior: el preview empieza arriba como el editor.
 
@@ -51,7 +51,7 @@ Además, al llegar al máximo en el editor la última línea queda en el borde s
 
 ## Tests
 
-- `source-line-sync.test.ts`: resolución línea→top, top→línea, índice DOM, binding bidireccional, animación por frames, retarget, cancelación y eco.
+- `source-line-sync.test.ts`: resolución línea→top, top→línea, índice DOM, binding bidireccional síncrono y guarda de eco.
 - `preview-space.test.ts`: altura del espaciador inferior.
 - `MarkdownPreview.test.tsx`: render, marcadores, scroller y espaciador inferior.
 - `App.cursor-origin.test.tsx`: publicación en vivo del caret del puntero.

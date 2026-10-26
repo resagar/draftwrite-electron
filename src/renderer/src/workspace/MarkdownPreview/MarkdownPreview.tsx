@@ -207,17 +207,25 @@ function PreviewBottomSpace({
     }
 
     const update = (): void => {
-      const markers = article.querySelectorAll<HTMLElement>(`[${SOURCE_LINE_ATTRIBUTE}]`)
-      const last = markers[markers.length - 1] ?? article.lastElementChild
+      const articleRect = article.getBoundingClientRect()
+      const range = article.ownerDocument.createRange()
+      range.selectNodeContents(article)
 
-      const next =
-        last instanceof HTMLElement
-          ? bottomSpaceForLastLine(
-              container.clientHeight,
-              article.getBoundingClientRect().height,
-              last.getBoundingClientRect().top - article.getBoundingClientRect().top
-            )
-          : 0
+      // The last visual row, not the last source-line marker: a long last
+      // source line can wrap into several rows in the preview, and only the
+      // last one is the line the reader sees at the bottom.
+      const rows = Array.from(range.getClientRects()).filter((rect) => rect.height > 0)
+      const lastRow = rows[rows.length - 1] ?? null
+      const markers = article.querySelectorAll<HTMLElement>(`[${SOURCE_LINE_ATTRIBUTE}]`)
+      const lastMarker = markers[markers.length - 1] ?? null
+      const lastRowTop =
+        lastRow !== null
+          ? lastRow.top - articleRect.top
+          : lastMarker !== null
+            ? lastMarker.getBoundingClientRect().top - articleRect.top
+            : 0
+
+      const next = bottomSpaceForLastLine(container.clientHeight, articleRect.height, lastRowTop)
 
       if (previousHeight.current === next) {
         return

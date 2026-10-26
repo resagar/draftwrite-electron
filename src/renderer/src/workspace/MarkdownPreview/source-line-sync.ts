@@ -236,6 +236,15 @@ export function editorToPreview(
   max: number
 ): number | null {
   const block = editorBlockAtTop(view, scrollTop)
+
+  // The editor is at its last line, so it is also at its maximum scroll. The
+  // preview must go to its own maximum: the last SOURCE line may wrap into
+  // several visual rows, and the reader wants the last row at the top, not the
+  // first row of the line.
+  if (block.line === view.state.doc.lines) {
+    return max
+  }
+
   const entry = anchorForLine(index, block.line)
 
   if (entry === null) {
@@ -285,117 +294,6 @@ export function previewToEditor(
   return clamp(block.top + fraction * block.height, max)
 }
 
-/** Time and frame source, injected so tests can drive the animation by hand. */
-export type FrameScheduler = {
-  now: () => number
-  request: (callback: (time: number) => void) => number
-  cancel: (handle: number) => void
-  reducedMotion: () => boolean
-}
-
-export function browserFrameScheduler(win: Window): FrameScheduler {
-  return {
-    now: () => win.performance.now(),
-    request: (callback) => win.requestAnimationFrame(callback),
-    cancel: (handle) => win.cancelAnimationFrame(handle),
-    reducedMotion: () =>
-      typeof win.matchMedia === 'function' &&
-      win.matchMedia('(prefers-reduced-motion: reduce)').matches
-  }
-}
-
-const DURATION = 150
-
-function easeOutCubic(t: number): number {
-  return 1 - (1 - t) ** 3
-}
-
-/**
- * Moves a scroller toward a target with a short ease-out flight. A new target
- * retargets the running flight from the live position, so continuous scrolling
- * produces one continuous motion instead of a queue of jumps.
- */
-class SmoothTarget {
-  private target: number | null = null
-  private frame: number | null = null
-  private from = 0
-  private start = 0
-  private last: number | null = null
-
-  constructor(
-    private readonly scroller: ScrollSource,
-    private readonly scheduler: FrameScheduler
-  ) {}
-
-  set(target: number): void {
-    if (this.scheduler.reducedMotion() || Math.abs(target - this.scroller.scrollTop) <= 1) {
-      this.stop()
-      this.scroller.scrollTop = target
-      this.last = target
-
-      return
-    }
-
-    this.from = this.scroller.scrollTop
-    this.start = this.scheduler.now()
-    this.target = target
-
-    if (this.frame === null) {
-      this.frame = this.scheduler.request(this.step)
-    }
-  }
-
-  stop(): void {
-    if (this.frame !== null) {
-      this.scheduler.cancel(this.frame)
-      this.frame = null
-    }
-
-    this.target = null
-  }
-
-  isActive(): boolean {
-    return this.frame !== null
-  }
-
-  clearLast(): void {
-    this.last = null
-  }
-
-  /** True when `value` is the last write of this animator; clears it. */
-  consumeEcho(value: number): boolean {
-    const echo = this.last !== null && Math.abs(value - this.last) <= 1
-    this.last = null
-
-    return echo
-  }
-
-  private step = (time: number): void => {
-    if (this.target === null) {
-      this.frame = null
-
-      return
-    }
-
-    const t = Math.min(1, Math.max(0, (time - this.start) / DURATION))
-    const value = this.from + (this.target - this.from) * easeOutCubic(t)
-    this.scroller.scrollTop = value
-    this.last = value
-
-    if (t < 1) {
-      this.frame = this.scheduler.request(this.step)
-    } else {
-      this.scroller.scrollTop = this.target
-      this.last = this.target
-      this.target = null
-      this.frame = null
-    }
-  }
-}
-
-const defaultScheduler = (): FrameScheduler =>
-  browserFrameScheduler(typeof window === 'undefined' ? (globalThis as unknown as Window) : window)
-
 /** What the binding exposes to its owner. */
 export type LineScrollBinding = {
   stop: () => void
@@ -403,78 +301,76 @@ export type LineScrollBinding = {
   realign: () => void
 }
 
+/** Tolerance for recognizing the scroll event of a programmatic write. */
+const ECHO_EPSILON = 1
+
 /**
  * Wires the two scrollers with the given mapping.
  *
- * The driven pane eases toward the target instead of jumping; its scroll events
- * are ignored while it is animating (and for the late echo of the final frame),
- * so the two directions never bounce each other.
+ * The target is written synchronously in the same scroll event, so both panes
+ * move together with no animation delay. The only adjustment is the mapping
+ * itself: inside the reference line the preview advances at the ratio of its
+ * rendered line span, and it lands exactly on the same line at every boundary.
+ *
+ * A programmatic write is remembered so the `scroll` event it causes does not
+ * drive the other pane back.
  */
 export function bindLineScrollSync(
   from: ScrollSource,
   to: ScrollSource,
-  map: LineScrollMap,
-  scheduler: FrameScheduler = defaultScheduler()
+  map: LineScrollMap
 ): LineScrollBinding {
-  const toTarget = new SmoothTarget(to, scheduler)
-  const fromTarget = new SmoothTarget(from, scheduler)
+  let lastFrom: number | null = null
+  let lastTo: number | null = null
+
+  const consumeEcho = (value: number, last: number | null): boolean => {
+    return last !== null && Math.abs(value - last) <= ECHO_EPSILON
+  }
 
   const onFromScroll = (): void => {
-    if (fromTarget.isActive() || fromTarget.consumeEcho(from.scrollTop)) {
+    if (consumeEcho(from.scrollTop, lastFrom)) {
+      lastFrom = null
+
       return
     }
 
-    fromTarget.stop()
+    lastFrom = null
     const target = map.toPreview(from.scrollTop)
 
-    if (target !== null) {
-      toTarget.set(target)
+    if (target === null) {
+      return
     }
+
+    lastTo = target
+    to.scrollTop = target
   }
 
   const onToScroll = (): void => {
-    if (toTarget.isActive() || toTarget.consumeEcho(to.scrollTop)) {
+    if (consumeEcho(to.scrollTop, lastTo)) {
+      lastTo = null
+
       return
     }
 
-    toTarget.stop()
+    lastTo = null
     const target = map.toEditor(to.scrollTop)
 
-    if (target !== null) {
-      fromTarget.set(target)
+    if (target === null) {
+      return
     }
-  }
 
-  const cancelFrom = (): void => {
-    fromTarget.stop()
-    fromTarget.clearLast()
+    lastFrom = target
+    from.scrollTop = target
   }
-
-  const cancelTo = (): void => {
-    toTarget.stop()
-    toTarget.clearLast()
-  }
-
-  const gestures = ['wheel', 'touchstart', 'pointerdown'] as const
 
   from.addEventListener('scroll', onFromScroll, { passive: true })
   to.addEventListener('scroll', onToScroll, { passive: true })
-  for (const gesture of gestures) {
-    from.addEventListener(gesture, cancelFrom, { passive: true })
-    to.addEventListener(gesture, cancelTo, { passive: true })
-  }
-
-  const stop = (): void => {
-    from.removeEventListener('scroll', onFromScroll)
-    to.removeEventListener('scroll', onToScroll)
-    for (const gesture of gestures) {
-      from.removeEventListener(gesture, cancelFrom)
-      to.removeEventListener(gesture, cancelTo)
-    }
-  }
 
   return {
-    stop,
+    stop: (): void => {
+      from.removeEventListener('scroll', onFromScroll)
+      to.removeEventListener('scroll', onToScroll)
+    },
     realign: (): void => {
       // A hidden editor has no geometry to align against.
       if (from.clientHeight <= 0) {
@@ -484,7 +380,8 @@ export function bindLineScrollSync(
       const target = map.toPreview(from.scrollTop)
 
       if (target !== null) {
-        toTarget.set(target)
+        lastTo = target
+        to.scrollTop = target
       }
     }
   }

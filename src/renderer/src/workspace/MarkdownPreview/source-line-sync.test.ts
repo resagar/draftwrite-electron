@@ -7,7 +7,6 @@ import {
   editorToPreview,
   entryAtTop,
   previewToEditor,
-  type FrameScheduler,
   type PreviewLineIndex
 } from './source-line-sync'
 
@@ -130,6 +129,12 @@ describe('editorToPreview', () => {
     expect(editorToPreview(fakeView(), index(), 48, 200)).toBe(64)
   })
 
+  it('sends the last editor line to the preview maximum', () => {
+    // The last source line may wrap into several rows in the preview; the
+    // preview maximum puts its last visual row at the top.
+    expect(editorToPreview(fakeView(), index(), 80, 200)).toBe(200)
+  })
+
   it('clamps to the preview scroll range', () => {
     expect(editorToPreview(fakeView(), index(), 32, 40)).toBe(40)
   })
@@ -226,134 +231,64 @@ function emitScroll(element: HTMLElement): void {
   element.dispatchEvent(new Event('scroll'))
 }
 
-/** Writes instantly, as `prefers-reduced-motion` does. */
-const instant: FrameScheduler = {
-  now: () => 0,
-  request: () => 1,
-  cancel: () => undefined,
-  reducedMotion: () => true
-}
-
-/** Frames the test advances by hand. */
-function manualScheduler(): FrameScheduler & { advance: (ms: number) => void } {
-  let time = 0
-  let nextId = 1
-  const queue = new Map<number, (time: number) => void>()
-
-  return {
-    now: () => time,
-    request: (callback) => {
-      const id = nextId
-      nextId += 1
-      queue.set(id, callback)
-
-      return id
-    },
-    cancel: (handle) => {
-      queue.delete(handle)
-    },
-    reducedMotion: () => false,
-    advance: (ms) => {
-      time += ms
-      const callbacks = [...queue.values()]
-      queue.clear()
-      for (const callback of callbacks) callback(time)
-    }
-  }
-}
-
 describe('bindLineScrollSync', () => {
   const map = {
     toPreview: (top: number) => top * 2,
     toEditor: (top: number) => top / 2
   }
 
-  it('maps both directions and ignores the echoes of its own writes', () => {
+  it('moves the other pane in the same scroll event', () => {
     const editor = scroller({ clientHeight: 500, scrollHeight: 1500 })
     const preview = scroller({ clientHeight: 400, scrollHeight: 2400 })
 
-    bindLineScrollSync(editor, preview, map, instant)
+    bindLineScrollSync(editor, preview, map)
 
     editor.scrollTop = 100
     emitScroll(editor)
     expect(preview.scrollTop).toBe(200)
-
-    // The preview did not move: this is its own echo.
-    emitScroll(preview)
-    expect(editor.scrollTop).toBe(100)
 
     preview.scrollTop = 300
     emitScroll(preview)
     expect(editor.scrollTop).toBe(150)
-
-    // The editor did not move: this is its own echo.
-    emitScroll(editor)
-    expect(preview.scrollTop).toBe(300)
   })
 
-  it('animates the driven pane instead of jumping', () => {
+  it('ignores the echo of its own write', () => {
     const editor = scroller({ clientHeight: 500, scrollHeight: 1500 })
     const preview = scroller({ clientHeight: 400, scrollHeight: 2400 })
-    const scheduler = manualScheduler()
 
-    bindLineScrollSync(editor, preview, map, scheduler)
+    bindLineScrollSync(editor, preview, map)
 
     editor.scrollTop = 100
     emitScroll(editor)
-    expect(preview.scrollTop).toBe(0)
-
-    scheduler.advance(75)
-    expect(preview.scrollTop).toBeCloseTo(175, 5)
-
-    scheduler.advance(75)
     expect(preview.scrollTop).toBe(200)
 
-    // The final echo does not bounce back.
+    // The preview did not move: this event is its own echo.
     emitScroll(preview)
     expect(editor.scrollTop).toBe(100)
   })
 
-  it('retargets a running flight from the live position', () => {
+  it('ignores a late echo after the source moved again', () => {
     const editor = scroller({ clientHeight: 500, scrollHeight: 1500 })
     const preview = scroller({ clientHeight: 400, scrollHeight: 2400 })
-    const scheduler = manualScheduler()
 
-    bindLineScrollSync(editor, preview, map, scheduler)
+    bindLineScrollSync(editor, preview, map)
 
     editor.scrollTop = 100
     emitScroll(editor)
-    scheduler.advance(75)
-
     editor.scrollTop = 150
     emitScroll(editor)
-    scheduler.advance(75)
-    scheduler.advance(75)
 
     expect(preview.scrollTop).toBe(300)
-  })
 
-  it('lets the user take over by cancelling the flight', () => {
-    const editor = scroller({ clientHeight: 500, scrollHeight: 1500 })
-    const preview = scroller({ clientHeight: 400, scrollHeight: 2400 })
-    const scheduler = manualScheduler()
-
-    bindLineScrollSync(editor, preview, map, scheduler)
-
-    editor.scrollTop = 100
-    emitScroll(editor)
-    scheduler.advance(75)
-    const midway = preview.scrollTop
-
-    preview.dispatchEvent(new Event('wheel'))
-    scheduler.advance(150)
-
-    expect(preview.scrollTop).toBe(midway)
+    // Scroll events read the live position: this is the latest echo.
+    emitScroll(preview)
+    expect(editor.scrollTop).toBe(150)
   })
 
   it('realigns the preview from the editor on demand', () => {
     const editor = scroller({ clientHeight: 500, scrollHeight: 1500 })
     const preview = scroller({ clientHeight: 400, scrollHeight: 2400 })
-    const binding = bindLineScrollSync(editor, preview, map, instant)
+    const binding = bindLineScrollSync(editor, preview, map)
 
     editor.scrollTop = 100
     binding.realign()
@@ -366,7 +301,7 @@ describe('bindLineScrollSync', () => {
   it('stops listening after cleanup', () => {
     const editor = scroller({ clientHeight: 500, scrollHeight: 1500 })
     const preview = scroller({ clientHeight: 400, scrollHeight: 2400 })
-    const binding = bindLineScrollSync(editor, preview, map, instant)
+    const binding = bindLineScrollSync(editor, preview, map)
 
     binding.stop()
     editor.scrollTop = 100
