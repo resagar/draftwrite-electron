@@ -125,6 +125,10 @@ export function SourcePane({
       )}
     >
       <div className="flex h-full min-h-0 w-full flex-col">
+        {expanded && footer !== undefined ? (
+          <div className="h-1/4 min-h-0 shrink-0 border-b border-base-300/60">{footer}</div>
+        ) : null}
+
         <header className="flex h-9 min-h-9 items-center gap-2 border-b border-base-300 bg-base-200/80 px-2">
           <IconButton
             label={`Toggle ${label.toLowerCase()}`}
@@ -203,109 +207,103 @@ export function SourcePane({
             </div>
           )}
 
-          <div className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              {source.kind === 'empty' ? (
-                <div className="p-5">
-                  <p className="text-xs font-semibold text-base-content/80">
-                    {subject === 'post' ? 'No source yet' : 'No source story yet'}
-                  </p>
-                  <p className="mt-1 text-xs text-base-content/60">
-                    {subject === 'post'
-                      ? 'Choose a story or an article for this post to preview it here.'
-                      : 'Choose a story for this article to preview it here.'}
-                  </p>
-                </div>
-              ) : source.kind === 'loading' ? (
-                <p role="status" aria-busy="true" className="p-5 text-xs text-base-content/70">
-                  {isArticle ? 'Loading source article…' : 'Loading source story…'}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            {source.kind === 'empty' ? (
+              <div className="p-5">
+                <p className="text-xs font-semibold text-base-content/80">
+                  {subject === 'post' ? 'No source yet' : 'No source story yet'}
                 </p>
-              ) : source.kind === 'error' ? (
-                <ErrorState
-                  title={
-                    isArticle
-                      ? 'Source article could not be loaded'
-                      : 'Source story could not be loaded'
-                  }
-                  description={
-                    isArticle
-                      ? 'The app could not read your articles from the local database.'
-                      : 'The app could not read your stories from the local database.'
-                  }
-                  onRetry={onRetry}
-                />
-              ) : source.kind === 'missing' ? (
-                <p className="p-5 text-xs text-base-content/70">
-                  {creating
-                    ? subject === 'post'
-                      ? 'The selected source is no longer available. Choose another source for this post.'
-                      : 'The selected story is no longer available. Choose another story for this article.'
-                    : subject === 'post'
-                      ? 'The source this post came from no longer exists.'
-                      : 'The story this article came from no longer exists.'}
+                <p className="mt-1 text-xs text-base-content/60">
+                  {subject === 'post'
+                    ? 'Choose a story or an article for this post to preview it here.'
+                    : 'Choose a story for this article to preview it here.'}
                 </p>
-              ) : content?.kind === 'story' ? (
-                <div className="space-y-3 p-5 select-text">
-                  <h3 className="text-[14px] leading-loose font-semibold text-secondary">
+              </div>
+            ) : source.kind === 'loading' ? (
+              <p role="status" aria-busy="true" className="p-5 text-xs text-base-content/70">
+                {isArticle ? 'Loading source article…' : 'Loading source story…'}
+              </p>
+            ) : source.kind === 'error' ? (
+              <ErrorState
+                title={
+                  isArticle
+                    ? 'Source article could not be loaded'
+                    : 'Source story could not be loaded'
+                }
+                description={
+                  isArticle
+                    ? 'The app could not read your articles from the local database.'
+                    : 'The app could not read your stories from the local database.'
+                }
+                onRetry={onRetry}
+              />
+            ) : source.kind === 'missing' ? (
+              <p className="p-5 text-xs text-base-content/70">
+                {creating
+                  ? subject === 'post'
+                    ? 'The selected source is no longer available. Choose another source for this post.'
+                    : 'The selected story is no longer available. Choose another story for this article.'
+                  : subject === 'post'
+                    ? 'The source this post came from no longer exists.'
+                    : 'The story this article came from no longer exists.'}
+              </p>
+            ) : content?.kind === 'story' ? (
+              <div className="space-y-3 p-5 select-text">
+                <h3 className="text-[14px] leading-loose font-semibold text-secondary">
+                  {content.story.Topic}
+                </h3>
+
+                {content.story.Titles.length > 0 ? (
+                  <ul className="space-y-0.5 text-[14px] leading-loose text-base-content/80">
+                    {content.story.Titles.map((title) => (
+                      <li key={title}>{title}</li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                {content.story.Tags.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {content.story.Tags.map((tag) => (
+                      <TagChip key={tag} tag={tag} />
+                    ))}
+                  </div>
+                ) : null}
+
+                <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
+                  {content.story.Text}
+                </pre>
+              </div>
+            ) : content?.kind === 'article' ? (
+              <div className="space-y-3 p-5 select-text">
+                <h3 className="text-[14px] leading-loose font-semibold text-secondary">
+                  {content.article.Title}
+                </h3>
+
+                {content.article.Subtitle !== '' ? (
+                  <p className="text-[14px] leading-loose text-base-content/80">
+                    {content.article.Subtitle}
+                  </p>
+                ) : null}
+
+                {content.article.Target !== '' ? (
+                  <p className="text-[14px] leading-loose text-base-content/60">
+                    <span className="font-mono text-2xs tracking-wider uppercase">Target </span>
+                    {content.article.Target}
+                  </p>
+                ) : null}
+
+                {content.story !== null ? (
+                  <p className="text-2xs text-base-content/60">
+                    <span className="font-mono tracking-wider uppercase">From </span>
                     {content.story.Topic}
-                  </h3>
+                  </p>
+                ) : null}
 
-                  {content.story.Titles.length > 0 ? (
-                    <ul className="space-y-0.5 text-[14px] leading-loose text-base-content/80">
-                      {content.story.Titles.map((title) => (
-                        <li key={title}>{title}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-
-                  {content.story.Tags.length > 0 ? (
-                    <div className="flex flex-wrap items-center gap-1">
-                      {content.story.Tags.map((tag) => (
-                        <TagChip key={tag} tag={tag} />
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
-                    {content.story.Text}
-                  </pre>
-                </div>
-              ) : content?.kind === 'article' ? (
-                <div className="space-y-3 p-5 select-text">
-                  <h3 className="text-[14px] leading-loose font-semibold text-secondary">
-                    {content.article.Title}
-                  </h3>
-
-                  {content.article.Subtitle !== '' ? (
-                    <p className="text-[14px] leading-loose text-base-content/80">
-                      {content.article.Subtitle}
-                    </p>
-                  ) : null}
-
-                  {content.article.Target !== '' ? (
-                    <p className="text-[14px] leading-loose text-base-content/60">
-                      <span className="font-mono text-2xs tracking-wider uppercase">Target </span>
-                      {content.article.Target}
-                    </p>
-                  ) : null}
-
-                  {content.story !== null ? (
-                    <p className="text-2xs text-base-content/60">
-                      <span className="font-mono tracking-wider uppercase">From </span>
-                      {content.story.Topic}
-                    </p>
-                  ) : null}
-
-                  <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
-                    {content.article.Text}
-                  </pre>
-                </div>
-              ) : null}
-            </div>
-
-            {footer === undefined ? null : (
-              <div className="h-1/4 min-h-0 shrink-0 border-t border-base-300/60">{footer}</div>
-            )}
+                <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
+                  {content.article.Text}
+                </pre>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

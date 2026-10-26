@@ -963,7 +963,7 @@ describe('article target', () => {
     return fake
   }
 
-  it('shows the target below the source story', async () => {
+  it('shows the target above the source story', async () => {
     await openArticle()
 
     const source = screen.getByRole('region', { name: 'Source story' })
