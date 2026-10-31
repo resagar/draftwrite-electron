@@ -47,3 +47,7 @@ _Avoid_: subtítulo de la Story (no existe)
 **Target**:
 El objetivo de un Article —lo que pretende lograr—, opcional.
 _Avoid_: meta, propósito, word count
+
+**Vim mode**:
+Preferencia de edición modal para escribir el Text de una Story, Article o Post con movimientos y comandos de estilo Vim. No implica ejecutar Neovim ni cargar su configuración o sus plugins.
+_Avoid_: modo nvim, Neovim integrado

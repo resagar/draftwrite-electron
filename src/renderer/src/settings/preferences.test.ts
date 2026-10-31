@@ -75,3 +75,22 @@ describe('typography preferences storage', () => {
     }
   )
 })
+
+it('persists Vim mode and treats absent or corrupt flags as disabled without changing typography', () => {
+  const preferences = {
+    ...defaultPreferences,
+    editor: { font: 'Monaspace Neon', size: 24, lineHeight: 1.25, vimMode: true }
+  }
+  expect(savePreferences(preferences)).toBe(true)
+  expect(readPreferences()).toEqual(preferences)
+  localStorage.setItem(
+    'draftwrite.typography',
+    JSON.stringify({ ...preferences, editor: { ...preferences.editor, vimMode: 'true' } })
+  )
+  expect(readPreferences().editor.vimMode ?? false).toBe(false)
+  expect(readPreferences().editor).toMatchObject({
+    font: 'Monaspace Neon',
+    size: 24,
+    lineHeight: 1.25
+  })
+})

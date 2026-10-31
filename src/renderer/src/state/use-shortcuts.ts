@@ -12,7 +12,7 @@ type ShortcutHandlers = {
 export function useShortcuts({ onNew, onSave, onToggleZen }: ShortcutHandlers): void {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (!event.metaKey && !event.ctrlKey) {
+      if (event.defaultPrevented || (!event.metaKey && !event.ctrlKey)) {
         return
       }
 

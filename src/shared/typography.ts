@@ -1,5 +1,11 @@
 export type TypographyContext = 'editor' | 'preview' | 'interface'
-export type TypographyChoice = { font: string; size: number; lineHeight?: number }
+export type TypographyChoice = {
+  font: string
+  size: number
+  lineHeight?: number
+  /** Editor only; omission is the backward-compatible disabled value. */
+  vimMode?: boolean
+}
 export type TypographyPreferences = Record<TypographyContext, TypographyChoice>
 export type TypographyPatch = { context: TypographyContext; changes: Partial<TypographyChoice> }
 export type TypographySnapshot = {
@@ -24,6 +30,7 @@ export function validChoice(context: TypographyContext, value: unknown): Typogra
     typeof value === 'object' && value !== null ? (value as Partial<TypographyChoice>) : {}
   const { min, max } = sizeBounds(context)
   return {
+    ...(context === 'editor' && choice.vimMode === true ? { vimMode: true } : {}),
     ...(context === 'interface'
       ? {}
       : {
@@ -75,11 +82,17 @@ export function applyTypographyPatch(
   )
     throw new Error('Invalid typography update')
   const fields = Object.keys(changes)
-  const allowed = context === 'interface' ? ['font', 'size'] : ['font', 'size', 'lineHeight']
+  const allowed = [
+    'font',
+    'size',
+    ...(context !== 'interface' ? ['lineHeight'] : []),
+    ...(context === 'editor' ? ['vimMode'] : [])
+  ]
   const { min, max } = sizeBounds(context)
   if (
     !fields.length ||
     fields.some((field) => !allowed.includes(field)) ||
+    ('vimMode' in changes && typeof changes.vimMode !== 'boolean') ||
     ('font' in changes &&
       (typeof changes.font !== 'string' || !changes.font.trim() || changes.font.length > 200)) ||
     ('size' in changes &&

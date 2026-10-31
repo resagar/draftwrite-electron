@@ -14,7 +14,7 @@ const SAVE_LABELS: Record<SaveStatus, string> = {
 }
 
 export function StatusBar(): JSX.Element {
-  const { save, words, characters, readingMinutes, cursor } = useEditorStatus()
+  const { save, words, characters, readingMinutes, cursor, vimMode } = useEditorStatus()
   const modifier = usePlatformModifier()
   const label = SAVE_LABELS[save]
   const showingDocument = save !== 'idle'
@@ -61,6 +61,11 @@ export function StatusBar(): JSX.Element {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
+        {vimMode !== null && (
+          <span role="status" aria-label={`Vim mode: ${vimMode}`} className="text-base-content/85">
+            {vimMode}
+          </span>
+        )}
         {cursor === null ? null : (
           <>
             <span className="text-base-content/60">

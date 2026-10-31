@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
+export type VimMode = 'Normal' | 'Insert' | 'Visual'
+
 export type SaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error' | 'incomplete'
 
 /** How the caret moved: typed/keyed, or settled at the end of a pointer gesture. */
@@ -12,6 +14,7 @@ export type EditorCursor = {
 }
 
 export type EditorStatus = {
+  vimMode: VimMode | null
   save: SaveStatus
   words: number
   characters: number
@@ -21,6 +24,7 @@ export type EditorStatus = {
 }
 
 const EMPTY: EditorStatus = {
+  vimMode: null,
   save: 'idle',
   words: 0,
   characters: 0,

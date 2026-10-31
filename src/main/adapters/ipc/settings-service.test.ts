@@ -66,3 +66,59 @@ describe('settings IPC boundary', () => {
     await expect(call(settingsChannels.close, 'main')).resolves.toMatchObject({ ok: false })
   })
 })
+
+it('accepts only editor boolean Vim updates and preserves unrelated preferences', async () => {
+  const handlers = new Map<string, (event: unknown, ...args: unknown[]) => unknown>()
+  registerSettingsHandlers(
+    {
+      handle: (channel, handler) => {
+        handlers.set(channel, handler)
+      }
+    },
+    {
+      isMain: (event) => event === 'main',
+      isSettings: (event) => event === 'settings',
+      open: async () => {},
+      close: () => {},
+      broadcast: () => {}
+    }
+  )
+  const call = (channel: string, ...args: unknown[]): unknown =>
+    handlers.get(channel)!('main', ...args)
+  await call(settingsChannels.get, {
+    ...defaultPreferences,
+    editor: { font: 'Monaspace Neon', size: 24, lineHeight: 1.25 }
+  })
+  for (const context of ['preview', 'interface']) {
+    await expect(
+      call(settingsChannels.patch, { context, changes: { vimMode: true } })
+    ).resolves.toMatchObject({ ok: false, error: { code: 'errInvalidPayload' } })
+  }
+  for (const vimMode of ['true', 1, null, {}, []]) {
+    await expect(
+      call(settingsChannels.patch, { context: 'editor', changes: { vimMode } })
+    ).resolves.toMatchObject({ ok: false, error: { code: 'errInvalidPayload' } })
+  }
+  await expect(
+    call(settingsChannels.patch, { context: 'editor', changes: { vimMode: true } })
+  ).resolves.toMatchObject({
+    ok: true,
+    value: {
+      preferences: {
+        editor: { font: 'Monaspace Neon', size: 24, lineHeight: 1.25, vimMode: true }
+      }
+    }
+  })
+  await expect(
+    call(settingsChannels.patch, { context: 'editor', changes: { size: 20 } })
+  ).resolves.toMatchObject({
+    ok: true,
+    value: { preferences: { editor: { vimMode: true, size: 20 } } }
+  })
+  await expect(
+    call(settingsChannels.patch, { context: 'editor', changes: { vimMode: false } })
+  ).resolves.toMatchObject({
+    ok: true,
+    value: { preferences: { editor: { font: 'Monaspace Neon', size: 20, lineHeight: 1.25 } } }
+  })
+})

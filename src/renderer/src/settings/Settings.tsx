@@ -92,12 +92,32 @@ function TypographyControls({ context, title, description }: TypographyControlsP
               onChange={(lineHeight) => update(context, { lineHeight })}
             />
           )}
+          {context === 'editor' && (
+            <div className="my-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm"
+                  checked={choice.vimMode ?? false}
+                  onChange={(event) => update('editor', { vimMode: event.target.checked })}
+                  aria-describedby="vim-mode-description"
+                />
+                Vim mode
+              </label>
+              <p id="vim-mode-description" className="mt-2 text-sm text-base-content/75">
+                Use Vim keys in document text. Press i to write and Esc for Normal mode.
+              </p>
+            </div>
+          )}
           <button
             type="button"
             className="settings-button self-start"
             onClick={() => {
               setSearch('')
-              update(context, { ...defaultPreferences[context] })
+              update(context, {
+                ...defaultPreferences[context],
+                ...(context === 'editor' ? { vimMode: false } : {})
+              })
             }}
           >
             Restore {title.toLowerCase()} defaults

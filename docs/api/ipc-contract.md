@@ -53,7 +53,10 @@ Solo el renderer principal guarda cambios en la clave local existente
 se comunica sin descartar la elección de sesión ni impedir su aplicación visual.
 
 Cada patch contiene `context` y `changes`. Editor y preview aceptan `font`, `size`
-y `lineHeight`; interfaz acepta `font` y `size` (escala). El interlineado es un
+y `lineHeight`; solo editor acepta además `vimMode` (booleano). Interfaz acepta
+`font` y `size` (escala). Ausencia de `vimMode` equivale a desactivado; la
+normalización omite el valor desactivado para conservar la forma de las preferencias
+anteriores, sin perder fuentes, tamaños ni interlineado. El interlineado es un
 multiplicador finito entre 1 y 3, con default 2 para datos anteriores. Los rangos
 existentes de tamaño 10–40 px y escala 80–150 % permanecen vigentes. Los patches con campos o valores
 inválidos devuelven `errInvalidPayload`; frames ajenos o emisores sin el rol

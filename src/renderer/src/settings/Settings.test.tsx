@@ -226,3 +226,28 @@ it('ignores late hydration and saves once per update without echoing received ch
   expect(writes.mock.calls.filter(([key]) => key === 'draftwrite.typography')).toHaveLength(2)
   writes.mockRestore()
 })
+
+it('toggles Vim mode live, persists it and restores the editor default', async () => {
+  const fake = createFakePort()
+  renderApp(fake.port)
+  await screen.findByText('No stories yet')
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'New Story' })))
+  const editor = document.querySelector('.cm-editor')!
+  const view = EditorView.findFromDOM(editor as HTMLElement)!
+  act(() => view.dispatch({ changes: { from: 0, insert: 'A draft' }, selection: { anchor: 3 } }))
+  await openSettings(fake.port)
+  const toggle = screen.getByRole<HTMLInputElement>('checkbox', { name: 'Vim mode' })
+  expect(toggle.checked).toBe(false)
+  await act(async () => fireEvent.click(toggle))
+  expect(toggle.checked).toBe(true)
+  expect(document.querySelector('.cm-editor')).toBe(editor)
+  expect(view.state.doc.toString()).toBe('A draft')
+  expect(view.state.selection.main.head).toBe(3)
+  await screen.findByLabelText('Vim mode: Normal')
+  expect(JSON.parse(localStorage.getItem('draftwrite.typography')!).editor.vimMode).toBe(true)
+  await act(async () =>
+    fireEvent.click(screen.getByRole('button', { name: 'Restore editor defaults' }))
+  )
+  expect(toggle.checked).toBe(false)
+  expect(screen.queryByLabelText('Vim mode: Normal')).toBeNull()
+})
