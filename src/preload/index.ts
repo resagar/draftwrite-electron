@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { articleChannels, postChannels, storyChannels } from '../main/adapters/ipc/contract'
+import {
+  articleChannels,
+  postChannels,
+  storyChannels,
+  settingsChannels
+} from '../main/adapters/ipc/contract'
+import type { TypographySnapshot } from '../shared/typography'
 import type {
   ArticleDTO,
   DraftwriteApi,
@@ -20,6 +26,21 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
 
 /** Typed data entry point of the renderer. */
 const draftwrite: DraftwriteApi = {
+  settings: {
+    open: () => invoke(settingsChannels.open),
+    close: () => invoke(settingsChannels.close),
+    get: (initial) => invoke(settingsChannels.get, initial),
+    patch: (update) => invoke(settingsChannels.patch, update),
+    storage: (revision, failed) => invoke(settingsChannels.storage, revision, failed),
+    onChanged: (listener) => {
+      const receive = (_event: Electron.IpcRendererEvent, snapshot: TypographySnapshot): void =>
+        listener(snapshot)
+      ipcRenderer.on(settingsChannels.changed, receive)
+      return () => {
+        ipcRenderer.removeListener(settingsChannels.changed, receive)
+      }
+    }
+  },
   story: {
     create: (story: StoryDTO) => invoke<StoryDTO>(storyChannels.create, story),
     get: (id: string) => invoke<StoryDTO>(storyChannels.get, id),

@@ -6,10 +6,10 @@ import { IconButton } from '../../ui/IconButton/IconButton'
 
 export function TitleBar({
   onSettings,
-  settingsOpen = false
+  settingsReady = true
 }: {
   onSettings?: () => void
-  settingsOpen?: boolean
+  settingsReady?: boolean
 }): JSX.Element {
   const { sidebarCollapsed, zenMode } = useWorkspace()
   const modifier = usePlatformModifier()
@@ -34,7 +34,7 @@ export function TitleBar({
       </div>
 
       <div className="flex w-[220px] items-center justify-end gap-2">
-        <IconButton label="Settings" aria-pressed={settingsOpen} onClick={onSettings}>
+        <IconButton label="Settings" disabled={!settingsReady} onClick={onSettings}>
           <Settings aria-hidden="true" className="h-3.5 w-3.5" />
         </IconButton>
         <IconButton

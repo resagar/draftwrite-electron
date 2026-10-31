@@ -1,6 +1,8 @@
 import { makeArticle, makePost, makeStory } from './factories'
 import type { DataPort, NewArticle, NewPost, NewStory } from '../port'
 import type { Article, Post, Story } from '../types'
+import { applyTypographyPatch, normalizePreferences } from '../../../../shared/typography'
+import type { TypographySnapshot } from '../../../../shared/typography'
 
 export type FakePortOptions = {
   fontFamilies?: string[]
@@ -28,6 +30,8 @@ export type FakePortOptions = {
 export type FakePort = {
   port: DataPort
   calls: {
+    openSettings: number
+    closeSettings: number
     listStories: number
     listArticles: number
     listPosts: number
@@ -78,6 +82,8 @@ async function write<T>(produce: () => T, counter: Counter): Promise<T> {
 
 export function createFakePort(options: FakePortOptions = {}): FakePort {
   const calls = {
+    openSettings: 0,
+    closeSettings: 0,
     listStories: 0,
     listArticles: 0,
     listPosts: 0,
@@ -93,6 +99,13 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
   }
 
   const stories = [...(options.stories ?? [])]
+  let typography: TypographySnapshot | null = null
+  const typographyListeners = new Set<(snapshot: TypographySnapshot) => void>()
+  const notifyTypography = (): void => {
+    if (typography)
+      for (const listener of typographyListeners)
+        listener({ ...typography, preferences: normalizePreferences(typography.preferences) })
+  }
   const articles = [...(options.articles ?? [])]
   const posts = [...(options.posts ?? [])]
   const createdStories: NewStory[] = []
@@ -130,6 +143,42 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     deletedArticleIds,
     deletedPostIds,
     port: {
+      async openSettings() {
+        calls.openSettings += 1
+        notifyTypography()
+      },
+      async closeSettings() {
+        calls.closeSettings += 1
+      },
+      async getTypography(initial) {
+        typography ??= {
+          preferences: normalizePreferences(initial),
+          revision: 0,
+          storageError: false
+        }
+        return typography
+      },
+      async patchTypography(update) {
+        if (!typography) throw new Error('Settings are not initialized')
+        typography = {
+          preferences: applyTypographyPatch(typography.preferences, update),
+          revision: typography.revision + 1,
+          storageError: false
+        }
+        notifyTypography()
+        return typography
+      },
+      async reportTypographyStorage(revision, failed) {
+        if (typography?.revision !== revision || typography.storageError === failed) return
+        typography = { ...typography, revision: revision + 1, storageError: failed }
+        notifyTypography()
+      },
+      onTypographyChanged(listener) {
+        typographyListeners.add(listener)
+        return () => {
+          typographyListeners.delete(listener)
+        }
+      },
       async listFontFamilies() {
         return [...(options.fontFamilies ?? [])]
       },

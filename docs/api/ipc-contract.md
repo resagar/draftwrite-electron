@@ -17,7 +17,7 @@ src/renderer/src/data/ipc-port.ts (DataPort)
           → src/main/adapters/persistence/sqlite/ (repositorios)
 ```
 
-Los canales son 16: `story:create`, `story:get`, `story:list`, `story:update`, `story:delete`,
+Los canales de dominio son 16: `story:create`, `story:get`, `story:list`, `story:update`, `story:delete`,
 `article:create`, `article:get`, `article:listByStory`, `article:list`, `article:update`,
 `article:delete`, `post:create`, `post:get`, `post:list`, `post:update` y `post:delete`.
 
@@ -26,9 +26,42 @@ El contrato se mantiene a mano en `src/main/adapters/ipc/contract.ts` (`StoryDTO
 
 La capacidad `DataPort.listFontFamilies()` es local al navegador: su implementación usa
 `queryLocalFonts()` y devuelve nombres de familias instaladas. No agrega un canal IPC ni
-modifica los DTOs. El main concede el permiso `local-fonts` exclusivamente al frame principal
-de la aplicación. Las preferencias tipográficas se guardan en almacenamiento local del
-renderer y no forman parte de las entidades del dominio.
+modifica los DTOs. El main concede el permiso `local-fonts` exclusivamente a los frames
+principales registrados de las ventanas de escritura y configuración. Las preferencias
+tipográficas no forman parte de las entidades del dominio.
+
+## Configuración y preferencias entre ventanas
+
+Cinco peticiones adicionales utilizan `IpcResult`, a través de DataPort y preload:
+
+| Canal                | Emisor               | Resultado                                                                                                           |
+| -------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `settings:open`      | Principal            | Abre, restaura o enfoca la única ventana auxiliar no modal.                                                         |
+| `settings:close`     | Auxiliar             | Cierra configuración, conservando la principal.                                                                     |
+| `typography:get`     | Principal o auxiliar | Instantánea actual. Solo la principal puede aportar preferencias iniciales para una sesión todavía no inicializada. |
+| `typography:patch`   | Principal o auxiliar | Combina los campos editados de un contexto y devuelve la instantánea aceptada.                                      |
+| `typography:storage` | Principal            | Informa el resultado del guardado para la revisión indicada; un resultado antiguo se ignora.                        |
+
+La notificación `typography:changed` entrega una instantánea con `preferences`,
+`revision` y `storageError`. La revisión es monótona y también avanza cuando cambia
+el estado de error de guardado; evita aplicar respuestas o eventos antiguos. Las
+notificaciones recibidas no se vuelven a publicar.
+
+El main coordina el estado efectivo de la sesión y el ciclo de vida de la auxiliar.
+Solo el renderer principal guarda cambios en la clave local existente
+`draftwrite.typography`; la auxiliar no compite por escribirla. Un fallo de guardado
+se comunica sin descartar la elección de sesión ni impedir su aplicación visual.
+
+Cada patch contiene `context` y `changes`. Editor y preview aceptan `font`, `size`
+y `lineHeight`; interfaz acepta `font` y `size` (escala). El interlineado es un
+multiplicador finito entre 1 y 3, con default 2 para datos anteriores. Los rangos
+existentes de tamaño 10–40 px y escala 80–150 % permanecen vigentes. Los patches con campos o valores
+inválidos devuelven `errInvalidPayload`; frames ajenos o emisores sin el rol
+requerido reciben `errForbidden`. Antes de la inicialización se devuelve `errNotReady`.
+
+Las rutas internas son la entrada normal del renderer y `#settings`, sin aceptar
+URLs suministradas por los mensajes. La política de permisos compartida reconoce
+ambas ventanas y conserva la escritura de texto en el portapapeles de la principal.
 
 Los wrappers de `src/main/adapters/ipc/` no contienen reglas de negocio: validan la forma del payload en la
 frontera (`validate.ts`), envuelven el resultado (`errors.ts`) y delegan al servicio de aplicación

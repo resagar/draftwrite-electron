@@ -6,6 +6,7 @@ import type {
   StoryDTO
 } from '../../../main/adapters/ipc/contract'
 import { createIpcPort, IpcError } from './ipc-port'
+import { defaultPreferences } from '../../../shared/typography'
 
 const storyDTO: StoryDTO = {
   id: 's1',
@@ -71,6 +72,20 @@ function createFakeApi(overrides: ApiOverrides = {}): DraftwriteApi {
   }
 
   return {
+    settings: {
+      open: async () => ({ ok: true, value: undefined }),
+      close: async () => ({ ok: true, value: undefined }),
+      get: async () => ({
+        ok: true,
+        value: { preferences: defaultPreferences, revision: 0, storageError: false }
+      }),
+      patch: async () => ({
+        ok: true,
+        value: { preferences: defaultPreferences, revision: 1, storageError: false }
+      }),
+      storage: async () => ({ ok: true, value: undefined }),
+      onChanged: () => () => {}
+    },
     story: { ...story, ...overrides.story },
     article: { ...article, ...overrides.article },
     post: { ...post, ...overrides.post }

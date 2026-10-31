@@ -76,6 +76,18 @@ function toPostDTO(post: Post): PostDTO {
 
 export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort {
   return {
+    openSettings: async () => {
+      unwrap(await api.settings.open())
+    },
+    closeSettings: async () => {
+      unwrap(await api.settings.close())
+    },
+    getTypography: async (initial) => unwrap(await api.settings.get(initial)),
+    patchTypography: async (update) => unwrap(await api.settings.patch(update)),
+    reportTypographyStorage: async (revision, failed) => {
+      unwrap(await api.settings.storage(revision, failed))
+    },
+    onTypographyChanged: (listener) => api.settings.onChanged(listener),
     listFontFamilies: async () => {
       const browser = window as Window & {
         queryLocalFonts?: () => Promise<{ family: string }[]>

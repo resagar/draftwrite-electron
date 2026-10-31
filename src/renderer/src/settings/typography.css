@@ -11,6 +11,11 @@
   font-size: var(--preview-size, 16px);
 }
 
+[aria-label='Preview'] article,
+[aria-label='Preview'] article .leading-loose {
+  line-height: var(--preview-line-height, 2);
+}
+
 [aria-label='Preview'] article :is(p, blockquote, ul, ol, table, h1, h2, h3) {
   font-family: inherit;
 }

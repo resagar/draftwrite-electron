@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { JSX } from 'react'
 import { availableFont } from './fonts'
 import { defaultPreferences } from './preferences'
-import { SizeControl } from './SizeControl'
+import { SizeControl, NumberControl } from './SizeControl'
+import { useDataPort } from '../data/port-context'
 import type { TypographyContext } from './preferences'
 import { useTypography } from './typography-context'
 
@@ -51,7 +52,7 @@ function TypographyControls({ context, title, description }: TypographyControlsP
             id={`${context}-font`}
             className="settings-input"
             value={availableFont(choice.font, catalog) ?? choice.font}
-            onChange={(event) => update(context, { ...choice, font: event.target.value })}
+            onChange={(event) => update(context, { font: event.target.value })}
           >
             {missing && (
               <option value={choice.font} disabled>
@@ -77,8 +78,20 @@ function TypographyControls({ context, title, description }: TypographyControlsP
             context={context}
             title={title}
             size={choice.size}
-            onChange={(size) => update(context, { ...choice, size })}
+            onChange={(size) => update(context, { size })}
           />
+          {context !== 'interface' && (
+            <NumberControl
+              id={`${context}-line-height`}
+              label={`${title} line height`}
+              actionLabel={`${title.toLowerCase()} line height`}
+              value={choice.lineHeight ?? 2}
+              min={1}
+              max={3}
+              step={0.1}
+              onChange={(lineHeight) => update(context, { lineHeight })}
+            />
+          )}
           <button
             type="button"
             className="settings-button self-start"
@@ -102,15 +115,23 @@ function TypographyControls({ context, title, description }: TypographyControlsP
 }
 
 export function Settings(): JSX.Element {
-  const { setSettingsOpen, storageError, catalogError, loading } = useTypography()
+  const port = useDataPort()
+  const { ready, error, storageError, catalogError, loading } = useTypography()
+  const [closeError, setCloseError] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus()
-  }, [])
+  }, [ready])
+  if (!ready)
+    return (
+      <section aria-label="Settings" className="h-full overflow-y-auto p-6 text-sm">
+        <p role={error ? 'alert' : 'status'}>{error ?? 'Loading settings…'}</p>
+      </section>
+    )
   return (
     <section
       aria-label="Settings"
-      className="settings-screen absolute inset-0 z-20 overflow-y-auto bg-base-100 p-6 sm:p-8"
+      className="settings-screen h-full overflow-y-auto bg-base-100 p-6 text-sm sm:p-8"
     >
       <div className="mx-auto max-w-3xl">
         <div className="mb-6 flex items-start justify-between gap-4">
@@ -125,11 +146,23 @@ export function Settings(): JSX.Element {
           <button
             type="button"
             className="settings-button shrink-0"
-            onClick={() => setSettingsOpen(false)}
+            onClick={() => {
+              void port.closeSettings().catch(() => setCloseError(true))
+            }}
           >
-            Back to writing
+            Close settings
           </button>
         </div>
+        {error && (
+          <p role="alert" className="mb-4 text-error">
+            {error}
+          </p>
+        )}
+        {closeError && (
+          <p role="alert" className="mb-4 text-error">
+            Settings could not be closed. Use the window close button to try again.
+          </p>
+        )}
         {loading && (
           <p role="status" className="mb-4">
             Loading system fonts…

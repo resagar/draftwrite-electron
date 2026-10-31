@@ -1,6 +1,20 @@
 import type { Article } from '../../article/model'
 import type { Post } from '../../post/model'
 import type { Story } from '../../story/model'
+import type {
+  TypographyPatch,
+  TypographyPreferences,
+  TypographySnapshot
+} from '../../../shared/typography'
+
+export const settingsChannels = {
+  open: 'settings:open',
+  close: 'settings:close',
+  get: 'typography:get',
+  patch: 'typography:patch',
+  storage: 'typography:storage',
+  changed: 'typography:changed'
+} as const
 
 /**
  * IPC contract of the presentation layer. Pure module: types and constants
@@ -68,6 +82,14 @@ export interface IpcHandlerRegistry {
 
 /** API the preload exposes as `window.draftwrite`. */
 export interface DraftwriteApi {
+  settings: {
+    open(): Promise<IpcResult<void>>
+    close(): Promise<IpcResult<void>>
+    get(initial?: TypographyPreferences): Promise<IpcResult<TypographySnapshot>>
+    patch(update: TypographyPatch): Promise<IpcResult<TypographySnapshot>>
+    storage(revision: number, failed: boolean): Promise<IpcResult<void>>
+    onChanged(listener: (snapshot: TypographySnapshot) => void): () => void
+  }
   story: {
     create(story: StoryDTO): Promise<IpcResult<StoryDTO>>
     get(id: string): Promise<IpcResult<StoryDTO>>

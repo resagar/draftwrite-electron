@@ -13,6 +13,7 @@ import './assets/fonts/monaspace/monaspace.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { SettingsApp } from './settings/SettingsApp'
 import { createIpcPort } from './data/ipc-port'
 import { DataPortProvider } from './data/port-context'
 import './global.css'
@@ -25,7 +26,7 @@ if (container === null) {
 createRoot(container).render(
   <StrictMode>
     <DataPortProvider port={createIpcPort()}>
-      <App />
+      {window.location.hash === '#settings' ? <SettingsApp /> : <App />}
     </DataPortProvider>
   </StrictMode>
 )

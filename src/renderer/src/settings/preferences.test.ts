@@ -4,10 +4,25 @@ import { defaultPreferences, readPreferences, savePreferences } from './preferen
 beforeEach(() => localStorage.clear())
 
 describe('typography preferences storage', () => {
+  it('migrates existing preferences with independent default line heights', () => {
+    localStorage.setItem(
+      'draftwrite.typography',
+      JSON.stringify({
+        editor: { font: 'Monaspace Neon', size: 24 },
+        preview: { font: 'Newsreader', size: 20, lineHeight: 1.25 },
+        interface: { font: 'Inter', size: 150 }
+      })
+    )
+    expect(readPreferences()).toEqual({
+      editor: { font: 'Monaspace Neon', size: 24, lineHeight: 2 },
+      preview: { font: 'Newsreader', size: 20, lineHeight: 1.25 },
+      interface: { font: 'Inter', size: 150 }
+    })
+  })
   it('keeps independent choices across sessions', () => {
     const preferences = {
-      editor: { font: 'Monaspace Neon', size: 24 },
-      preview: { font: 'Newsreader', size: 20 },
+      editor: { font: 'Monaspace Neon', size: 24, lineHeight: 1.5 },
+      preview: { font: 'Newsreader', size: 20, lineHeight: 1.25 },
       interface: { font: 'Inter', size: 150 }
     }
     expect(savePreferences(preferences)).toBe(true)
@@ -26,8 +41,8 @@ describe('typography preferences storage', () => {
       })
     )
     expect(readPreferences()).toEqual({
-      editor: { font: 'Missing font', size: 16 },
-      preview: { font: 'Inter', size: 10 },
+      editor: { font: 'Missing font', size: 16, lineHeight: 2 },
+      preview: { font: 'Inter', size: 10, lineHeight: 2 },
       interface: { font: 'Inter', size: 100 }
     })
   })
@@ -44,4 +59,19 @@ describe('typography preferences storage', () => {
     expect(savePreferences(defaultPreferences)).toBe(false)
     write.mockRestore()
   })
+
+  it.each([0, -1, 3.1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'defaults only an invalid line height (%s)',
+    (lineHeight) => {
+      localStorage.setItem(
+        'draftwrite.typography',
+        JSON.stringify({
+          editor: { font: 'Newsreader', size: 20, lineHeight },
+          preview: { font: 'Inter', size: 24, lineHeight: 3 }
+        })
+      )
+      expect(readPreferences().editor).toEqual({ font: 'Newsreader', size: 20, lineHeight: 2 })
+      expect(readPreferences().preview).toEqual({ font: 'Inter', size: 24, lineHeight: 3 })
+    }
+  )
 })

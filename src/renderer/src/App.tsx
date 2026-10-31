@@ -14,10 +14,9 @@ import { useShortcuts } from './state/use-shortcuts'
 import { WorkspaceProvider, useWorkspace, useWorkspaceDispatch } from './state/workspace-context'
 import { ConfirmDialog } from './ui/ConfirmDialog/ConfirmDialog'
 import { Workspace } from './workspace/Workspace/Workspace'
-import { TypographyProvider, useTypography } from './settings/typography-context'
+import { TypographyProvider } from './settings/typography-context'
 
 function AppLayout(): JSX.Element {
-  const { settingsOpen } = useTypography()
   const port = useDataPort()
   const { library, dialog, pendingNavigation, selectedArticleId, selectedStoryId } = useWorkspace()
   const { articleById, storyById, postById, reloadStories, reloadArticles, reloadPosts } =
@@ -38,12 +37,8 @@ function AppLayout(): JSX.Element {
   const create = useContextualCreate()
 
   useShortcuts({
-    onNew: () => {
-      if (!settingsOpen) create.start()
-    },
-    onSave: () => {
-      if (!settingsOpen) void requestSave()
-    },
+    onNew: create.start,
+    onSave: () => void requestSave(),
     onToggleZen: () => dispatch({ type: 'zen/toggle' })
   })
 

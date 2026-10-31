@@ -1,4 +1,9 @@
 import type { Article, Post, Story } from './types'
+import type {
+  TypographyPatch,
+  TypographyPreferences,
+  TypographySnapshot
+} from '../../../shared/typography'
 
 export type NewStory = {
   topic: string
@@ -23,6 +28,12 @@ export type NewPost = {
 }
 
 export type DataPort = {
+  openSettings(): Promise<void>
+  closeSettings(): Promise<void>
+  getTypography(initial?: TypographyPreferences): Promise<TypographySnapshot>
+  patchTypography(update: TypographyPatch): Promise<TypographySnapshot>
+  reportTypographyStorage(revision: number, failed: boolean): Promise<void>
+  onTypographyChanged(listener: (snapshot: TypographySnapshot) => void): () => void
   listFontFamilies(): Promise<string[]>
   listStories(): Promise<Story[]>
   listArticles(): Promise<Article[]>
