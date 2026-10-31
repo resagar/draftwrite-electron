@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
 import { join } from 'path'
+import { pathToFileURL } from 'node:url'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers } from './adapters/ipc/register'
 import { bootstrap, closeDatabase, type Bootstrap } from './bootstrap'
@@ -25,6 +26,34 @@ function createWindow(): void {
     }
   })
   mainWindow = window
+
+  const rendererUrl =
+    is.dev && process.env['ELECTRON_RENDERER_URL']
+      ? process.env['ELECTRON_RENDERER_URL']
+      : pathToFileURL(join(__dirname, '../renderer/index.html')).href
+  const isAppFrame = (url: string): boolean =>
+    url.split('#')[0] === new URL(rendererUrl).href.split('#')[0]
+  // Keep the source-text copy action working alongside local font access.
+  const isAppPermission = (permission: string): boolean =>
+    permission === 'local-fonts' || permission === 'clipboard-sanitized-write'
+  // These permissions belong only to the application's main frame, never linked pages.
+  window.webContents.session.setPermissionCheckHandler(
+    (contents, permission, _origin, details) =>
+      isAppPermission(permission) &&
+      contents === window.webContents &&
+      details.isMainFrame &&
+      isAppFrame(details.requestingUrl ?? contents.getURL())
+  )
+  window.webContents.session.setPermissionRequestHandler(
+    (contents, permission, callback, details) => {
+      callback(
+        isAppPermission(permission) &&
+          contents === window.webContents &&
+          details.isMainFrame &&
+          isAppFrame(details.requestingUrl)
+      )
+    }
+  )
 
   window.on('ready-to-show', () => {
     window.show()

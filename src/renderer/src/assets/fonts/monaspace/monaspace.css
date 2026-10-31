@@ -1,0 +1,35 @@
+@font-face {
+  font-family: 'Monaspace Neon';
+  src: url('./MonaspaceNeon.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Argon';
+  src: url('./MonaspaceArgon.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Xenon';
+  src: url('./MonaspaceXenon.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Radon';
+  src: url('./MonaspaceRadon.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monaspace Krypton';
+  src: url('./MonaspaceKrypton.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}

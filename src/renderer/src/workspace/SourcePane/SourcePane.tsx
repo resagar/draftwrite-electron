@@ -249,12 +249,12 @@ export function SourcePane({
               </p>
             ) : content?.kind === 'story' ? (
               <div className="space-y-3 p-5 select-text">
-                <h3 className="text-[14px] leading-loose font-semibold text-secondary">
+                <h3 className="text-base leading-loose font-semibold text-secondary">
                   {content.story.Topic}
                 </h3>
 
                 {content.story.Titles.length > 0 ? (
-                  <ul className="space-y-0.5 text-[14px] leading-loose text-base-content/80">
+                  <ul className="space-y-0.5 text-base leading-loose text-base-content/80">
                     {content.story.Titles.map((title) => (
                       <li key={title}>{title}</li>
                     ))}
@@ -269,24 +269,24 @@ export function SourcePane({
                   </div>
                 ) : null}
 
-                <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
+                <pre className="font-mono text-base leading-loose whitespace-pre-wrap text-base-content/70">
                   {content.story.Text}
                 </pre>
               </div>
             ) : content?.kind === 'article' ? (
               <div className="space-y-3 p-5 select-text">
-                <h3 className="text-[14px] leading-loose font-semibold text-secondary">
+                <h3 className="text-base leading-loose font-semibold text-secondary">
                   {content.article.Title}
                 </h3>
 
                 {content.article.Subtitle !== '' ? (
-                  <p className="text-[14px] leading-loose text-base-content/80">
+                  <p className="text-base leading-loose text-base-content/80">
                     {content.article.Subtitle}
                   </p>
                 ) : null}
 
                 {content.article.Target !== '' ? (
-                  <p className="text-[14px] leading-loose text-base-content/60">
+                  <p className="text-base leading-loose text-base-content/60">
                     <span className="font-mono text-2xs tracking-wider uppercase">Target </span>
                     {content.article.Target}
                   </p>
@@ -299,7 +299,7 @@ export function SourcePane({
                   </p>
                 ) : null}
 
-                <pre className="font-mono text-[14px] leading-loose whitespace-pre-wrap text-base-content/70">
+                <pre className="font-mono text-base leading-loose whitespace-pre-wrap text-base-content/70">
                   {content.article.Text}
                 </pre>
               </div>

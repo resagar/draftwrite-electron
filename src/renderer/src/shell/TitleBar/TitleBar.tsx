@@ -1,10 +1,16 @@
-import { Expand, Feather, PanelLeft, Shrink } from 'lucide-react'
+import { Expand, Feather, PanelLeft, Shrink, Settings } from 'lucide-react'
 import type { JSX } from 'react'
 import { usePlatformModifier } from '../../state/use-platform'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { IconButton } from '../../ui/IconButton/IconButton'
 
-export function TitleBar(): JSX.Element {
+export function TitleBar({
+  onSettings,
+  settingsOpen = false
+}: {
+  onSettings?: () => void
+  settingsOpen?: boolean
+}): JSX.Element {
   const { sidebarCollapsed, zenMode } = useWorkspace()
   const modifier = usePlatformModifier()
   const dispatch = useWorkspaceDispatch()
@@ -28,6 +34,9 @@ export function TitleBar(): JSX.Element {
       </div>
 
       <div className="flex w-[220px] items-center justify-end gap-2">
+        <IconButton label="Settings" aria-pressed={settingsOpen} onClick={onSettings}>
+          <Settings aria-hidden="true" className="h-3.5 w-3.5" />
+        </IconButton>
         <IconButton
           label={zenLabel}
           aria-pressed={zenMode}

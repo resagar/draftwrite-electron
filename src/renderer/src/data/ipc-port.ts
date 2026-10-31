@@ -76,6 +76,13 @@ function toPostDTO(post: Post): PostDTO {
 
 export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort {
   return {
+    listFontFamilies: async () => {
+      const browser = window as Window & {
+        queryLocalFonts?: () => Promise<{ family: string }[]>
+      }
+      if (!browser.queryLocalFonts) throw new Error('Local font access is unavailable')
+      return (await browser.queryLocalFonts()).map(({ family }) => family)
+    },
     listStories: async () => toStories(unwrap(await api.story.list())),
     listArticles: async () => toArticles(unwrap(await api.article.list())),
     listPosts: async () => toPosts(unwrap(await api.post.list())),

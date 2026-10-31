@@ -23,6 +23,7 @@ export type NewPost = {
 }
 
 export type DataPort = {
+  listFontFamilies(): Promise<string[]>
   listStories(): Promise<Story[]>
   listArticles(): Promise<Article[]>
   listPosts(): Promise<Post[]>

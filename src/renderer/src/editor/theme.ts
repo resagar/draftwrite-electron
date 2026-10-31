@@ -5,10 +5,10 @@ import { tags } from '@lezer/highlight'
 const base = EditorView.theme(
   {
     '&': { backgroundColor: 'transparent', color: 'var(--color-base-content)', height: '100%' },
-    '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '2' },
+    '.cm-scroller': { fontFamily: 'var(--editor-font, var(--font-mono))', lineHeight: '2' },
     '.cm-content': {
       padding: '16px 20px',
-      fontSize: '16px',
+      fontSize: 'var(--editor-size, 16px)',
       lineHeight: '2',
       caretColor: 'var(--color-primary)',
       // The editor uses a wider measure than the preview at 16 px. The gutter
@@ -22,7 +22,7 @@ const base = EditorView.theme(
       backgroundColor: 'transparent',
       border: 'none',
       color: 'var(--color-gutter)',
-      fontSize: '16px',
+      fontSize: 'var(--editor-size, 16px)',
       lineHeight: '2',
       marginLeft: 'auto',
       opacity: '0.6'

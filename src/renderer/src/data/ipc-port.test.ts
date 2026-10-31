@@ -78,6 +78,25 @@ function createFakeApi(overrides: ApiOverrides = {}): DraftwriteApi {
 }
 
 describe('createIpcPort', () => {
+  it('lists system font families at the browser boundary and propagates access failures', async () => {
+    const browser = window as Window & { queryLocalFonts?: () => Promise<{ family: string }[]> }
+    const previous = browser.queryLocalFonts
+    try {
+      browser.queryLocalFonts = async () => [{ family: 'Local Serif' }, { family: 'Local Mono' }]
+      const port = createIpcPort(createFakeApi())
+      await expect(port.listFontFamilies()).resolves.toEqual(['Local Serif', 'Local Mono'])
+      browser.queryLocalFonts = async () => {
+        throw new Error('Font access denied')
+      }
+      await expect(port.listFontFamilies()).rejects.toThrow('Font access denied')
+      delete browser.queryLocalFonts
+      await expect(port.listFontFamilies()).rejects.toThrow('Local font access is unavailable')
+    } finally {
+      if (previous) browser.queryLocalFonts = previous
+      else delete browser.queryLocalFonts
+    }
+  })
+
   it('maps the stories the api lists to the interface shape', async () => {
     const api = createFakeApi({ story: { list: async () => ({ ok: true, value: [storyDTO] }) } })
     const port = createIpcPort(api)

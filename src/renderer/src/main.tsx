@@ -8,6 +8,7 @@ import '@fontsource/fira-code/latin-500.css'
 import '@fontsource/fira-code/latin-600.css'
 import '@fontsource/newsreader/latin-400.css'
 import '@fontsource/newsreader/latin-400-italic.css'
+import './assets/fonts/monaspace/monaspace.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

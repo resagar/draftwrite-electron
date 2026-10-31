@@ -3,6 +3,7 @@ import type { DataPort, NewArticle, NewPost, NewStory } from '../port'
 import type { Article, Post, Story } from '../types'
 
 export type FakePortOptions = {
+  fontFamilies?: string[]
   stories?: Story[]
   articles?: Article[]
   posts?: Post[]
@@ -129,6 +130,9 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     deletedArticleIds,
     deletedPostIds,
     port: {
+      async listFontFamilies() {
+        return [...(options.fontFamilies ?? [])]
+      },
       async listStories() {
         calls.listStories += 1
         return load(() => [...stories], listStoryCounter, options.listStoriesGate)

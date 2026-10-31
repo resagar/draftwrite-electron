@@ -24,6 +24,12 @@ Los canales son 16: `story:create`, `story:get`, `story:list`, `story:update`, `
 El contrato se mantiene a mano en `src/main/adapters/ipc/contract.ts` (`StoryDTO`, `ArticleDTO`,
 `PostDTO` y las firmas); se verifica con `pnpm typecheck` y los tests.
 
+La capacidad `DataPort.listFontFamilies()` es local al navegador: su implementación usa
+`queryLocalFonts()` y devuelve nombres de familias instaladas. No agrega un canal IPC ni
+modifica los DTOs. El main concede el permiso `local-fonts` exclusivamente al frame principal
+de la aplicación. Las preferencias tipográficas se guardan en almacenamiento local del
+renderer y no forman parte de las entidades del dominio.
+
 Los wrappers de `src/main/adapters/ipc/` no contienen reglas de negocio: validan la forma del payload en la
 frontera (`validate.ts`), envuelven el resultado (`errors.ts`) y delegan al servicio de aplicación
 (`src/main/<domain>/service.ts`), que a su vez delega al repositorio. Por eso las validaciones de
