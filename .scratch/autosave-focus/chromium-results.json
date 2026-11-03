@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "kind": "Story",
+      "inputFocus": true,
+      "inputSelection": true,
+      "editorFocus": true,
+      "editorSelection": true,
+      "undoAcrossCreation": true
+    },
+    {
+      "kind": "Article",
+      "inputFocus": true,
+      "inputSelection": true,
+      "editorFocus": true,
+      "editorSelection": true,
+      "undoAcrossCreation": true
+    },
+    {
+      "kind": "Post",
+      "inputFocus": true,
+      "inputSelection": true,
+      "editorFocus": true,
+      "editorSelection": true,
+      "undoAcrossCreation": true
+    }
+  ]
+}

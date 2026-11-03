@@ -4,16 +4,30 @@ import { ArticleEditor } from '../ArticleEditor/ArticleEditor'
 import { ArticleHeader } from '../ArticleHeader/ArticleHeader'
 
 type ArticlePaneProps = {
-  article: Article
+  article: Article | null
   story: Story | null
+  initialStoryId?: string
+  onStoryChange?: (storyId: string) => void
 }
 
-export function ArticlePane({ article, story }: ArticlePaneProps): JSX.Element {
+export function ArticlePane({
+  article,
+  story,
+  initialStoryId,
+  onStoryChange
+}: ArticlePaneProps): JSX.Element {
   return (
-    <section aria-label="Article" className="flex min-w-0 flex-1 flex-col bg-base-100">
-      <ArticleHeader article={article} story={story} />
+    <section
+      aria-label={article ? 'Article' : undefined}
+      className="flex min-w-0 flex-1 flex-col bg-base-100"
+    >
+      {article ? <ArticleHeader article={article} story={story} /> : null}
 
-      <ArticleEditor key={article.ID} stored={article} />
+      <ArticleEditor
+        stored={article}
+        initialStoryId={initialStoryId}
+        onStoryChange={onStoryChange}
+      />
     </section>
   )
 }

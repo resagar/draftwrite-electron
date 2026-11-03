@@ -8,6 +8,7 @@ type ArticleBandProps = {
   title: string
   subtitle: string
   creating: boolean
+  storyLocked?: boolean
   onStory: (storyId: string) => void
   onTitle: (title: string) => void
   onSubtitle: (subtitle: string) => void
@@ -20,6 +21,7 @@ export function ArticleBand({
   title,
   subtitle,
   creating,
+  storyLocked = false,
   onStory,
   onTitle,
   onSubtitle,
@@ -45,7 +47,7 @@ export function ArticleBand({
         <select
           id="article-story"
           value={storyId}
-          disabled={!creating}
+          disabled={!creating || storyLocked}
           aria-invalid={missingStoryId}
           onChange={(event) => onStory(event.target.value)}
           className={cn(

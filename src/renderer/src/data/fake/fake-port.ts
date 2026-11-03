@@ -16,11 +16,14 @@ export type FakePortOptions = {
   listArticlesGate?: Promise<void>
   listPostsGate?: Promise<void>
   createStoryFailures?: number
+  createStoryGate?: Promise<void>
   updateStoryFailures?: number
   updateStoryGate?: Promise<void>
   createArticleFailures?: number
+  createArticleGate?: Promise<void>
   updateArticleFailures?: number
   createPostFailures?: number
+  createPostGate?: Promise<void>
   updatePostFailures?: number
   deleteStoryFailures?: number
   deleteArticleFailures?: number
@@ -194,8 +197,9 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
         calls.listPosts += 1
         return load(() => [...posts], listPostCounter, options.listPostsGate)
       },
-      createStory(input) {
+      async createStory(input) {
         calls.createStory += 1
+        if (options.createStoryGate) await options.createStoryGate
         return write(() => {
           createdStories.push(input)
           const created = makeStory({
@@ -209,8 +213,9 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
           return created
         }, createStoryCounter)
       },
-      createArticle(input) {
+      async createArticle(input) {
         calls.createArticle += 1
+        if (options.createArticleGate) await options.createArticleGate
         return write(() => {
           createdArticles.push(input)
           const created = makeArticle({
@@ -252,8 +257,9 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
           return article
         }, updateArticleCounter)
       },
-      createPost(input) {
+      async createPost(input) {
         calls.createPost += 1
+        if (options.createPostGate) await options.createPostGate
         return write(() => {
           createdPosts.push(input)
           const created = makePost({

@@ -34,6 +34,7 @@ export function useDraftPersistence<T extends { ID: string }>({
   const timer = useRef<number | null>(null)
   const pending = useRef<T | null>(null)
   const queue = useRef<Promise<void>>(Promise.resolve())
+  const createdID = useRef<string | null>(null)
 
   const clearTimer = useCallback(() => {
     if (timer.current !== null) {
@@ -44,7 +45,10 @@ export function useDraftPersistence<T extends { ID: string }>({
 
   const persist = useCallback(
     async (draft: T) => {
-      const creating = draft.ID === ''
+      // Queued edits may still carry the empty ID from an in-flight creation.
+      const value =
+        draft.ID === '' && createdID.current !== null ? { ...draft, ID: createdID.current } : draft
+      const creating = value.ID === ''
       setStatus('saving')
       setError(null)
 
@@ -55,16 +59,16 @@ export function useDraftPersistence<T extends { ID: string }>({
       }
 
       try {
-        const stored = creating ? await create(draft) : await update(draft)
+        const stored = creating ? await create(value) : await update(value)
+        if (creating) createdID.current = stored.ID
         onStored(stored, creating)
-        setStatus('saved')
-
-        // Anything typed while the create was in flight was scheduled with
-        // no ID yet. It now belongs to the stored entity, so writing it out
-        // later updates instead of creating a second one.
-        if (creating && pending.current !== null) {
-          pending.current = { ...pending.current, ID: stored.ID }
-        }
+        setStatus(
+          pending.current === null
+            ? 'saved'
+            : canPersist(pending.current)
+              ? 'pending'
+              : 'incomplete'
+        )
       } catch (caught) {
         // The domain's own reason (a taken topic, a taken title) is what the
         // writer needs to read, so it is translated and kept.
@@ -78,7 +82,7 @@ export function useDraftPersistence<T extends { ID: string }>({
         }
       }
     },
-    [create, update, onStored]
+    [create, update, onStored, canPersist]
   )
 
   const write = useCallback(

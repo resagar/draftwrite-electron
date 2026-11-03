@@ -4,15 +4,18 @@ import { StoryEditor } from '../StoryEditor/StoryEditor'
 import { StoryHeader } from '../StoryHeader/StoryHeader'
 
 type StoryEditorPaneProps = {
-  story: Story
+  story: Story | null
 }
 
 export function StoryEditorPane({ story }: StoryEditorPaneProps): JSX.Element {
   return (
-    <section aria-label="Story" className="flex min-w-0 flex-1 flex-col bg-base-100">
-      <StoryHeader story={story} />
+    <section
+      aria-label={story ? 'Story' : undefined}
+      className="flex min-w-0 flex-1 flex-col bg-base-100"
+    >
+      {story ? <StoryHeader story={story} /> : null}
 
-      <StoryEditor key={story.ID} stored={story} />
+      <StoryEditor stored={story} />
     </section>
   )
 }

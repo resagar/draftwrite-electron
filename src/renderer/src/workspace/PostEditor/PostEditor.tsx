@@ -1,5 +1,5 @@
 import type { EditorView } from '@codemirror/view'
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react'
 import { emptyPost } from '../../data/drafts'
 import { useDataPort } from '../../data/port-context'
 import type { Post } from '../../data/types'
@@ -9,7 +9,6 @@ import { registerSave } from '../../state/save-registry'
 import { publishUnsavedDraft } from '../../state/status-store'
 import { useDraftPersistence } from '../../state/use-draft-persistence'
 import { useEditorStatus } from '../../state/use-editor-status'
-import { useWorkspaceNavigation } from '../../state/use-navigation'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
@@ -39,11 +38,11 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
     reloadArticles,
     upsertPost
   } = useLibrary()
-  const { storyPaneExpanded } = useWorkspace()
+  const { storyPaneExpanded, editorSession } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
-  const navigate = useWorkspaceNavigation()
   const creating = stored === null
   const [draft, setDraft] = useState<Post>(stored ?? emptyPost())
+  const latestDraft = useRef(draft)
   const [view, setView] = useState<EditorView | null>(null)
 
   const canPersist = (value: Post): boolean => value.Topic.trim() !== ''
@@ -61,12 +60,19 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
     update: (value) => port.updatePost(value),
     onStored: (value, wasCreated) => {
       upsertPost(value)
-      publishUnsavedDraft(false)
 
       if (wasCreated) {
-        setDraft(value)
-        dispatch({ type: 'create/cancel' })
-        navigate({ type: 'post/select', postId: value.ID })
+        const next = {
+          ...latestDraft.current,
+          ID: value.ID,
+          CreatedAt: value.CreatedAt,
+          UpdatedAt: value.UpdatedAt
+        }
+        latestDraft.current = next
+        setDraft(next)
+        // Creation always starts pending; persist any state chosen in the draft.
+        if (next.State !== value.State || next.ScheduledAt !== value.ScheduledAt) schedule(next)
+        dispatch({ type: 'create/complete', kind: 'post', id: value.ID, session: editorSession })
       }
     }
   })
@@ -86,6 +92,7 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
   }, [saveNow])
 
   const change = (next: Post): void => {
+    latestDraft.current = next
     setDraft(next)
     // What cannot be persisted, and would be lost by leaving, is what the
     // navigation guard must ask about — a blanked topic included.

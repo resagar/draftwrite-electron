@@ -10,8 +10,7 @@ import { registerSave } from '../../state/save-registry'
 import { publishUnsavedDraft } from '../../state/status-store'
 import { useDraftPersistence } from '../../state/use-draft-persistence'
 import { useEditorStatus } from '../../state/use-editor-status'
-import { useWorkspaceNavigation } from '../../state/use-navigation'
-import { useWorkspaceDispatch } from '../../state/workspace-context'
+import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { ArticleBand } from '../ArticleBand/ArticleBand'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
@@ -42,10 +41,11 @@ export function ArticleEditor({
   const port = useDataPort()
   const { allStories, upsertArticle } = useLibrary()
   const dispatch = useWorkspaceDispatch()
-  const navigate = useWorkspaceNavigation()
+  const { editorSession } = useWorkspace()
   const creating = stored === null
   const [draft, setDraft] = useState<Article>(stored ?? emptyArticle(initialStoryId))
   const [view, setView] = useState<EditorView | null>(null)
+  const [storyLocked, setStoryLocked] = useState(false)
 
   const canPersist = (value: Article): boolean =>
     value.StoryID.trim() !== '' && value.Title.trim() !== ''
@@ -53,23 +53,33 @@ export function ArticleEditor({
   const { status, error, schedule, saveNow } = useDraftPersistence<Article>({
     initialStatus: creating ? 'incomplete' : 'saved',
     canPersist,
-    create: (value) =>
-      port.createArticle({
-        storyId: value.StoryID,
-        title: value.Title,
-        subtitle: value.Subtitle,
-        target: value.Target,
-        text: value.Text
-      }),
+    create: async (value) => {
+      setStoryLocked(true)
+      try {
+        return await port.createArticle({
+          storyId: value.StoryID,
+          title: value.Title,
+          subtitle: value.Subtitle,
+          target: value.Target,
+          text: value.Text
+        })
+      } catch (caught) {
+        setStoryLocked(false)
+        throw caught
+      }
+    },
     update: (value) => port.updateArticle(value),
     onStored: (value, wasCreated) => {
       upsertArticle(value)
-      publishUnsavedDraft(false)
 
       if (wasCreated) {
-        setDraft(value)
-        dispatch({ type: 'create/cancel' })
-        navigate({ type: 'article/select', articleId: value.ID })
+        setDraft((current) => ({
+          ...current,
+          ID: value.ID,
+          CreatedAt: value.CreatedAt,
+          UpdatedAt: value.UpdatedAt
+        }))
+        dispatch({ type: 'create/complete', kind: 'article', id: value.ID, session: editorSession })
       }
     }
   })
@@ -123,7 +133,9 @@ export function ArticleEditor({
         title={draft.Title}
         subtitle={draft.Subtitle}
         creating={creating}
+        storyLocked={storyLocked}
         onStory={(storyId) => {
+          if (!creating || storyLocked) return
           change({ ...draft, StoryID: storyId })
           if (creating) {
             onStoryChange?.(storyId)

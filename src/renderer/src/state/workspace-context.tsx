@@ -32,6 +32,7 @@ export type WorkspaceState = {
   zenMode: boolean
   storyPaneExpanded: boolean
   creating: CreateKind | null
+  editorSession: number
   // The Story a new Article is pre-selected with, taken from whatever story is
   // in context when «New Article» is pressed.
   creatingStoryId: string | null
@@ -56,6 +57,7 @@ export type WorkspaceAction =
   | { type: 'create/start'; kind: CreateKind; storyId?: string }
   | { type: 'create/story'; storyId: string }
   | { type: 'create/cancel' }
+  | { type: 'create/complete'; kind: CreateKind; id: string; session: number }
   | { type: 'dialog/open'; request: DeleteRequest }
   | { type: 'dialog/close' }
   | { type: 'pending/set'; action: WorkspaceAction }
@@ -73,6 +75,7 @@ export const initialWorkspaceState: WorkspaceState = {
   zenMode: false,
   storyPaneExpanded: true,
   creating: null,
+  editorSession: 0,
   creatingStoryId: null,
   dialog: null,
   pendingNavigation: null
@@ -81,11 +84,25 @@ export const initialWorkspaceState: WorkspaceState = {
 export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
   switch (action.type) {
     case 'library/select':
-      return { ...state, library: action.library, creating: null, creatingStoryId: null }
+      return {
+        ...state,
+        library: action.library,
+        creating: null,
+        creatingStoryId: null,
+        editorSession: state.editorSession + (state.creating === null ? 0 : 1)
+      }
     case 'story/select':
+      if (
+        state.creating === null &&
+        state.selectedStoryId === action.storyId &&
+        state.selectedArticleId === null &&
+        state.selectedPostId === null
+      )
+        return state
       // One editor per selection: opening a Story leaves the Article behind.
       return {
         ...state,
+        editorSession: state.editorSession + 1,
         selectedStoryId: action.storyId,
         selectedArticleId: null,
         selectedPostId: null,
@@ -95,8 +112,15 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
     case 'story/deleted':
       return state.selectedStoryId === action.storyId ? { ...state, selectedStoryId: null } : state
     case 'article/select':
+      if (
+        state.creating === null &&
+        state.selectedArticleId === action.articleId &&
+        state.selectedPostId === null
+      )
+        return state
       return {
         ...state,
+        editorSession: state.editorSession + 1,
         selectedArticleId: action.articleId,
         selectedPostId: null,
         creating: null,
@@ -108,8 +132,16 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         ? { ...state, selectedArticleId: null }
         : state
     case 'post/select':
+      if (
+        state.creating === null &&
+        state.selectedPostId === action.postId &&
+        state.selectedStoryId === null &&
+        state.selectedArticleId === null
+      )
+        return state
       return {
         ...state,
+        editorSession: state.editorSession + 1,
         selectedPostId: action.postId,
         selectedStoryId: null,
         selectedArticleId: null,
@@ -133,6 +165,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
     case 'create/start':
       return {
         ...state,
+        editorSession: state.editorSession + 1,
         creating: action.kind,
         creatingStoryId: action.storyId ?? null,
         storyPaneExpanded: action.kind === 'article' ? true : state.storyPaneExpanded
@@ -140,7 +173,28 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
     case 'create/story':
       return { ...state, creatingStoryId: action.storyId }
     case 'create/cancel':
-      return { ...state, creating: null, creatingStoryId: null }
+      return {
+        ...state,
+        creating: null,
+        creatingStoryId: null,
+        editorSession: state.editorSession + 1
+      }
+    case 'create/complete':
+      // A late save must not replace a different editing session.
+      if (state.editorSession !== action.session || state.creating !== action.kind) return state
+      return {
+        ...state,
+        creating: null,
+        creatingStoryId: null,
+        selectedStoryId:
+          action.kind === 'story'
+            ? action.id
+            : action.kind === 'post'
+              ? null
+              : state.selectedStoryId,
+        selectedArticleId: action.kind === 'article' ? action.id : null,
+        selectedPostId: action.kind === 'post' ? action.id : null
+      }
     case 'dialog/open':
       return { ...state, dialog: action.request }
     case 'dialog/close':

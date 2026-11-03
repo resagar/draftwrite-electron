@@ -9,8 +9,7 @@ import { registerSave } from '../../state/save-registry'
 import { publishUnsavedDraft } from '../../state/status-store'
 import { useDraftPersistence } from '../../state/use-draft-persistence'
 import { useEditorStatus } from '../../state/use-editor-status'
-import { useWorkspaceNavigation } from '../../state/use-navigation'
-import { useWorkspaceDispatch } from '../../state/workspace-context'
+import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
@@ -33,7 +32,7 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
   const port = useDataPort()
   const { upsertStory } = useLibrary()
   const dispatch = useWorkspaceDispatch()
-  const navigate = useWorkspaceNavigation()
+  const { editorSession } = useWorkspace()
   const creating = stored === null
   const [draft, setDraft] = useState<Story>(stored ?? emptyStory())
   const [view, setView] = useState<EditorView | null>(null)
@@ -53,12 +52,15 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
     update: (value) => port.updateStory(value),
     onStored: (value, wasCreated) => {
       upsertStory(value)
-      publishUnsavedDraft(false)
 
       if (wasCreated) {
-        setDraft(value)
-        dispatch({ type: 'create/cancel' })
-        navigate({ type: 'story/select', storyId: value.ID })
+        setDraft((current) => ({
+          ...current,
+          ID: value.ID,
+          CreatedAt: value.CreatedAt,
+          UpdatedAt: value.UpdatedAt
+        }))
+        dispatch({ type: 'create/complete', kind: 'story', id: value.ID, session: editorSession })
       }
     }
   })
