@@ -21,7 +21,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
-    ...(process.platform === 'win32'
+    ...(process.platform === 'win32' || process.platform === 'linux'
       ? {
           titleBarStyle: 'hidden' as const,
           titleBarOverlay: {

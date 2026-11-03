@@ -37,3 +37,23 @@ Un harness temporal intentó activar WCO sobre Linux para comprobar sus variable
 En Windows, abrir un build actualizado y comprobar a tamaño mínimo y maximizado, con Zen activado/desactivado: ausencia de fila duplicada, legibilidad, ausencia de solapamientos, botones del encabezado, arrastre, doble clic, minimizar, maximizar/restaurar y cerrar. Repetir la comprobación de geometría con escalado de pantalla si está disponible.
 
 No se añadieron tests de layout a Jest ni mocks de BrowserWindow: no demostrarían el comportamiento nativo. No se modificaron tests existentes para acomodar la implementación. Los harnesses y capturas temporales permanecen fuera del repositorio.
+
+## Corrección: ejecución desde Linux/WSLg
+
+La captura posterior del usuario mostró que seguía presente el marco nativo. Se verificó `process.platform = linux` y kernel WSL2. La condición inicial exclusiva de Windows impedía activar la función en su ejecución real.
+
+Se actualizó el alcance y se habilitó la misma configuración en Windows y Linux, junto con la región de arrastre del renderer. macOS y Settings conservan su configuración. No fue necesario añadir frame: false, IPC ni dependencias.
+
+La regresión se ejecutó en Electron real sobre WSLg, con perfil y SQLite aislados, antes y después del cambio:
+
+- Antes: overlay invisible, rectángulo seguro vacío y encabezado sin drag. La comprobación falló.
+- Después: overlay visible, región drag activa, controles fuera del área de contenido del encabezado y botones sin solapamientos, en ventanas de 900 y 1280 px y con Zen activado/desactivado. La comprobación pasó.
+- Ventana de 900 px: área segura del encabezado de 787 px; ventana de 1280 px: área segura de 1167 px. Electron reserva 113 px para los controles nativos.
+- Búsqueda, apertura/cierre de Settings e IPC SQLite también pasaron; cero errores de renderer.
+- El verificador reutilizable scripts/verify-titlebar.browser.js comprueba WCO, geometría, regiones drag/no-drag, búsqueda y Zen. Ejecutarlo sobre una app Electron aislada a los tamaños requeridos.
+
+Esta evidencia sustituye la limitación del harness temporal descrita arriba: aquel reemplazo de texto afectaba una condición win32 anterior a la creación de ventana y no activaba WCO. La corrección actual se probó directamente sobre la aplicación compilada, sin reemplazos ni inyección de clases.
+
+La geometría y activación están verificadas en Linux/WSLg. El clic físico en los controles del compositor, el arrastre y doble clic con mouse y el binario nativo Windows siguen requiriendo comprobación manual. Los cambios de BrowserWindow se aplican al crear la ventana: reiniciar la aplicación después de actualizar el código.
+
+Tras la corrección WSL: build (incluido typecheck), lint y Prettier correctos; suite completa nuevamente correcta: 46 suites, 557 tests. Verificador reutilizable ejecutado con éxito sobre Electron real. Revisión final de estándares y spec sin defectos detectados.

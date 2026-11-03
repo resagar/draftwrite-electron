@@ -4,11 +4,11 @@
 
 ## Problem Statement
 
-En Windows, la ventana principal de DraftWrite muestra una barra nativa con icono y título encima del encabezado de la aplicación. Esa separación visual ocupa espacio y rompe la continuidad del tema. El usuario quiere una barra integrada, tomando como referencia visual Inkdrop.
+En Windows y Linux (incluido WSLg), la ventana principal de DraftWrite muestra una barra nativa con icono y título encima del encabezado de la aplicación. Esa separación visual ocupa espacio y rompe la continuidad del tema. El usuario quiere una barra integrada, tomando como referencia visual Inkdrop.
 
 ## Solution
 
-Integrar el encabezado existente con el área de título de la ventana principal en Windows. Mantener los controles nativos de minimizar, maximizar/restaurar y cerrar, con colores acordes al tema y espacio reservado para evitar superposiciones. El área libre permitirá mover la ventana.
+Integrar el encabezado existente con el área de título de la ventana principal en Windows y Linux. Mantener los controles nativos de minimizar, maximizar/restaurar y cerrar, con colores acordes al tema y espacio reservado para evitar superposiciones. El área libre permitirá mover la ventana.
 
 ## User Stories
 
@@ -24,11 +24,11 @@ Integrar el encabezado existente con el área de título de la ventana principal
 10. Como escritor, quiero controles visibles y legibles con el tema actual para reconocer sus funciones.
 11. Como escritor, quiero que los controles no tapen contenido cuando reduzco o maximizo la ventana.
 12. Como escritor, quiero seguir accediendo a los controles de ventana en modo Zen para poder administrar la ventana mientras escribo.
-13. Como usuario de Linux o macOS, quiero conservar el comportamiento actual de mi ventana mientras se ajusta la experiencia de Windows.
+13. Como usuario de Linux bajo WSLg, quiero la misma barra integrada para evitar el marco del sistema al ejecutar la aplicación desde WSL.
 
 ## Implementation Decisions
 
-- Aplicar el cambio a la ventana principal en Windows, conservando el comportamiento actual en otras plataformas.
+- Aplicar el cambio a la ventana principal en Windows y Linux, incluido WSLg, conservando el comportamiento actual en macOS.
 - Usar la barra oculta de Electron mediante titleBarStyle y Window Controls Overlay mediante titleBarOverlay. Mantener los controles nativos; no construir botones propios ni nuevos canales IPC.
 - Adaptar el encabezado existente y sus estilos al espacio disponible, usando los colores del tema actual.
 - Reservar espacio para los controles nativos en todos los estados relevantes de la interfaz, incluido Zen y los tamaños de ventana admitidos.
@@ -53,9 +53,13 @@ Integrar el encabezado existente con el área de título de la ventana principal
 - Rediseñar las acciones o la distribución completa del encabezado.
 - Copiar los iconos, menús o funciones de Inkdrop.
 - Sustituir controles nativos por botones personalizados.
-- Rediseñar los marcos de Linux o macOS.
+- Rediseñar el marco de macOS.
 - Añadir dependencias, contratos IPC o cambios de dominio y persistencia.
 
 ## Further Notes
 
 Inkdrop sirve como referencia de integración visual; no se ha investigado su implementación interna. El tracker configurado es local. La frontera de pruebas y el desglose de un ticket fueron aprobados por el usuario.
+
+## Comments
+
+Corrección de alcance tras la captura del usuario: la ejecución desde WSL2 se identifica como Linux, aunque el escritorio anfitrión sea Windows. La barra integrada debe cubrir también Linux/WSLg. La exclusión inicial de Linux no resolvía su caso real. Ver la actualización de evidencia en verification.md.

@@ -19,7 +19,8 @@ export function TitleBar({
   const dispatch = useWorkspaceDispatch()
   const zenLabel = `Zen mode (${modifier} Shift D)`
   const searchLabel = `Search stories, articles and posts (${modifier} K)`
-  const integrated = window.electron?.process.platform === 'win32'
+  const platform = window.electron?.process.platform
+  const integrated = platform === 'win32' || platform === 'linux'
 
   return (
     <header
