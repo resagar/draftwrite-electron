@@ -38,28 +38,27 @@ export function ArticleBand({
   const knownStory = stories.some((story) => story.ID === storyId)
 
   return (
-    <div className="@container/article-properties flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
-      <div className="grid min-w-0 grid-cols-1 gap-2 @sm/article-properties:grid-cols-[minmax(0,1fr)_auto] @2xl/article-properties:grid-cols-[minmax(0,1fr)_minmax(8rem,12rem)_auto]">
-        <div className="flex min-w-0 flex-col gap-1 @sm/article-properties:col-span-2 @sm/article-properties:flex-row @sm/article-properties:items-center @sm/article-properties:gap-2 @2xl/article-properties:col-span-1">
-          <label
-            htmlFor="article-title"
-            className="shrink-0 text-2xs tracking-wider text-base-content/60"
-          >
+    <div className="workspace-band @container/article-properties flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className="flex min-w-0 basis-full items-center gap-2">
+          <label htmlFor="article-title" className="sr-only">
             Title
           </label>
           <input
             id="article-title"
+            placeholder="Untitled article"
+            data-heading-input
             value={title}
             aria-invalid={missingTitle}
             onChange={(event) => onTitle(event.target.value)}
             className={cn(
               field,
-              'min-w-0 w-full shrink-0 @sm/article-properties:flex-1',
+              'min-w-0 w-full flex-1',
               missingTitle ? 'border-warning/60' : 'border-line'
             )}
           />
         </div>
-        <div className="flex min-w-0 flex-col gap-1 @sm/article-properties:flex-row @sm/article-properties:items-center @sm/article-properties:gap-2">
+        <div className="flex min-w-0 max-w-full basis-60 items-center gap-2">
           <label
             htmlFor="article-story"
             className="shrink-0 text-2xs tracking-wider text-base-content/60"
@@ -74,7 +73,7 @@ export function ArticleBand({
             onChange={(event) => onStory(event.target.value)}
             className={cn(
               field,
-              'min-w-0 w-full shrink-0 disabled:opacity-70 @sm/article-properties:flex-1',
+              'min-w-0 flex-1 disabled:opacity-70',
               missingStoryId ? 'border-warning/60' : 'border-line'
             )}
           >
