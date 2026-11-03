@@ -17,7 +17,9 @@ export type LibraryData = {
   stories: Story[]
   allStories: Story[]
   articles: Article[]
+  allArticles: Article[]
   posts: Post[]
+  allPosts: Post[]
   storiesTotal: number
   articlesTotal: number
   storiesStatus: LoadStatus
@@ -58,7 +60,9 @@ export function LibraryProvider({ children }: { children: ReactNode }): JSX.Elem
       stories: visibleStories,
       allStories: storyList.items,
       articles: visibleArticles,
+      allArticles: articleList.items,
       posts: visiblePosts,
+      allPosts: postList.items,
       storiesTotal: storyList.items.length,
       articlesTotal: articleList.items.length,
       storiesStatus: storyList.status,

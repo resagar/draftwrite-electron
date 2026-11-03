@@ -1,20 +1,24 @@
-import { Expand, Feather, PanelLeft, Shrink, Settings } from 'lucide-react'
+import { Expand, Feather, PanelLeft, Search, Settings, Shrink } from 'lucide-react'
 import type { JSX } from 'react'
 import { usePlatformModifier } from '../../state/use-platform'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { IconButton } from '../../ui/IconButton/IconButton'
+import { Kbd } from '../../ui/Kbd/Kbd'
 
 export function TitleBar({
   onSettings,
+  onSearch,
   settingsReady = true
 }: {
   onSettings?: () => void
+  onSearch: () => void
   settingsReady?: boolean
 }): JSX.Element {
   const { sidebarCollapsed, zenMode } = useWorkspace()
   const modifier = usePlatformModifier()
   const dispatch = useWorkspaceDispatch()
   const zenLabel = `Zen mode (${modifier} Shift D)`
+  const searchLabel = `Search stories, articles and posts (${modifier} K)`
 
   return (
     <header className="z-30 flex h-9 min-h-9 items-center gap-3 border-b border-base-300 bg-base-300 px-3 select-none">
@@ -24,13 +28,18 @@ export function TitleBar({
       </div>
 
       <div className="flex min-w-0 flex-1 justify-center">
-        <input
-          type="search"
-          disabled
-          aria-label="Search stories and articles (not available yet)"
-          placeholder="Search stories and articles..."
-          className="h-6 w-full max-w-[460px] rounded border border-line bg-base-200 px-2.5 text-xs text-base-content transition placeholder:text-base-content/60 focus-visible:border-primary disabled:cursor-not-allowed"
-        />
+        <button
+          type="button"
+          onClick={onSearch}
+          aria-label={searchLabel}
+          className="flex h-6 w-full max-w-[460px] items-center gap-1.5 rounded border border-line bg-base-200 px-2.5 text-xs text-base-content/60 transition hover:border-line-strong focus-visible:border-primary"
+        >
+          <Search aria-hidden="true" className="h-3 w-3 shrink-0" />
+          <span className="min-w-0 flex-1 truncate text-left">
+            Search stories, articles and posts…
+          </span>
+          <Kbd className="shrink-0">{modifier} K</Kbd>
+        </button>
       </div>
 
       <div className="flex w-[220px] items-center justify-end gap-2">

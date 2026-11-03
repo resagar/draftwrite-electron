@@ -1,7 +1,7 @@
 import { Send, Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
 import { formatRelativeDate } from '../../data/format'
-import type { PostState } from '../../data/types'
+import { POST_STATE_BADGES, POST_STATE_LABELS } from '../../data/post-state'
 import { cn } from '../../lib/cn'
 import { CREATE_LABELS } from '../../lib/create-labels'
 import { useLibrary } from '../../state/library-context'
@@ -15,18 +15,6 @@ import { ListEmpty } from '../ListEmpty/ListEmpty'
 import { ListRowItem } from '../ListRowItem/ListRowItem'
 import { OptionList } from '../OptionList/OptionList'
 import { SortToggle } from '../SortToggle/SortToggle'
-
-const STATE_LABELS: Record<PostState, string> = {
-  pending: 'Pending',
-  scheduled: 'Scheduled',
-  published: 'Published'
-}
-
-const STATE_BADGES: Record<PostState, string> = {
-  pending: 'border-warning/20 bg-warning/15 text-warning',
-  scheduled: 'border-info/20 bg-info/15 text-info',
-  published: 'border-success/20 bg-success/15 text-success'
-}
 
 export function PostList(): JSX.Element {
   const { posts, postsStatus, reloadPosts } = useLibrary()
@@ -102,10 +90,10 @@ export function PostList(): JSX.Element {
               <span
                 className={cn(
                   'rounded border px-1.5 py-0.5 font-mono text-2xs',
-                  STATE_BADGES[post.State]
+                  POST_STATE_BADGES[post.State]
                 )}
               >
-                {STATE_LABELS[post.State]}
+                {POST_STATE_LABELS[post.State]}
               </span>
               {post.State === 'scheduled' && post.ScheduledAt !== null ? (
                 <span className="font-mono text-2xs text-base-content/60">

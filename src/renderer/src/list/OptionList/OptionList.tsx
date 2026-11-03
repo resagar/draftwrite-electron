@@ -1,4 +1,4 @@
-import type { JSX, ReactNode } from 'react'
+import { useEffect, type JSX, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 import { useOptionList } from '../use-option-list'
 
@@ -30,6 +30,17 @@ export function OptionList<T>({
       }
     }
   })
+
+  // A row that becomes selected after a navigation must be visible, even when
+  // it was outside the scroll area.
+  useEffect(() => {
+    if (selectedId === null) {
+      return
+    }
+
+    const index = items.findIndex((item) => getId(item) === selectedId)
+    list.itemsRef.current[index]?.scrollIntoView?.({ block: 'nearest' })
+  }, [selectedId, items, getId, list.itemsRef])
 
   return (
     <ul

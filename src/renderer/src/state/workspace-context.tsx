@@ -48,6 +48,7 @@ export type WorkspaceAction =
   | { type: 'article/deleted'; articleId: string }
   | { type: 'post/select'; postId: string | null }
   | { type: 'post/deleted'; postId: string }
+  | { type: 'entry/open'; kind: CreateKind; id: string; clearTagFilter: boolean }
   | { type: 'filter/tag'; tag: string | null }
   | { type: 'sort/toggle' }
   | { type: 'viewMode/select'; viewMode: ViewMode }
@@ -150,6 +151,21 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       }
     case 'post/deleted':
       return state.selectedPostId === action.postId ? { ...state, selectedPostId: null } : state
+    case 'entry/open':
+      // One action so the unsaved-draft guard runs once and the library, the
+      // selection and the tag filter move together.
+      return {
+        ...state,
+        library:
+          action.kind === 'story' ? 'stories' : action.kind === 'article' ? 'articles' : 'posts',
+        editorSession: state.editorSession + 1,
+        creating: null,
+        creatingStoryId: null,
+        selectedStoryId: action.kind === 'story' ? action.id : null,
+        selectedArticleId: action.kind === 'article' ? action.id : null,
+        selectedPostId: action.kind === 'post' ? action.id : null,
+        tagFilter: action.clearTagFilter ? null : state.tagFilter
+      }
     case 'filter/tag':
       return { ...state, tagFilter: action.tag }
     case 'sort/toggle':

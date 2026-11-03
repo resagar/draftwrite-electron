@@ -1,7 +1,8 @@
 import { useState, type JSX } from 'react'
-import { PropertiesToggle } from '../PropertiesToggle/PropertiesToggle'
+import { POST_STATE_LABELS } from '../../data/post-state'
 import type { Article, PostState, Story } from '../../data/types'
 import { cn } from '../../lib/cn'
+import { PropertiesToggle } from '../PropertiesToggle/PropertiesToggle'
 
 type PostBandProps = {
   topic: string
@@ -91,9 +92,9 @@ export function PostBand({
             onChange={(event) => onState(event.target.value as PostState)}
             className={cn(field, 'shrink-0')}
           >
-            <option value="pending">Pending</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
+            <option value="pending">{POST_STATE_LABELS.pending}</option>
+            <option value="scheduled">{POST_STATE_LABELS.scheduled}</option>
+            <option value="published">{POST_STATE_LABELS.published}</option>
           </select>
         </div>
         <PropertiesToggle

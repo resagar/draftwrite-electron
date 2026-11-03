@@ -3,6 +3,8 @@ import type { JSX } from 'react'
 import { ArticleList } from './list/ArticleList/ArticleList'
 import { PostList } from './list/PostList/PostList'
 import { StoryList } from './list/StoryList/StoryList'
+import { QuickSwitcher } from './search/QuickSwitcher'
+import type { SearchEntry } from './search/search'
 import { Sidebar } from './sidebar/Sidebar/Sidebar'
 import { AppShell } from './shell/AppShell/AppShell'
 import { describeError } from './data/errors'
@@ -11,6 +13,7 @@ import { LibraryProvider, useLibrary } from './state/library-context'
 import { requestSave } from './state/save-registry'
 import { useContextualCreate } from './state/use-contextual-create'
 import { useShortcuts } from './state/use-shortcuts'
+import { useWorkspaceNavigation } from './state/use-navigation'
 import { WorkspaceProvider, useWorkspace, useWorkspaceDispatch } from './state/workspace-context'
 import { ConfirmDialog } from './ui/ConfirmDialog/ConfirmDialog'
 import { Workspace } from './workspace/Workspace/Workspace'
@@ -18,11 +21,14 @@ import { TypographyProvider } from './settings/typography-context'
 
 function AppLayout(): JSX.Element {
   const port = useDataPort()
-  const { library, dialog, pendingNavigation, selectedArticleId, selectedStoryId } = useWorkspace()
+  const { library, dialog, pendingNavigation, selectedArticleId, selectedStoryId, tagFilter } =
+    useWorkspace()
   const { articleById, storyById, postById, reloadStories, reloadArticles, reloadPosts } =
     useLibrary()
   const dispatch = useWorkspaceDispatch()
+  const navigate = useWorkspaceNavigation()
   const [dialogError, setDialogError] = useState<string | null>(null)
+  const [switcherOpen, setSwitcherOpen] = useState(false)
 
   const selectedArticle = articleById(selectedArticleId)
   const dialogStory = dialog?.kind === 'delete-story' ? storyById(dialog.storyId) : null
@@ -36,10 +42,47 @@ function AppLayout(): JSX.Element {
 
   const create = useContextualCreate()
 
+  const openSwitcher = (): void => {
+    if (switcherOpen || dialog !== null || pendingNavigation !== null) {
+      return
+    }
+
+    setSwitcherOpen(true)
+  }
+
+  // The palette searches the whole library, not the tag-filtered view. Clear
+  // the filter only when it would hide the entry that is about to open.
+  const hidesEntry = (entry: SearchEntry): boolean => {
+    if (tagFilter === null || entry.kind === 'post') {
+      return false
+    }
+
+    if (entry.kind === 'story') {
+      const story = storyById(entry.id)
+      return story !== null && !story.Tags.includes(tagFilter)
+    }
+
+    const article = articleById(entry.id)
+    if (article === null) {
+      return false
+    }
+
+    const story = storyById(article.StoryID)
+    return story === null || !story.Tags.includes(tagFilter)
+  }
+
+  const openEntry = (entry: SearchEntry): void => {
+    const clearTagFilter = hidesEntry(entry)
+    setSwitcherOpen(false)
+    navigate({ type: 'entry/open', kind: entry.kind, id: entry.id, clearTagFilter })
+  }
+
   useShortcuts({
     onNew: create.start,
     onSave: () => void requestSave(),
-    onToggleZen: () => dispatch({ type: 'zen/toggle' })
+    onToggleZen: () => dispatch({ type: 'zen/toggle' }),
+    onSearch: openSwitcher,
+    suspended: switcherOpen
   })
 
   const afterWrite = (): void => {
@@ -59,6 +102,7 @@ function AppLayout(): JSX.Element {
   return (
     <>
       <AppShell
+        onSearch={openSwitcher}
         sidebar={<Sidebar />}
         list={
           library === 'stories' ? (
@@ -71,6 +115,10 @@ function AppLayout(): JSX.Element {
         }
         workspace={<Workspace />}
       />
+
+      {switcherOpen ? (
+        <QuickSwitcher onClose={() => setSwitcherOpen(false)} onOpen={openEntry} />
+      ) : null}
 
       {pendingNavigation === null ? null : (
         <ConfirmDialog
