@@ -242,6 +242,7 @@ describe('post source', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New Post' }))
     await screen.findByRole('region', { name: 'Post editor' })
 
+    fireEvent.click(screen.getByRole('button', { name: 'Post properties' }))
     fireEvent.change(screen.getByLabelText('Source'), { target: { value: 'story:s1' } })
     fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'Launch note' } })
 
@@ -265,6 +266,7 @@ describe('post source', () => {
     fireEvent.click(within(list).getByRole('option', { name: /Launch note/ }))
     await screen.findByRole('region', { name: 'Post' })
 
+    fireEvent.click(screen.getByRole('button', { name: 'Post properties' }))
     expect(screen.getByLabelText<HTMLSelectElement>('Source').disabled).toBe(false)
 
     fireEvent.change(screen.getByLabelText('State'), { target: { value: 'scheduled' } })
@@ -2615,6 +2617,7 @@ describe('deleting', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'New Article' }))
       await screen.findByRole('region', { name: 'Article editor' })
+      fireEvent.click(screen.getByRole('button', { name: 'Article properties' }))
       fireEvent.change(screen.getByLabelText('Subtitle'), {
         target: { value: 'Draft in progress' }
       })
@@ -2924,6 +2927,7 @@ describe('the story editor', () => {
     await startNewStory()
 
     fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'Calm software' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Story properties' }))
     fireEvent.click(screen.getByRole('button', { name: 'Add title' }))
     fireEvent.change(screen.getByLabelText('Title 1'), {
       target: { value: 'The architecture of calm' }

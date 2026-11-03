@@ -126,6 +126,7 @@ it('keeps an incomplete Story draft protected when an older creation finishes', 
     createStoryGate: gate.promise
   })
   const input = await startCreation('Story', fake)
+  fireEvent.click(screen.getByRole('button', { name: 'Story properties' }))
   fireEvent.click(screen.getByRole('button', { name: 'Add title' }))
   fireEvent.change(screen.getByLabelText('Title 1'), { target: { value: 'Keep this draft' } })
   fireEvent.change(input, { target: { value: 'Original topic' } })

@@ -1,6 +1,7 @@
 import { cn } from '../../lib/cn'
 import type { Story } from '../../data/types'
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
+import { PropertiesToggle } from '../PropertiesToggle/PropertiesToggle'
 
 type ArticleBandProps = {
   stories: Story[]
@@ -29,6 +30,7 @@ export function ArticleBand({
 }: ArticleBandProps): JSX.Element {
   const field =
     'h-7 rounded border border-line bg-base-200 px-2 text-xs text-base-content focus-visible:border-primary'
+  const [propertiesOpen, setPropertiesOpen] = useState(false)
   const missingStoryId = storyId.trim() === ''
   const missingTitle = title.trim() === ''
   // A stored article keeps its provenance: the selector shows where it came from
@@ -36,60 +38,73 @@ export function ArticleBand({
   const knownStory = stories.some((story) => story.ID === storyId)
 
   return (
-    <div className="space-y-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
-      <div className="flex items-center gap-2">
-        <label
-          htmlFor="article-story"
-          className="shrink-0 text-2xs tracking-wider text-base-content/60"
-        >
-          Story
-        </label>
-        <select
-          id="article-story"
-          value={storyId}
-          disabled={!creating || storyLocked}
-          aria-invalid={missingStoryId}
-          onChange={(event) => onStory(event.target.value)}
-          className={cn(
-            'h-7 min-w-0 max-w-[240px] rounded border bg-base-200 px-2 text-xs text-base-content focus-visible:border-primary disabled:opacity-70',
-            missingStoryId ? 'border-warning/60' : 'border-line'
-          )}
-        >
-          <option value="">Choose a story…</option>
-          {knownStory || storyId === '' ? null : <option value={storyId}>{storyId}</option>}
-          {stories.map((story) => (
-            <option key={story.ID} value={story.ID}>
-              {story.Topic}
-            </option>
-          ))}
-        </select>
-
-        <label
-          htmlFor="article-title"
-          className="shrink-0 text-2xs tracking-wider text-base-content/60"
-        >
-          Title
-        </label>
-        <input
-          id="article-title"
-          value={title}
-          aria-invalid={missingTitle}
-          onChange={(event) => onTitle(event.target.value)}
-          className={cn(
-            field,
-            'min-w-0 flex-1',
-            missingTitle ? 'border-warning/60' : 'border-line'
-          )}
-        />
-        {creating ? (
-          <button
-            type="button"
-            onClick={onDiscard}
-            className="shrink-0 rounded border border-line px-2 py-1 text-xs text-base-content/80 transition hover:bg-neutral/40"
+    <div className="@container/article-properties flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
+      <div className="grid min-w-0 grid-cols-1 gap-2 @sm/article-properties:grid-cols-[minmax(0,1fr)_auto] @2xl/article-properties:grid-cols-[minmax(0,1fr)_minmax(8rem,12rem)_auto]">
+        <div className="flex min-w-0 flex-col gap-1 @sm/article-properties:col-span-2 @sm/article-properties:flex-row @sm/article-properties:items-center @sm/article-properties:gap-2 @2xl/article-properties:col-span-1">
+          <label
+            htmlFor="article-title"
+            className="shrink-0 text-2xs tracking-wider text-base-content/60"
           >
-            Discard
-          </button>
-        ) : null}
+            Title
+          </label>
+          <input
+            id="article-title"
+            value={title}
+            aria-invalid={missingTitle}
+            onChange={(event) => onTitle(event.target.value)}
+            className={cn(
+              field,
+              'min-w-0 w-full shrink-0 @sm/article-properties:flex-1',
+              missingTitle ? 'border-warning/60' : 'border-line'
+            )}
+          />
+        </div>
+        <div className="flex min-w-0 flex-col gap-1 @sm/article-properties:flex-row @sm/article-properties:items-center @sm/article-properties:gap-2">
+          <label
+            htmlFor="article-story"
+            className="shrink-0 text-2xs tracking-wider text-base-content/60"
+          >
+            Story
+          </label>
+          <select
+            id="article-story"
+            value={storyId}
+            disabled={!creating || storyLocked}
+            aria-invalid={missingStoryId}
+            onChange={(event) => onStory(event.target.value)}
+            className={cn(
+              field,
+              'min-w-0 w-full shrink-0 disabled:opacity-70 @sm/article-properties:flex-1',
+              missingStoryId ? 'border-warning/60' : 'border-line'
+            )}
+          >
+            <option value="">Choose a story…</option>
+            {knownStory || storyId === '' ? null : <option value={storyId}>{storyId}</option>}
+            {stories.map((story) => (
+              <option key={story.ID} value={story.ID}>
+                {story.Topic}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 @min-[10rem]/article-properties:flex-nowrap">
+          <PropertiesToggle
+            label="Article properties"
+            summary={subtitle.trim() || 'No subtitle'}
+            expanded={propertiesOpen}
+            controls="article-properties"
+            onToggle={() => setPropertiesOpen((open) => !open)}
+          />
+          {creating ? (
+            <button
+              type="button"
+              onClick={onDiscard}
+              className="shrink-0 rounded border border-line px-2 py-1 text-xs text-base-content/80 transition hover:bg-neutral/40"
+            >
+              Discard
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {missingStoryId || missingTitle ? (
@@ -98,7 +113,7 @@ export function ArticleBand({
         </p>
       ) : null}
 
-      <div className="space-y-1">
+      <div id="article-properties" hidden={!propertiesOpen} className="space-y-1">
         <label htmlFor="article-subtitle" className="text-2xs tracking-wider text-base-content/60">
           Subtitle
         </label>

@@ -1,8 +1,9 @@
 import { Trash2 } from 'lucide-react'
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
 import { cn } from '../../lib/cn'
 import { TagInput } from '../../forms/TagInput/TagInput'
 import { IconButton } from '../../ui/IconButton/IconButton'
+import { PropertiesToggle } from '../PropertiesToggle/PropertiesToggle'
 
 type TitlesFieldProps = {
   titles: string[]
@@ -11,7 +12,7 @@ type TitlesFieldProps = {
 
 function TitlesField({ titles, onChange }: TitlesFieldProps): JSX.Element {
   return (
-    <div className="min-w-[200px] flex-1 space-y-1">
+    <div className="min-w-0 flex-1 basis-48 space-y-1">
       <span className="text-2xs tracking-wider text-base-content/60">Titles</span>
       {titles.map((title, index) => (
         <div key={index} className="flex items-center gap-1">
@@ -72,25 +73,37 @@ export function StoryBand({
   onDelete
 }: StoryBandProps): JSX.Element {
   const missingTopic = topic.trim() === ''
+  const [propertiesOpen, setPropertiesOpen] = useState(false)
+  const titleCount = titles.filter((title) => title.trim() !== '').length
+  const summary = `${titleCount} ${titleCount === 1 ? 'title' : 'titles'} · ${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}`
 
   return (
-    <div className="space-y-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
-      <div className="flex items-center gap-2">
-        <label
-          htmlFor="story-topic"
-          className="shrink-0 text-2xs tracking-wider text-base-content/60"
-        >
-          Topic
-        </label>
-        <input
-          id="story-topic"
-          value={topic}
-          aria-invalid={missingTopic}
-          onChange={(event) => onTopic(event.target.value)}
-          className={cn(
-            'h-7 min-w-0 flex-1 rounded border bg-base-200 px-2 text-xs text-base-content focus-visible:border-primary',
-            missingTopic ? 'border-warning/60' : 'border-line'
-          )}
+    <div className="flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-1 basis-48 items-center gap-2">
+          <label
+            htmlFor="story-topic"
+            className="shrink-0 text-2xs tracking-wider text-base-content/60"
+          >
+            Topic
+          </label>
+          <input
+            id="story-topic"
+            value={topic}
+            aria-invalid={missingTopic}
+            onChange={(event) => onTopic(event.target.value)}
+            className={cn(
+              'h-7 min-w-0 flex-1 rounded border bg-base-200 px-2 text-xs text-base-content focus-visible:border-primary',
+              missingTopic ? 'border-warning/60' : 'border-line'
+            )}
+          />
+        </div>
+        <PropertiesToggle
+          label="Story properties"
+          summary={summary}
+          expanded={propertiesOpen}
+          controls="story-properties"
+          onToggle={() => setPropertiesOpen((open) => !open)}
         />
         {creating ? (
           <button
@@ -113,11 +126,13 @@ export function StoryBand({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-start gap-4">
-        <TitlesField titles={titles} onChange={onTitles} />
-        <div className="min-w-[180px] flex-1 space-y-1">
-          <span className="text-2xs tracking-wider text-base-content/60">Tags</span>
-          <TagInput tags={tags} onChange={onTags} />
+      <div id="story-properties" hidden={!propertiesOpen} className="max-h-48 overflow-y-auto">
+        <div className="flex flex-wrap items-start gap-4">
+          <TitlesField titles={titles} onChange={onTitles} />
+          <div className="min-w-0 flex-1 basis-44 space-y-1">
+            <span className="text-2xs tracking-wider text-base-content/60">Tags</span>
+            <TagInput tags={tags} onChange={onTags} />
+          </div>
         </div>
       </div>
     </div>

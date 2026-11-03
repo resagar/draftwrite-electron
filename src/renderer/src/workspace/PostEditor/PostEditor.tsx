@@ -84,6 +84,18 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
     storiesStatus,
     articlesStatus
   })
+  const sourceName =
+    source.kind === 'ready'
+      ? source.content.kind === 'story'
+        ? source.content.story.Topic
+        : source.content.article.Title
+      : source.kind === 'empty'
+        ? 'No source'
+        : source.kind === 'loading'
+          ? 'Loading source…'
+          : draft.StoryID !== null
+            ? 'Unavailable story'
+            : 'Unavailable article'
 
   useEffect(() => {
     registerSave(saveNow)
@@ -108,6 +120,7 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
         scheduledAt={draft.ScheduledAt}
         storyId={draft.StoryID}
         articleId={draft.ArticleID}
+        sourceName={sourceName}
         stories={stories}
         articles={articles}
         creating={creating}

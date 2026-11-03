@@ -1,0 +1,589 @@
+{
+  "runtimeErrors": [],
+  "scenarios": [
+    {
+      "entity": "Story",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "rootFont": "16px",
+      "sourceExpanded": true,
+      "mode": "split",
+      "nativeKeyboardTested": true,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 67.28125,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 169.5625,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 45,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "split-closed",
+          "bandHeight": 45,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Article",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "rootFont": "16px",
+      "sourceExpanded": true,
+      "mode": "split",
+      "nativeKeyboardTested": true,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 103.28125,
+          "bandWidth": 420,
+          "title": {
+            "x": 906.90625,
+            "y": 44,
+            "width": 357.09375,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 131.28125,
+          "bandWidth": 420,
+          "title": {
+            "x": 906.90625,
+            "y": 44,
+            "width": 357.09375,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 81,
+          "bandWidth": 420,
+          "title": {
+            "x": 906.90625,
+            "y": 44,
+            "width": 357.09375,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "split-closed",
+          "bandHeight": 81,
+          "bandWidth": 420,
+          "title": {
+            "x": 906.90625,
+            "y": 80,
+            "width": 357.09375,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Post",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "rootFont": "16px",
+      "sourceExpanded": true,
+      "mode": "split",
+      "nativeKeyboardTested": true,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 67.28125,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 81,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 45,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "split-scheduled-closed",
+          "bandHeight": 81,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Story",
+      "viewport": {
+        "width": 900,
+        "height": 600
+      },
+      "rootFont": "16px",
+      "sourceExpanded": true,
+      "mode": "split",
+      "nativeKeyboardTested": true,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 67.28125,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 169.5625,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 45,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "split-closed",
+          "bandHeight": 45,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Article",
+      "viewport": {
+        "width": 900,
+        "height": 600
+      },
+      "rootFont": "16px",
+      "sourceExpanded": true,
+      "mode": "split",
+      "nativeKeyboardTested": true,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 190.125,
+          "bandWidth": 204,
+          "title": {
+            "x": 712,
+            "y": 62.28125,
+            "width": 172,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 203.84375,
+          "bandWidth": 204,
+          "title": {
+            "x": 712,
+            "y": 62.28125,
+            "width": 172,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 153.5625,
+          "bandWidth": 204,
+          "title": {
+            "x": 712,
+            "y": 62.28125,
+            "width": 172,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "split-closed",
+          "bandHeight": 153.5625,
+          "bandWidth": 204,
+          "title": {
+            "x": 712,
+            "y": 98.28125,
+            "width": 172,
+            "height": 28
+          },
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Post",
+      "viewport": {
+        "width": 900,
+        "height": 600
+      },
+      "rootFont": "16px",
+      "sourceExpanded": true,
+      "mode": "split",
+      "nativeKeyboardTested": true,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 100.609375,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 117,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 81,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "split-scheduled-closed",
+          "bandHeight": 117,
+          "bandWidth": 564,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Story",
+      "viewport": {
+        "width": 900,
+        "height": 600
+      },
+      "rootFont": "24px",
+      "sourceExpanded": true,
+      "mode": "edit",
+      "nativeKeyboardTested": false,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 154.421875,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 395.265625,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 121,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "edit-closed",
+          "bandHeight": 121,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Article",
+      "viewport": {
+        "width": 900,
+        "height": 600
+      },
+      "rootFont": "24px",
+      "sourceExpanded": true,
+      "mode": "edit",
+      "nativeKeyboardTested": false,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 376.53125,
+          "bandWidth": 176,
+          "title": {
+            "x": 748,
+            "y": 93.421875,
+            "width": 128,
+            "height": 42
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 354.265625,
+          "bandWidth": 176,
+          "title": {
+            "x": 748,
+            "y": 93.421875,
+            "width": 128,
+            "height": 42
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 278.84375,
+          "bandWidth": 176,
+          "title": {
+            "x": 748,
+            "y": 93.421875,
+            "width": 128,
+            "height": 42
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "edit-closed",
+          "bandHeight": 229.84375,
+          "bandWidth": 176,
+          "title": {
+            "x": 748,
+            "y": 147.421875,
+            "width": 128,
+            "height": 42
+          },
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Post",
+      "viewport": {
+        "width": 900,
+        "height": 600
+      },
+      "rootFont": "24px",
+      "sourceExpanded": true,
+      "mode": "edit",
+      "nativeKeyboardTested": false,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 154.421875,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 175,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 121,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "edit-scheduled-closed",
+          "bandHeight": 175,
+          "bandWidth": 536,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Story",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "rootFont": "12.8px",
+      "sourceExpanded": false,
+      "mode": "preview",
+      "nativeKeyboardTested": false,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 53.984375,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 135.71875,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 36.171875,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "preview-closed",
+          "bandHeight": 36.171875,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Article",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "rootFont": "12.8px",
+      "sourceExpanded": false,
+      "mode": "preview",
+      "nativeKeyboardTested": false,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 82.765625,
+          "bandWidth": 420,
+          "title": {
+            "x": 897.515625,
+            "y": 35.1875,
+            "width": 369.6875,
+            "height": 22.390625
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 76.375,
+          "bandWidth": 712.984375,
+          "title": {
+            "x": 604.53125,
+            "y": 35.1875,
+            "width": 286.5,
+            "height": 22.390625
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 36.171875,
+          "bandWidth": 746.796875,
+          "title": {
+            "x": 570.71875,
+            "y": 35.1875,
+            "width": 320.3125,
+            "height": 22.390625
+          },
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "preview-closed",
+          "bandHeight": 36.171875,
+          "bandWidth": 748,
+          "title": {
+            "x": 569.515625,
+            "y": 63.984375,
+            "width": 375.828125,
+            "height": 22.390625
+          },
+          "horizontalControlOverflow": 0
+        }
+      ]
+    },
+    {
+      "entity": "Post",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "rootFont": "12.8px",
+      "sourceExpanded": false,
+      "mode": "preview",
+      "nativeKeyboardTested": false,
+      "focusSelectionAndUndoPassed": true,
+      "measurements": [
+        {
+          "phase": "empty-closed",
+          "bandHeight": 53.984375,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-open",
+          "bandHeight": 64.953125,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "filled-closed",
+          "bandHeight": 36.171875,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        },
+        {
+          "phase": "preview-scheduled-closed",
+          "bandHeight": 64.953125,
+          "bandWidth": 780,
+          "title": null,
+          "horizontalControlOverflow": 0
+        }
+      ]
+    }
+  ]
+}

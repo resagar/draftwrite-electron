@@ -1,4 +1,5 @@
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
+import { PropertiesToggle } from '../PropertiesToggle/PropertiesToggle'
 import type { Article, PostState, Story } from '../../data/types'
 import { cn } from '../../lib/cn'
 
@@ -8,6 +9,7 @@ type PostBandProps = {
   scheduledAt: string | null
   storyId: string | null
   articleId: string | null
+  sourceName: string
   stories: Story[]
   articles: Article[]
   creating: boolean
@@ -28,6 +30,7 @@ export function PostBand({
   scheduledAt,
   storyId,
   articleId,
+  sourceName,
   stories,
   articles,
   creating,
@@ -37,10 +40,17 @@ export function PostBand({
   onSource,
   onDiscard
 }: PostBandProps): JSX.Element {
+  const [propertiesOpen, setPropertiesOpen] = useState(false)
   const missingTopic = topic.trim() === ''
   const sourceLocked = state !== 'pending'
   const sourceValue =
     storyId !== null ? `story:${storyId}` : articleId !== null ? `article:${articleId}` : ''
+
+  const knownSource =
+    storyId !== null
+      ? stories.some((story) => story.ID === storyId)
+      : articleId !== null && articles.some((article) => article.ID === articleId)
+  const summary = `Source: ${sourceName}${sourceLocked ? ' (locked)' : ''}`
 
   const changeSource = (value: string): void => {
     if (value.startsWith('story:')) {
@@ -53,37 +63,46 @@ export function PostBand({
   }
 
   return (
-    <div className="space-y-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
-      <div className="flex items-center gap-2">
-        <label htmlFor="post-topic" className={label}>
-          Topic
-        </label>
-        <input
-          id="post-topic"
-          value={topic}
-          aria-invalid={missingTopic}
-          onChange={(event) => onTopic(event.target.value)}
-          className={cn(
-            field,
-            'min-w-0 flex-1',
-            missingTopic ? 'border-warning/60' : 'border-line'
-          )}
+    <div className="flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-1 basis-48 items-center gap-2">
+          <label htmlFor="post-topic" className={label}>
+            Topic
+          </label>
+          <input
+            id="post-topic"
+            value={topic}
+            aria-invalid={missingTopic}
+            onChange={(event) => onTopic(event.target.value)}
+            className={cn(
+              field,
+              'min-w-0 flex-1',
+              missingTopic ? 'border-warning/60' : 'border-line'
+            )}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="post-state" className={label}>
+            State
+          </label>
+          <select
+            id="post-state"
+            value={state}
+            onChange={(event) => onState(event.target.value as PostState)}
+            className={cn(field, 'shrink-0')}
+          >
+            <option value="pending">Pending</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
+        <PropertiesToggle
+          label="Post properties"
+          summary={summary}
+          expanded={propertiesOpen}
+          controls="post-properties"
+          onToggle={() => setPropertiesOpen((open) => !open)}
         />
-
-        <label htmlFor="post-state" className={label}>
-          State
-        </label>
-        <select
-          id="post-state"
-          value={state}
-          onChange={(event) => onState(event.target.value as PostState)}
-          className={cn(field, 'shrink-0')}
-        >
-          <option value="pending">Pending</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="published">Published</option>
-        </select>
-
         {creating ? (
           <button
             type="button"
@@ -95,55 +114,59 @@ export function PostBand({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <label htmlFor="post-source" className={label}>
-          Source
-        </label>
-        <select
-          id="post-source"
-          value={sourceValue}
-          disabled={sourceLocked}
-          onChange={(event) => changeSource(event.target.value)}
-          className={cn(field, 'min-w-0 max-w-[280px] shrink-0 disabled:opacity-70')}
-        >
-          <option value="">No source</option>
-          <optgroup label="Stories">
-            {stories.map((story) => (
-              <option key={story.ID} value={`story:${story.ID}`}>
-                {story.Topic}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label="Articles">
-            {articles.map((article) => (
-              <option key={article.ID} value={`article:${article.ID}`}>
-                {article.Title}
-              </option>
-            ))}
-          </optgroup>
-        </select>
-        {sourceLocked ? (
-          <span className="text-2xs text-base-content/60">Locked while the post is {state}.</span>
-        ) : null}
-
-        {state === 'scheduled' ? (
-          <>
-            <label htmlFor="post-scheduled-at" className={label}>
-              Scheduled at
-            </label>
-            <input
-              id="post-scheduled-at"
-              type="datetime-local"
-              value={scheduledAt ?? ''}
-              onChange={(event) =>
-                onScheduledAt(event.target.value === '' ? null : event.target.value)
-              }
-              className={cn(field, 'shrink-0')}
-            />
-            <span className="text-2xs text-base-content/60">Optional</span>
-          </>
-        ) : null}
+      <div id="post-properties" hidden={!propertiesOpen}>
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="post-source" className={label}>
+            Source
+          </label>
+          <select
+            id="post-source"
+            value={sourceValue}
+            disabled={sourceLocked}
+            onChange={(event) => changeSource(event.target.value)}
+            className={cn(field, 'min-w-0 max-w-full flex-1 basis-48 disabled:opacity-70')}
+          >
+            <option value="">No source</option>
+            {sourceValue !== '' && !knownSource ? (
+              <option value={sourceValue}>{sourceName}</option>
+            ) : null}
+            <optgroup label="Stories">
+              {stories.map((story) => (
+                <option key={story.ID} value={`story:${story.ID}`}>
+                  {story.Topic}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Articles">
+              {articles.map((article) => (
+                <option key={article.ID} value={`article:${article.ID}`}>
+                  {article.Title}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+          {sourceLocked ? (
+            <span className="text-2xs text-base-content/60">Locked while the post is {state}.</span>
+          ) : null}
+        </div>
       </div>
+      {state === 'scheduled' ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="post-scheduled-at" className={label}>
+            Scheduled at
+          </label>
+          <input
+            id="post-scheduled-at"
+            type="datetime-local"
+            value={scheduledAt ?? ''}
+            onChange={(event) =>
+              onScheduledAt(event.target.value === '' ? null : event.target.value)
+            }
+            className={cn(field, 'min-w-0 max-w-full')}
+          />
+          <span className="text-2xs text-base-content/60">Optional</span>
+        </div>
+      ) : null}
 
       {missingTopic ? (
         <p role="status" className="text-2xs text-warning">
