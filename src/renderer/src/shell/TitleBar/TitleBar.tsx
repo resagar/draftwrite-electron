@@ -19,9 +19,13 @@ export function TitleBar({
   const dispatch = useWorkspaceDispatch()
   const zenLabel = `Zen mode (${modifier} Shift D)`
   const searchLabel = `Search stories, articles and posts (${modifier} K)`
+  const platform = window.electron?.process.platform
+  const integrated = platform === 'win32' || platform === 'linux'
 
   return (
-    <header className="z-30 flex h-9 min-h-9 items-center gap-3 border-b border-base-300 bg-base-300 px-3 select-none">
+    <header
+      className={`z-30 flex h-9 min-h-9 items-center gap-3 border-b border-base-300 bg-base-300 px-3 select-none${integrated ? ' title-bar--integrated' : ''}`}
+    >
       <div className="flex w-[220px] min-w-0 items-center gap-1.5">
         <Feather aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary" />
         <span className="truncate text-xs font-semibold tracking-wide">DraftWrite</span>

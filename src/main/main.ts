@@ -21,6 +21,17 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform === 'win32' || process.platform === 'linux'
+      ? {
+          titleBarStyle: 'hidden' as const,
+          titleBarOverlay: {
+            // Match the renderer's Rosé Pine Moon overlay and text colors.
+            color: '#393552',
+            symbolColor: '#e0def4',
+            height: 36
+          }
+        }
+      : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
