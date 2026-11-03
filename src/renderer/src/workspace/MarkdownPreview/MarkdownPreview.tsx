@@ -51,7 +51,7 @@ const COMPONENTS: Components = {
   h1: ({ children, node }) => (
     <h1
       {...blockAnchors(node)}
-      className="mb-4 border-b border-base-300 pb-2 font-sans text-[24px] leading-loose font-bold tracking-tight text-secondary"
+      className="mb-4 border-b border-base-300 pb-2 font-sans text-[24px] leading-loose font-bold tracking-tight"
     >
       {children}
     </h1>
@@ -59,7 +59,7 @@ const COMPONENTS: Components = {
   h2: ({ children, node }) => (
     <h2
       {...blockAnchors(node)}
-      className="mt-6 mb-2.5 font-sans text-[18px] leading-loose font-semibold tracking-tight text-secondary"
+      className="mt-6 mb-2.5 font-sans text-[18px] leading-loose font-semibold tracking-tight"
     >
       {children}
     </h2>
@@ -67,7 +67,7 @@ const COMPONENTS: Components = {
   h3: ({ children, node }) => (
     <h3
       {...blockAnchors(node)}
-      className="mt-4 mb-2 font-sans text-[16px] leading-loose font-semibold text-secondary"
+      className="mt-4 mb-2 font-sans text-[16px] leading-loose font-semibold"
     >
       {children}
     </h3>
@@ -90,24 +90,21 @@ const COMPONENTS: Components = {
     </h6>
   ),
   p: ({ children, node }) => (
-    <p
-      {...blockAnchors(node)}
-      className="mb-4 font-sans text-[16px] leading-loose text-base-content/90"
-    >
+    <p {...blockAnchors(node)} className="mb-4 font-sans text-[16px] leading-loose">
       {children}
     </p>
   ),
   a: ({ children, href }) => (
-    <a href={href} className="text-info underline hover:text-info/80">
+    <a href={href} className="underline">
       {children}
     </a>
   ),
-  strong: ({ children }) => <strong className="font-semibold text-accent">{children}</strong>,
-  em: ({ children }) => <em className="font-serif text-warning italic">{children}</em>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="font-serif italic">{children}</em>,
   blockquote: ({ children, node }) => (
     <blockquote
       {...blockAnchors(node)}
-      className="my-4 rounded-r border-l-2 border-secondary/70 bg-base-200/40 py-1.5 pl-3.5 font-sans text-[16px] leading-loose text-base-content/75 italic"
+      className="my-4 rounded-r border-l-2 bg-base-200/40 py-1.5 pl-3.5 font-sans text-[16px] leading-loose italic"
     >
       {children}
     </blockquote>
@@ -115,7 +112,7 @@ const COMPONENTS: Components = {
   ul: ({ children, node }) => (
     <ul
       {...blockAnchors(node)}
-      className="mb-4 list-disc space-y-1.5 pl-5 font-sans text-[16px] leading-loose text-base-content/80 marker:text-primary"
+      className="mb-4 list-disc space-y-1.5 pl-5 font-sans text-[16px] leading-loose"
     >
       {children}
     </ul>
@@ -123,7 +120,7 @@ const COMPONENTS: Components = {
   ol: ({ children, node }) => (
     <ol
       {...blockAnchors(node)}
-      className="mb-4 list-decimal space-y-1.5 pl-5 font-sans text-[16px] leading-loose text-base-content/80 marker:text-primary"
+      className="mb-4 list-decimal space-y-1.5 pl-5 font-sans text-[16px] leading-loose"
     >
       {children}
     </ol>
@@ -136,14 +133,12 @@ const COMPONENTS: Components = {
     </li>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-base-300 px-1 py-0.5 font-mono text-[16px] text-success">
-      {children}
-    </code>
+    <code className="rounded px-1 py-0.5 font-mono text-[16px]">{children}</code>
   ),
   pre: ({ children, node }) => (
     <pre
       {...blockAnchors(node)}
-      className="my-3 overflow-x-auto rounded border border-line bg-base-300 p-3 font-mono text-[16px] leading-loose text-base-content/90"
+      className="my-3 overflow-x-auto rounded border border-line p-3 font-mono text-[16px] leading-loose"
     >
       {children}
     </pre>
@@ -382,7 +377,7 @@ export function MarkdownPreview({
     <section
       ref={containerRef}
       aria-label="Preview"
-      className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] [scroll-behavior:auto]"
+      className="markdown-preview min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] [scroll-behavior:auto]"
     >
       <article
         ref={articleRef}

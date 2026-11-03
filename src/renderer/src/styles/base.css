@@ -22,7 +22,7 @@
 }
 
 ::selection {
-  background-color: color-mix(in oklab, var(--color-secondary) 28%, transparent);
+  background-color: var(--editor-selection);
 }
 
 :focus-visible {

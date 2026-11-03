@@ -18,7 +18,7 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - react-markdown -> [https://github.com/remarkjs/react-markdown](https://github.com/remarkjs/react-markdown) + remark-gfm -> [https://github.com/remarkjs/remark-gfm](https://github.com/remarkjs/remark-gfm) + remark-breaks -> [https://github.com/remarkjs/remark-breaks](https://github.com/remarkjs/remark-breaks)
 - iconos: lucide-react -> [https://lucide.dev/](https://lucide.dev/)
 - fuentes: `@fontsource/{inter,fira-code,newsreader}` -> [https://fontsource.org/](https://fontsource.org/)
-- Tailwind 4 + daisyUI 5 (tema dracula)
+- Tailwind 4 + daisyUI 5 (tema Rosé Pine Moon)
 - Jest (sin Vitest) -> [https://jestjs.io/](https://jestjs.io/) + @testing-library/react -> [https://testing-library.com/docs/react-testing-library/intro/](https://testing-library.com/docs/react-testing-library/intro/) + jsdom -> [https://github.com/jsdom/jsdom](https://github.com/jsdom/jsdom) - unit tests, tests de integración y mocks
 - IPC directo main↔renderer (`contextBridge` + `ipcRenderer.invoke`), sin servidor HTTP y sin red
 

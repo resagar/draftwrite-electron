@@ -1,6 +1,18 @@
-# Los tokens de diseño salen del tema dracula de daisyUI
+# Los tokens de diseño salen de una paleta compartida y un tema semántico daisyUI
 
-La paleta de la interfaz no se declara en el proyecto: se habilita el tema `dracula` que ya trae daisyUI 5 y se usan sus utilidades semánticas (`bg-base-100`, `text-secondary`, `border-error`). El mockup de referencia declaraba esos mismos colores como hex en un `tailwind.config`; comprobamos contra la fuente del tema que **son los mismos valores**, así que repetirlos solo habría creado una segunda fuente de verdad que se desincroniza.
+## Decisión actual: Rosé Pine Moon
+
+Rosé Pine Moon reemplaza a Dracula como tema único. Los valores crudos se declaran una sola vez en `palette.css`; `ui.css` los traduce al tema semántico de daisyUI 5. Los componentes siguen usando sus utilidades (`bg-base-100`, `text-secondary`, `border-error`) y los cinco tokens propios para líneas, gutter y fondos también se derivan de esa paleta.
+
+`syntax.css` define los roles del editor y los elementos Markdown. `preview.css` consume esos mismos roles en una superficie acotada. CodeMirror conserva su puente TypeScript hacia las variables CSS. Los roles Markdown son independientes de los estados de la interfaz: compartir un valor inicial no acopla el color de un título con una alerta.
+
+Esta separación permite coherencia entre interfaz, Markdown crudo y preview sin duplicar hexadecimales en componentes ni introducir un gestor de temas. Las hojas son internas; no se cargan paquetes de Inkdrop ni CSS proporcionado por el usuario. Los nombres de las hojas son una convención de organización, no una API de carga de CodeMirror.
+
+Se mantienen los radios, tamaños, bordes, profundidad y ruido anteriores. La migración solo cambia colores y conserva las preferencias tipográficas.
+
+## Antecedente: Dracula
+
+Originalmente se habilitó el tema `dracula` incluido en daisyUI 5. El mockup de referencia declaraba esos mismos colores como hex en un `tailwind.config`; comprobamos contra la fuente del tema que **eran los mismos valores**, así que repetirlos solo habría creado una segunda fuente de verdad que se desincroniza.
 
 Dos cosas sí se sobrescriben, con `@plugin "daisyui/theme"`: los radios (`--radius-box`, `--radius-selector`, `--radius-field`), porque el tema trae 1rem y el diseño es plano con líneas de 1px; y `--depth`/`--noise`, por lo mismo.
 

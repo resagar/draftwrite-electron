@@ -1,0 +1,22 @@
+:root {
+  --editor-foreground: var(--rp-text);
+  --editor-cursor: var(--rp-rose);
+  --editor-active-line: var(--rp-highlight-low);
+  --editor-selection: var(--rp-highlight-med);
+
+  /* Shared Markdown roles keep editor/preview colors independent of UI states. */
+  --md-heading: var(--rp-iris);
+  --md-link: var(--rp-foam);
+  --md-code: var(--rp-gold);
+  --md-strong: var(--rp-rose);
+  --md-emphasis: var(--rp-gold);
+  --md-quote: var(--rp-subtle);
+  --md-list: var(--rp-rose);
+  --md-mark: var(--rp-iris);
+  --md-heading-mark: var(--rp-rose);
+  --md-list-mark: var(--rp-foam);
+  --md-emphasis-mark: var(--rp-iris);
+  --md-code-mark: var(--rp-rose);
+  --md-link-mark: var(--rp-iris);
+  --md-quote-mark: var(--rp-foam);
+}
