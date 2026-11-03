@@ -78,17 +78,16 @@ export function StoryBand({
   const summary = `${titleCount} ${titleCount === 1 ? 'title' : 'titles'} · ${tags.length} ${tags.length === 1 ? 'tag' : 'tags'}`
 
   return (
-    <div className="flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
+    <div className="workspace-band flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex min-w-0 flex-1 basis-48 items-center gap-2">
-          <label
-            htmlFor="story-topic"
-            className="shrink-0 text-2xs tracking-wider text-base-content/60"
-          >
+        <div className="flex min-w-0 basis-full items-center gap-2">
+          <label htmlFor="story-topic" className="sr-only">
             Topic
           </label>
           <input
             id="story-topic"
+            placeholder="Story topic"
+            data-heading-input
             value={topic}
             aria-invalid={missingTopic}
             onChange={(event) => onTopic(event.target.value)}
