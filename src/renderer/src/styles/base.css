@@ -55,23 +55,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Unlayered rules override the field utilities in every interaction state. */
 .workspace-band :is(input, select) {
-  border-color: transparent;
+  border: 0;
+  outline: none;
   background-color: transparent;
   box-shadow: none;
   caret-color: var(--color-primary);
-  transition:
-    background-color 150ms ease,
-    border-color 150ms ease;
+  transition: background-color 150ms ease;
 }
 
 .workspace-band :is(input, select):hover:not(:disabled) {
   background-color: var(--color-base-200);
-  border-color: var(--color-line);
 }
 
 .workspace-band :is(input, select):focus-visible {
-  background-color: var(--color-base-200);
+  background-color: var(--color-neutral);
+}
+
+.workspace-band .workspace-heading {
+  flex-basis: 12rem;
+  min-width: min(100%, 12rem);
 }
 
 .workspace-band [data-heading-input] {
@@ -82,17 +86,6 @@ body {
   line-height: 1.5;
 }
 
-.workspace-band [data-heading-input]:is(:hover, :focus-visible) {
-  border-color: transparent;
-  border-bottom-color: var(--color-primary);
-  background-color: transparent;
-  outline: none;
-}
-
-.workspace-band [data-heading-input]:focus-visible {
-  border-bottom-width: 2px;
-}
-
 .workspace-band [aria-invalid='true'] {
-  border-bottom-color: var(--color-warning);
+  color: var(--color-warning);
 }

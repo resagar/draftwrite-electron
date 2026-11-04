@@ -40,7 +40,7 @@ export function ArticleBand({
   return (
     <div className="workspace-band @container/article-properties flex min-w-0 shrink-0 flex-col gap-2 border-b border-base-300 bg-base-200/60 px-4 py-2">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <div className="flex min-w-0 basis-full items-center gap-2">
+        <div className="workspace-heading flex min-w-0 flex-1 items-center gap-2">
           <label htmlFor="article-title" className="sr-only">
             Title
           </label>
@@ -58,7 +58,7 @@ export function ArticleBand({
             )}
           />
         </div>
-        <div className="flex min-w-0 max-w-full basis-60 items-center gap-2">
+        <div className="flex min-w-0 max-w-full basis-40 items-center gap-2">
           <label
             htmlFor="article-story"
             className="shrink-0 text-2xs tracking-wider text-base-content/60"
