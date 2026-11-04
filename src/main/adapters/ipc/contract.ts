@@ -1,6 +1,7 @@
 import type { Article } from '../../article/model'
 import type { Post } from '../../post/model'
 import type { Story } from '../../story/model'
+import type { EditorialRequest, EditorialReply } from '../../../shared/editorial'
 import type {
   TypographyPatch,
   TypographyPreferences,
@@ -82,6 +83,7 @@ export interface IpcHandlerRegistry {
 
 /** API the preload exposes as `window.draftwrite`. */
 export interface DraftwriteApi {
+  editorial?: { execute(request: EditorialRequest): Promise<IpcResult<EditorialReply>> }
   settings: {
     open(): Promise<IpcResult<void>>
     close(): Promise<IpcResult<void>>

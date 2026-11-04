@@ -4,6 +4,7 @@ import { errNotFound, errTitleTaken, type ArticleRepository } from '../../../art
 import type { AppDatabase } from '../../../db'
 import { isUniqueConstraintError, parseDatabaseTime } from './mapping'
 import { articles } from './schema'
+import { newEditorialWorkspace, writingOf } from '../../../editorial/model'
 
 type ArticleRow = typeof articles.$inferSelect
 
@@ -16,6 +17,15 @@ export function newArticleRepository(db: AppDatabase): ArticleRepository {
           .insert(articles)
           .values({
             id: article.id,
+            editorial: JSON.stringify(
+              newEditorialWorkspace(article.id, writingOf(article), {
+                kind: 'article',
+                title: '',
+                subtitle: '',
+                target: '',
+                text: ''
+              })
+            ),
             storyID: article.storyID,
             title: article.title,
             subtitle: article.subtitle,

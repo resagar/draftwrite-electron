@@ -1,4 +1,5 @@
 import type { Article, Post, Story } from './types'
+import type { EditorialRequest, EditorialReply } from '../../../shared/editorial'
 import type {
   TypographyPatch,
   TypographyPreferences,
@@ -28,6 +29,7 @@ export type NewPost = {
 }
 
 export type DataPort = {
+  editorial?: (request: EditorialRequest) => Promise<EditorialReply>
   openSettings(): Promise<void>
   closeSettings(): Promise<void>
   getTypography(initial?: TypographyPreferences): Promise<TypographySnapshot>

@@ -1,4 +1,6 @@
 import { mkdirSync } from 'node:fs'
+import { newEditorialRepository } from './adapters/persistence/sqlite/editorial-repository'
+import { newEditorialService, type EditorialService } from './editorial/service'
 import { newArticleRepository } from './adapters/persistence/sqlite/article-repository'
 import { newPostRepository } from './adapters/persistence/sqlite/post-repository'
 import { newStoryRepository } from './adapters/persistence/sqlite/story-repository'
@@ -14,6 +16,7 @@ export interface Bootstrap {
     story: StoryService
     article: ArticleService
     post: PostService
+    editorial: EditorialService
   }
   db: AppDatabase
 }
@@ -37,7 +40,8 @@ export function bootstrap(options: DataDirOptions = {}): Bootstrap {
     services: {
       story: newStoryService(storyRepo),
       article: newArticleService(articleRepo, storyRepo),
-      post: newPostService(postRepo, storyRepo, articleRepo)
+      post: newPostService(postRepo, storyRepo, articleRepo),
+      editorial: newEditorialService(newEditorialRepository(db))
     },
     db
   }

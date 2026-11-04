@@ -33,6 +33,7 @@ export const articles = sqliteTable(
     title: text('title').notNull(),
     subtitle: text('subtitle').notNull(),
     target: text('target').notNull(),
+    editorial: text('editorial'),
     text: text('text').notNull(),
     createdAt: text('created_at')
       .notNull()
@@ -51,6 +52,7 @@ export const posts = sqliteTable(
     topic: text('topic').notNull(),
     text: text('text').notNull(),
     state: text('state').notNull().default('pending'),
+    editorial: text('editorial'),
     scheduledAt: text('scheduled_at'),
     storyID: text('story_id').references(() => stories.id, { onDelete: 'set null' }),
     articleID: text('article_id').references(() => articles.id, { onDelete: 'set null' }),

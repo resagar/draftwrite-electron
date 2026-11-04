@@ -21,6 +21,34 @@ Los canales de dominio son 16: `story:create`, `story:get`, `story:list`, `story
 `article:create`, `article:get`, `article:listByStory`, `article:list`, `article:update`,
 `article:delete`, `post:create`, `post:get`, `post:list`, `post:update` y `post:delete`.
 
+El flujo editorial agrega `editorial:execute`, descrito a continuación, sin cambiar esos canales.
+
+## Versionado editorial
+
+`DataPort.editorial(request)` delega en `window.draftwrite.editorial.execute(request)` y devuelve una respuesta editorial mediante la envoltura `IpcResult` existente. La capacidad es opcional en los puertos anteriores para permitir la ampliación compatible; el preload de producción la expone.
+
+La petición identifica `kind` (`article` o `post`), `pieceId`, `action` y, salvo para `read`, la `revision` observada del espacio editorial. Los tipos de escritura, variantes, versiones, notas y publicaciones viven en el contrato compartido editorial. Las identidades son estables; un número de versión solo es único dentro de su variante.
+
+| Acción | Comportamiento |
+| --- | --- |
+| `read` | Lee variantes, versiones, notas, publicaciones y procedencia. |
+| `draft` | Autoguarda los campos de escritura de una variante sin numerar una versión. |
+| `version` | Conserva escritura y fotografía de revisión con incremento manual y descripción. |
+| `note`, `resolveNote` | Crea o edita una observación, o cambia su resolución. Las notas ancladas conservan la cita seleccionada, incluso si el documento cambió mientras se redactaba la nota. |
+| `branch` | Crea una variante desde una versión persistida, heredando notas pendientes con procedencia. |
+| `primary`, `archive` | Designa la principal o archiva/reactiva una variante. Nunca se archiva la principal. |
+| `restore` | Recupera campos de escritura, conservando notas actuales e historial. Rechaza cambios pendientes sin versionar. |
+| `plan` | Calcula cambios y conflictos respecto de una base común identificable. |
+| `integrate` | Incorpora solo los cambios y notas elegidos, con resolución explícita de conflictos; conserva la versión fuente como procedencia, sin tratar cambios no seleccionados como integrados. |
+| `convert` | Crea una pieza independiente y archiva la variante de origen en una única transacción. Respeta la unicidad del título de Article; el Post nuevo nace pendiente, sin programación ni publicaciones propias. |
+| `publish` | Registra versión guardada exacta, fecha y enlace HTTP(S) opcional. No publica por red ni modifica el estado o la programación del Post. |
+
+Cada mutación verifica la revisión dentro de una transacción SQLite. Una respuesta antigua no puede sobrescribir otra revisión. Los campos editoriales de la variante principal se proyectan sobre el CRUD anterior; una escritura por ese CRUD se reconcilia con el borrador principal antes de ejecutar operaciones editoriales. Los metadatos de pieza no forman parte de una versión.
+
+Errores editoriales: `errEditorialNotFound`, `errEditorialStale`, `errEditorialUnchanged`, `errEditorialPending`, `errEditorialInvalid`, `errEditorialConflict`, además de las invariantes de Article/Post y `errTitleTaken`. La frontera valida discriminantes, cadenas, rangos, revisiones y URLs; devuelve `errInvalidPayload` ante forma inválida.
+
+La migración añade almacenamiento editorial a Articles y Posts. El arranque incorpora piezas existentes con una variante principal `0.0.0`, conservando los datos y timestamps previos, sin crear versiones retrospectivas. Las operaciones de escritura y la creación de piezas independientes se verifican con SQLite real a través de IPC.
+
 El contrato se mantiene a mano en `src/main/adapters/ipc/contract.ts` (`StoryDTO`, `ArticleDTO`,
 `PostDTO` y las firmas); se verifica con `pnpm typecheck` y los tests.
 

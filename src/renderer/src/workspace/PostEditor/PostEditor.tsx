@@ -16,6 +16,7 @@ import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
 import { PostBand } from '../PostBand/PostBand'
 import { SourcePane } from '../SourcePane/SourcePane'
 import { postSource } from '../source-state'
+import { EditorialWorkspace } from '../EditorialWorkspace/EditorialWorkspace'
 
 type PostEditorProps = {
   stored: Post | null
@@ -44,6 +45,7 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
   const [draft, setDraft] = useState<Post>(stored ?? emptyPost())
   const latestDraft = useRef(draft)
   const [view, setView] = useState<EditorView | null>(null)
+  const [editorialOpen, setEditorialOpen] = useState(false)
 
   const canPersist = (value: Post): boolean => value.Topic.trim() !== ''
 
@@ -98,10 +100,11 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
             : 'Unavailable article'
 
   useEffect(() => {
+    if (editorialOpen) return
     registerSave(saveNow)
 
     return () => registerSave(null)
-  }, [saveNow])
+  }, [saveNow, editorialOpen])
 
   const change = (next: Post): void => {
     latestDraft.current = next
@@ -111,6 +114,27 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
     publishUnsavedDraft(hasContent(next) && !canPersist(next))
     schedule(next)
   }
+
+  if (editorialOpen)
+    return (
+      <EditorialWorkspace
+        kind="post"
+        pieceId={draft.ID}
+        onLibraryChange={() => {
+          void port.listPosts().then((values) => values.forEach(upsertPost))
+        }}
+        onClose={(workspace) => {
+          const content = workspace.variants.find((v) => v.id === workspace.primaryId)!.content
+          if (content.kind === 'post') {
+            const next = { ...latestDraft.current, Topic: content.topic, Text: content.text }
+            latestDraft.current = next
+            setDraft(next)
+          }
+          setEditorialOpen(false)
+          void port.listPosts().then((values) => values.forEach(upsertPost))
+        }}
+      />
+    )
 
   return (
     <section aria-label="Post editor" className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100">
@@ -138,6 +162,19 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
         }
         onDiscard={() => dispatch({ type: 'create/cancel' })}
       />
+
+      {port.editorial ? (
+        <div className="editorial-entry">
+          <span>Autosaved draft · manual versions</span>
+          <button
+            type="button"
+            disabled={!draft.ID || status !== 'saved'}
+            onClick={() => setEditorialOpen(true)}
+          >
+            Versions and review
+          </button>
+        </div>
+      ) : null}
 
       <div className="flex min-h-0 flex-1">
         <SourcePane

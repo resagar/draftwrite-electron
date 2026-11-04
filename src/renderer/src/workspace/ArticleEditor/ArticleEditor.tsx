@@ -15,6 +15,7 @@ import { EditorError } from '../../ui/EditorError/EditorError'
 import { ArticleBand } from '../ArticleBand/ArticleBand'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
+import { EditorialWorkspace } from '../EditorialWorkspace/EditorialWorkspace'
 
 type ArticleEditorProps = {
   stored: Article | null
@@ -46,6 +47,7 @@ export function ArticleEditor({
   const [draft, setDraft] = useState<Article>(stored ?? emptyArticle(initialStoryId))
   const [view, setView] = useState<EditorView | null>(null)
   const [storyLocked, setStoryLocked] = useState(false)
+  const [editorialOpen, setEditorialOpen] = useState(false)
 
   const canPersist = (value: Article): boolean =>
     value.StoryID.trim() !== '' && value.Title.trim() !== ''
@@ -88,10 +90,11 @@ export function ArticleEditor({
   const publishTarget = usePublishArticleTarget()
 
   useEffect(() => {
+    if (editorialOpen) return
     registerSave(saveNow)
 
     return () => registerSave(null)
-  }, [saveNow])
+  }, [saveNow, editorialOpen])
 
   const change = (next: Article): void => {
     setDraft(next)
@@ -122,6 +125,30 @@ export function ArticleEditor({
 
   useEffect(() => () => publishTarget(null), [publishTarget])
 
+  if (editorialOpen)
+    return (
+      <EditorialWorkspace
+        kind="article"
+        pieceId={draft.ID}
+        onLibraryChange={() => {
+          void port.listArticles().then((values) => values.forEach(upsertArticle))
+        }}
+        onClose={(workspace) => {
+          const content = workspace.variants.find((v) => v.id === workspace.primaryId)!.content
+          if (content.kind === 'article')
+            setDraft((current) => ({
+              ...current,
+              Title: content.title,
+              Subtitle: content.subtitle,
+              Target: content.target,
+              Text: content.text
+            }))
+          setEditorialOpen(false)
+          void port.listArticles().then((values) => values.forEach(upsertArticle))
+        }}
+      />
+    )
+
   return (
     <section
       aria-label="Article editor"
@@ -145,6 +172,19 @@ export function ArticleEditor({
         onSubtitle={(subtitle) => change({ ...draft, Subtitle: subtitle })}
         onDiscard={() => dispatch({ type: 'create/cancel' })}
       />
+
+      {port.editorial ? (
+        <div className="editorial-entry">
+          <span>Autosaved draft · manual versions</span>
+          <button
+            type="button"
+            disabled={!draft.ID || status !== 'saved'}
+            onClick={() => setEditorialOpen(true)}
+          >
+            Versions and review
+          </button>
+        </div>
+      ) : null}
 
       <EditorPreviewLayout
         toolbar={<EditorToolbar view={view} />}

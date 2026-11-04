@@ -26,6 +26,7 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
 
 /** Typed data entry point of the renderer. */
 const draftwrite: DraftwriteApi = {
+  editorial: { execute: (request) => invoke('editorial:execute', request) },
   settings: {
     open: () => invoke(settingsChannels.open),
     close: () => invoke(settingsChannels.close),

@@ -16,13 +16,15 @@ type TextEditorProps = {
   onChange: (value: string) => void
   onCursorChange: (cursor: EditorCursor) => void
   onCreate: (view: EditorView) => void
+  readOnly?: boolean
 }
 
 export function TextEditor({
   value,
   onChange,
   onCursorChange,
-  onCreate
+  onCreate,
+  readOnly = false
 }: TextEditorProps): JSX.Element {
   const { preferences } = useTypography()
   const enabled = preferences.editor.vimMode === true
@@ -68,6 +70,8 @@ export function TextEditor({
 
   return (
     <CodeMirror
+      readOnly={readOnly}
+      editable={!readOnly}
       value={value}
       height="100%"
       className="h-full"

@@ -5,6 +5,7 @@ import { applyTypographyPatch, normalizePreferences } from '../../../../shared/t
 import type { TypographySnapshot } from '../../../../shared/typography'
 
 export type FakePortOptions = {
+  editorial?: DataPort['editorial']
   fontFamilies?: string[]
   stories?: Story[]
   articles?: Article[]
@@ -146,6 +147,7 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     deletedArticleIds,
     deletedPostIds,
     port: {
+      ...(options.editorial ? { editorial: options.editorial } : {}),
       async openSettings() {
         calls.openSettings += 1
         notifyTypography()

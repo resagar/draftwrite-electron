@@ -4,6 +4,7 @@ import { errNotFound, type PostRepository } from '../../../post/repository'
 import type { AppDatabase } from '../../../db'
 import { parseDatabaseTime } from './mapping'
 import { posts } from './schema'
+import { newEditorialWorkspace, writingOf } from '../../../editorial/model'
 
 type PostRow = typeof posts.$inferSelect
 
@@ -15,6 +16,9 @@ export function newPostRepository(db: AppDatabase): PostRepository {
         .insert(posts)
         .values({
           id: post.id,
+          editorial: JSON.stringify(
+            newEditorialWorkspace(post.id, writingOf(post), { kind: 'post', topic: '', text: '' })
+          ),
           topic: post.topic,
           text: post.text,
           state: post.state,

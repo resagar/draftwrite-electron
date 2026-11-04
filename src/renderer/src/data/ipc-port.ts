@@ -76,6 +76,9 @@ function toPostDTO(post: Post): PostDTO {
 
 export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort {
   return {
+    ...(api.editorial
+      ? { editorial: async (request) => unwrap(await api.editorial!.execute(request)) }
+      : {}),
     openSettings: async () => {
       unwrap(await api.settings.open())
     },
