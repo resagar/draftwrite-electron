@@ -6,6 +6,8 @@
 **Rama:** `feat/better-preview-story`
 **Informe de investigación:** `research.md` (misma carpeta)
 
+**Nota (2026-10-24):** los identificadores citados en este documento se renombraron en `88bf6ba`: `StoryPane` → `SourcePane` y `SourceStoryState` → `SourceState`. Los estados (`ready`, `empty`, `loading`, `error`, `missing`) siguen vigentes; `ready` ahora envuelve el contenido en `SourceContent`.
+
 ---
 
 ## Declaración del problema

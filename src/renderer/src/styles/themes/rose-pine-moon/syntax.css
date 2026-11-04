@@ -1,5 +1,6 @@
 :root {
-  --editor-foreground: var(--rp-text);
+  --md-text: color-mix(in oklab, var(--rp-text) 65%, var(--rp-rose));
+  --editor-foreground: var(--md-text);
   --editor-cursor: var(--rp-rose);
   --editor-active-line: var(--rp-highlight-low);
   --editor-selection: var(--rp-highlight-med);

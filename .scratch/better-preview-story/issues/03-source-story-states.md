@@ -21,3 +21,4 @@
 ## Comments
 
 - 2026-10-20: Implementado en `8123619`. `SourceStoryState` prioriza la Story en memoria y distingue loading/error/missing; `Try again` llama a `reloadStories`. El mensaje específico de borrador existe; el seam de App no permite producir un `StoryID` huérfano en un borrador sin mutar la biblioteca fuera de la UI, así que ese caso no tiene test dedicado.
+- 2026-10-24: el tipo se renombró a `SourceState` en el ticket 01 de `post-domain` (`88bf6ba`); `SourceStoryState` queda como nombre histórico de este ticket.

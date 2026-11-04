@@ -1,6 +1,6 @@
 @layer components {
   .markdown-preview article > p {
-    color: color-mix(in oklab, var(--color-base-content) 90%, transparent);
+    color: var(--md-text);
   }
 
   .markdown-preview :is(h1, h2, h3, h4, h5, h6) {
