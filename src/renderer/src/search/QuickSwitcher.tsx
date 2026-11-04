@@ -26,6 +26,12 @@ type QuickSwitcherProps = {
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
+const GROUP_HEADING_COLORS: Record<EntryKind, string> = {
+  story: 'text-accent',
+  article: 'text-secondary',
+  post: 'text-success'
+}
+
 function optionId(entry: SearchEntry): string {
   return `quick-switcher-option-${entry.kind}-${entry.id}`
 }
@@ -283,11 +289,19 @@ export function QuickSwitcher({ onClose, onOpen }: QuickSwitcherProps): JSX.Elem
             </div>
           ) : null}
 
-          {visibleGroups.map((group) => (
-            <div key={group.kind} role="group" aria-label={group.label}>
+          {visibleGroups.map((group, groupIndex) => (
+            <div
+              key={group.kind}
+              role="group"
+              aria-label={group.label}
+              className={groupIndex > 0 ? 'mt-1' : undefined}
+            >
               <p
                 aria-hidden="true"
-                className="px-3 pt-2 pb-1 text-2xs font-semibold tracking-wider uppercase text-base-content/50"
+                className={cn(
+                  'border-t border-line px-3 pt-2 pb-1 text-2xs font-semibold tracking-wider uppercase',
+                  GROUP_HEADING_COLORS[group.kind]
+                )}
               >
                 {group.label}
               </p>

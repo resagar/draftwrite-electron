@@ -201,3 +201,53 @@ type SearchResult = {
 - No se crea ADR: la decisión es reversible, no sorprendente y no cambia el modelo de dominio.
 - La spec respeta los ADRs existentes: hexagonal (el renderer no importa dominio ni adapters), estado por contextos sin store global, y tokens de diseño de daisyUI.
 - El trabajo deja tres piezas reutilizables: el view model `SearchEntry`, el matcher puro y el patrón combobox; un futuro registro de comandos puede reutilizar el matcher y la cáscara de diálogo.
+
+---
+
+## Refinamiento aprobado: divisores por tipo (2026-11-04)
+
+**Status:** ready-for-agent
+
+### Problema
+
+Los encabezados por tipo se confunden visualmente con los resultados. Este refinamiento implementa únicamente la separación visual aprobada y los tres colores del research; no reabre el alcance funcional de la spec original.
+
+### Solución
+
+Diferenciar los encabezados de Stories, Articles y Posts con un color por tipo, una línea horizontal sutil y mayor separación entre grupos, conservando la densidad del primer grupo y la apariencia de las opciones.
+
+### Historias de usuario
+
+1. Como escritor, quiero reconocer el inicio de cada grupo para escanear los resultados rápidamente.
+2. Como escritor, quiero identificar Story en dorado, Article en lavanda y Post en celeste para distinguir los tipos.
+3. Como escritor, quiero mantener los nombres de tipo y una separación física para no depender exclusivamente del color.
+4. Como escritor, quiero que el primer grupo no gane espacio superior para conservar el acceso inmediato a los resultados.
+5. Como escritor, quiero distinguir la selección de los encabezados para saber qué abrirá Enter.
+6. Como escritor, quiero conservar el filtrado, los estados y el recorrido de teclado para seguir usando el Quick Switcher como hasta ahora.
+
+### Decisiones de implementación
+
+- Modificar únicamente la presentación de los encabezados del componente Quick Switcher.
+- Asignar clases estáticas completas: Story `text-accent`, Article `text-secondary`, Post `text-success`, sin reducir opacidad ni duplicar hexadecimales.
+- Añadir una línea horizontal de 1 px mediante `border-line` y 4 px adicionales de separación entre grupos. No añadir separación superior antes del primer grupo visible, incluso si se omiten tipos anteriores por el filtro.
+- Mantener el espaciado interno del primer encabezado. No añadir fondo de selección ni borde izquierdo coloreado a los encabezados.
+- Mantener sin cambios etiquetas de resultados, roles y atributos ARIA, agrupación y orden, opciones seleccionadas, hover, foco, scroll y handlers de teclado.
+- Consumir los tokens existentes conforme al ADR del tema; no cambiar paleta, dependencias, contratos, dominio ni persistencia.
+
+### Decisiones de testing
+
+- Fronteras de comprobación: Quick Switcher a través de la app para comportamiento, usando los tests existentes con fake port; componente renderizado en Electron/Chromium con datos sintéticos aislados para apariencia.
+- Comprobar resultado visible y comportamiento externo; no añadir tests Jest que afirmen clases CSS o geometría en jsdom.
+- Verificar los tres colores computados y contraste de texto de al menos 4.5:1 sobre el fondo real; los cálculos del research son 9.55:1, 7.47:1 y 9.19:1 respectivamente.
+- Revisar tres grupos, filtro a un solo tipo, selección junto a un divisor, lista desplazable, títulos largos, zoom y estados de carga/error.
+- Comprobar agrupación, etiquetas, flechas sin wrap, Home/End, Enter, Escape y foco con la cobertura existente y la validación de navegador pertinente.
+- Ejecutar tests existentes relevantes, typecheck, lint y suite completa al final, además de revisar la implementación contra cada criterio del ticket.
+- No usar perfiles ni datos reales para validación visual.
+
+### Fuera de alcance
+
+Fallo editorial de navegación de la sesión anterior, rediseño de resultados, búsqueda o ranking, nuevas interacciones, temas nuevos, migraciones, instalaciones, merge y push.
+
+### Notas adicionales
+
+Fuente: research de esta feature y alcance explícitamente aprobado en la conversación. Un único ticket completo cubre implementación y validación, sin dependencias ni prefactoring. La skill implement requiere un commit final convencional; no incluir atribución AI ni Co-Authored-By.
