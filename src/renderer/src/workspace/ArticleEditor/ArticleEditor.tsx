@@ -1,5 +1,6 @@
+import { GitBranch } from 'lucide-react'
 import type { EditorView } from '@codemirror/view'
-import { useEffect, useRef, useState, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react'
 import { emptyArticle } from '../../data/drafts'
 import { useDataPort } from '../../data/port-context'
 import type { Article } from '../../data/types'
@@ -11,6 +12,7 @@ import { publishUnsavedDraft } from '../../state/status-store'
 import { useDraftPersistence } from '../../state/use-draft-persistence'
 import { useEditorStatus } from '../../state/use-editor-status'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
+import { IconButton } from '../../ui/IconButton/IconButton'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { ArticleBand } from '../ArticleBand/ArticleBand'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
@@ -18,6 +20,7 @@ import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
 import { EditorialWorkspace } from '../EditorialWorkspace/EditorialWorkspace'
 
 type ArticleEditorProps = {
+  renderHeader: (versionsAction: ReactNode) => ReactNode
   stored: Article | null
   // Only read while creating: a stored article already carries its StoryID.
   initialStoryId?: string
@@ -36,6 +39,7 @@ function hasContent(article: Article): boolean {
 
 export function ArticleEditor({
   stored,
+  renderHeader,
   initialStoryId = '',
   onStoryChange
 }: ArticleEditorProps): JSX.Element {
@@ -125,82 +129,88 @@ export function ArticleEditor({
 
   useEffect(() => () => publishTarget(null), [publishTarget])
 
+  const header = renderHeader(
+    port.editorial && !editorialOpen ? (
+      <IconButton
+        label="Versions and review"
+        className="text-primary hover:text-primary"
+        disabled={!draft.ID || status !== 'saved'}
+        onClick={() => setEditorialOpen(true)}
+      >
+        <GitBranch aria-hidden="true" className="h-3.5 w-3.5" />
+      </IconButton>
+    ) : null
+  )
+
   if (editorialOpen)
     return (
-      <EditorialWorkspace
-        kind="article"
-        pieceId={draft.ID}
-        onLibraryChange={() => {
-          void port.listArticles().then((values) => values.forEach(upsertArticle))
-        }}
-        onClose={(workspace) => {
-          const content = workspace.variants.find((v) => v.id === workspace.primaryId)!.content
-          if (content.kind === 'article')
-            setDraft((current) => ({
-              ...current,
-              Title: content.title,
-              Subtitle: content.subtitle,
-              Target: content.target,
-              Text: content.text
-            }))
-          setEditorialOpen(false)
-          void port.listArticles().then((values) => values.forEach(upsertArticle))
-        }}
-      />
+      <>
+        {header}
+        <EditorialWorkspace
+          kind="article"
+          pieceId={draft.ID}
+          onLibraryChange={() => {
+            void port.listArticles().then((values) => values.forEach(upsertArticle))
+          }}
+          onClose={(workspace) => {
+            const content = workspace.variants.find((v) => v.id === workspace.primaryId)!.content
+            if (content.kind === 'article')
+              setDraft((current) => ({
+                ...current,
+                Title: content.title,
+                Subtitle: content.subtitle,
+                Target: content.target,
+                Text: content.text
+              }))
+            setEditorialOpen(false)
+            void port.listArticles().then((values) => values.forEach(upsertArticle))
+          }}
+        />
+      </>
     )
 
   return (
-    <section
-      aria-label="Article editor"
-      className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
-    >
-      <ArticleBand
-        stories={allStories}
-        storyId={draft.StoryID}
-        title={draft.Title}
-        subtitle={draft.Subtitle}
-        creating={creating}
-        storyLocked={storyLocked}
-        onStory={(storyId) => {
-          if (!creating || storyLocked) return
-          change({ ...draft, StoryID: storyId })
-          if (creating) {
-            onStoryChange?.(storyId)
+    <>
+      {header}
+      <section
+        aria-label="Article editor"
+        className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
+      >
+        <ArticleBand
+          stories={allStories}
+          storyId={draft.StoryID}
+          title={draft.Title}
+          subtitle={draft.Subtitle}
+          creating={creating}
+          storyLocked={storyLocked}
+          onStory={(storyId) => {
+            if (!creating || storyLocked) return
+            change({ ...draft, StoryID: storyId })
+            if (creating) {
+              onStoryChange?.(storyId)
+            }
+          }}
+          onTitle={(title) => change({ ...draft, Title: title })}
+          onSubtitle={(subtitle) => change({ ...draft, Subtitle: subtitle })}
+          onDiscard={() => dispatch({ type: 'create/cancel' })}
+        />
+
+        <EditorPreviewLayout
+          toolbar={<EditorToolbar view={view} />}
+          editor={
+            <TextEditor
+              value={draft.Text}
+              onChange={(text) => change({ ...draft, Text: text })}
+              onCursorChange={publishCursor}
+              onCreate={setView}
+            />
           }
-        }}
-        onTitle={(title) => change({ ...draft, Title: title })}
-        onSubtitle={(subtitle) => change({ ...draft, Subtitle: subtitle })}
-        onDiscard={() => dispatch({ type: 'create/cancel' })}
-      />
+          markdown={draft.Text}
+          view={view}
+        />
 
-      {port.editorial ? (
-        <div className="editorial-entry">
-          <span>Autosaved draft · manual versions</span>
-          <button
-            type="button"
-            disabled={!draft.ID || status !== 'saved'}
-            onClick={() => setEditorialOpen(true)}
-          >
-            Versions and review
-          </button>
-        </div>
-      ) : null}
-
-      <EditorPreviewLayout
-        toolbar={<EditorToolbar view={view} />}
-        editor={
-          <TextEditor
-            value={draft.Text}
-            onChange={(text) => change({ ...draft, Text: text })}
-            onCursorChange={publishCursor}
-            onCreate={setView}
-          />
-        }
-        markdown={draft.Text}
-        view={view}
-      />
-
-      {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}
-    </section>
+        {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}
+      </section>
+    </>
   )
 }

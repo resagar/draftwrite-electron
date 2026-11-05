@@ -1,15 +1,16 @@
 import { Trash2 } from 'lucide-react'
-import type { JSX } from 'react'
+import type { JSX, ReactNode } from 'react'
 import type { Post } from '../../data/types'
 import { useWorkspaceDispatch } from '../../state/workspace-context'
 import { IconButton } from '../../ui/IconButton/IconButton'
 import { ViewModeSwitcher } from '../ViewModeSwitcher/ViewModeSwitcher'
 
 type PostHeaderProps = {
+  versionsAction?: ReactNode
   post: Post
 }
 
-export function PostHeader({ post }: PostHeaderProps): JSX.Element {
+export function PostHeader({ post, versionsAction }: PostHeaderProps): JSX.Element {
   const dispatch = useWorkspaceDispatch()
 
   return (
@@ -18,6 +19,7 @@ export function PostHeader({ post }: PostHeaderProps): JSX.Element {
 
       <div className="flex shrink-0 items-center gap-2.5">
         <ViewModeSwitcher />
+        {versionsAction}
         <IconButton
           label="Delete post"
           tone="danger"

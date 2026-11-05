@@ -1,5 +1,6 @@
+import { GitBranch } from 'lucide-react'
 import type { EditorView } from '@codemirror/view'
-import { useEffect, useRef, useState, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react'
 import { emptyPost } from '../../data/drafts'
 import { useDataPort } from '../../data/port-context'
 import type { Post } from '../../data/types'
@@ -10,6 +11,7 @@ import { publishUnsavedDraft } from '../../state/status-store'
 import { useDraftPersistence } from '../../state/use-draft-persistence'
 import { useEditorStatus } from '../../state/use-editor-status'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
+import { IconButton } from '../../ui/IconButton/IconButton'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
@@ -19,6 +21,7 @@ import { postSource } from '../source-state'
 import { EditorialWorkspace } from '../EditorialWorkspace/EditorialWorkspace'
 
 type PostEditorProps = {
+  renderHeader: (versionsAction: ReactNode) => ReactNode
   stored: Post | null
 }
 
@@ -26,7 +29,7 @@ function hasContent(post: Post): boolean {
   return post.Topic.trim() !== '' || post.Text.trim() !== ''
 }
 
-export function PostEditor({ stored }: PostEditorProps): JSX.Element {
+export function PostEditor({ stored, renderHeader }: PostEditorProps): JSX.Element {
   const port = useDataPort()
   const {
     stories,
@@ -115,95 +118,104 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
     schedule(next)
   }
 
+  const header = renderHeader(
+    port.editorial && !editorialOpen ? (
+      <IconButton
+        label="Versions and review"
+        className="text-primary hover:text-primary"
+        disabled={!draft.ID || status !== 'saved'}
+        onClick={() => setEditorialOpen(true)}
+      >
+        <GitBranch aria-hidden="true" className="h-3.5 w-3.5" />
+      </IconButton>
+    ) : null
+  )
+
   if (editorialOpen)
     return (
-      <EditorialWorkspace
-        kind="post"
-        pieceId={draft.ID}
-        onLibraryChange={() => {
-          void port.listPosts().then((values) => values.forEach(upsertPost))
-        }}
-        onClose={(workspace) => {
-          const content = workspace.variants.find((v) => v.id === workspace.primaryId)!.content
-          if (content.kind === 'post') {
-            const next = { ...latestDraft.current, Topic: content.topic, Text: content.text }
-            latestDraft.current = next
-            setDraft(next)
-          }
-          setEditorialOpen(false)
-          void port.listPosts().then((values) => values.forEach(upsertPost))
-        }}
-      />
+      <>
+        {header}
+        <EditorialWorkspace
+          kind="post"
+          pieceId={draft.ID}
+          onLibraryChange={() => {
+            void port.listPosts().then((values) => values.forEach(upsertPost))
+          }}
+          onClose={(workspace) => {
+            const content = workspace.variants.find((v) => v.id === workspace.primaryId)!.content
+            if (content.kind === 'post') {
+              const next = { ...latestDraft.current, Topic: content.topic, Text: content.text }
+              latestDraft.current = next
+              setDraft(next)
+            }
+            setEditorialOpen(false)
+            void port.listPosts().then((values) => values.forEach(upsertPost))
+          }}
+        />
+      </>
     )
 
   return (
-    <section aria-label="Post editor" className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100">
-      <PostBand
-        topic={draft.Topic}
-        state={draft.State}
-        scheduledAt={draft.ScheduledAt}
-        storyId={draft.StoryID}
-        articleId={draft.ArticleID}
-        sourceName={sourceName}
-        stories={stories}
-        articles={articles}
-        creating={creating}
-        onTopic={(topic) => change({ ...draft, Topic: topic })}
-        onState={(state) =>
-          change({
-            ...draft,
-            State: state,
-            ScheduledAt: state === 'scheduled' ? draft.ScheduledAt : null
-          })
-        }
-        onScheduledAt={(scheduledAt) => change({ ...draft, ScheduledAt: scheduledAt })}
-        onSource={(storyId, articleId) =>
-          change({ ...draft, StoryID: storyId, ArticleID: articleId })
-        }
-        onDiscard={() => dispatch({ type: 'create/cancel' })}
-      />
-
-      {port.editorial ? (
-        <div className="editorial-entry">
-          <span>Autosaved draft · manual versions</span>
-          <button
-            type="button"
-            disabled={!draft.ID || status !== 'saved'}
-            onClick={() => setEditorialOpen(true)}
-          >
-            Versions and review
-          </button>
-        </div>
-      ) : null}
-
-      <div className="flex min-h-0 flex-1">
-        <SourcePane
-          source={source}
-          subject="post"
+    <>
+      {header}
+      <section
+        aria-label="Post editor"
+        className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
+      >
+        <PostBand
+          topic={draft.Topic}
+          state={draft.State}
+          scheduledAt={draft.ScheduledAt}
+          storyId={draft.StoryID}
+          articleId={draft.ArticleID}
+          sourceName={sourceName}
+          stories={stories}
+          articles={articles}
           creating={creating}
-          expanded={storyPaneExpanded}
-          onToggle={() => dispatch({ type: 'storyPane/toggle' })}
-          onRetry={draft.StoryID !== null ? reloadStories : reloadArticles}
+          onTopic={(topic) => change({ ...draft, Topic: topic })}
+          onState={(state) =>
+            change({
+              ...draft,
+              State: state,
+              ScheduledAt: state === 'scheduled' ? draft.ScheduledAt : null
+            })
+          }
+          onScheduledAt={(scheduledAt) => change({ ...draft, ScheduledAt: scheduledAt })}
+          onSource={(storyId, articleId) =>
+            change({ ...draft, StoryID: storyId, ArticleID: articleId })
+          }
+          onDiscard={() => dispatch({ type: 'create/cancel' })}
         />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <EditorPreviewLayout
-            toolbar={<EditorToolbar view={view} />}
-            editor={
-              <TextEditor
-                value={draft.Text}
-                onChange={(text) => change({ ...draft, Text: text })}
-                onCursorChange={publishCursor}
-                onCreate={setView}
-              />
-            }
-            markdown={draft.Text}
-            view={view}
+        <div className="flex min-h-0 flex-1">
+          <SourcePane
+            source={source}
+            subject="post"
+            creating={creating}
+            expanded={storyPaneExpanded}
+            onToggle={() => dispatch({ type: 'storyPane/toggle' })}
+            onRetry={draft.StoryID !== null ? reloadStories : reloadArticles}
           />
-        </div>
-      </div>
 
-      {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}
-    </section>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <EditorPreviewLayout
+              toolbar={<EditorToolbar view={view} />}
+              editor={
+                <TextEditor
+                  value={draft.Text}
+                  onChange={(text) => change({ ...draft, Text: text })}
+                  onCursorChange={publishCursor}
+                  onCreate={setView}
+                />
+              }
+              markdown={draft.Text}
+              view={view}
+            />
+          </div>
+        </div>
+
+        {status === 'error' ? <EditorError message={error} onRetry={() => void saveNow()} /> : null}
+      </section>
+    </>
   )
 }

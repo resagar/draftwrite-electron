@@ -1,16 +1,17 @@
 import { Trash2 } from 'lucide-react'
-import type { JSX } from 'react'
+import type { JSX, ReactNode } from 'react'
 import type { Article, Story } from '../../data/types'
 import { useWorkspaceDispatch } from '../../state/workspace-context'
 import { IconButton } from '../../ui/IconButton/IconButton'
 import { ViewModeSwitcher } from '../ViewModeSwitcher/ViewModeSwitcher'
 
 type ArticleHeaderProps = {
+  versionsAction?: ReactNode
   article: Article
   story: Story | null
 }
 
-export function ArticleHeader({ article, story }: ArticleHeaderProps): JSX.Element {
+export function ArticleHeader({ article, story, versionsAction }: ArticleHeaderProps): JSX.Element {
   const dispatch = useWorkspaceDispatch()
 
   return (
@@ -31,6 +32,7 @@ export function ArticleHeader({ article, story }: ArticleHeaderProps): JSX.Eleme
 
       <div className="flex shrink-0 items-center gap-2.5">
         <ViewModeSwitcher />
+        {versionsAction}
         <IconButton
           label="Delete article"
           tone="danger"

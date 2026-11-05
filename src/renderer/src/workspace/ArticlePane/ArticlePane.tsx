@@ -21,10 +21,13 @@ export function ArticlePane({
       aria-label={article ? 'Article' : undefined}
       className="flex min-w-0 flex-1 flex-col bg-base-100"
     >
-      {article ? <ArticleHeader article={article} story={story} /> : null}
-
       <ArticleEditor
         stored={article}
+        renderHeader={(versionsAction) =>
+          article ? (
+            <ArticleHeader article={article} story={story} versionsAction={versionsAction} />
+          ) : null
+        }
         initialStoryId={initialStoryId}
         onStoryChange={onStoryChange}
       />

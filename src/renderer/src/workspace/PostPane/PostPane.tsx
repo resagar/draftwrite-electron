@@ -13,9 +13,12 @@ export function PostPane({ post }: PostPaneProps): JSX.Element {
       aria-label={post ? 'Post' : undefined}
       className="flex min-w-0 flex-1 flex-col bg-base-100"
     >
-      {post ? <PostHeader post={post} /> : null}
-
-      <PostEditor stored={post} />
+      <PostEditor
+        stored={post}
+        renderHeader={(versionsAction) =>
+          post ? <PostHeader post={post} versionsAction={versionsAction} /> : null
+        }
+      />
     </section>
   )
 }
