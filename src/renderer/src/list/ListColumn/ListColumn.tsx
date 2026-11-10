@@ -34,7 +34,7 @@ export function ListColumn({
       inert={collapsed || undefined}
       style={{ width, minWidth: width }}
       className={cn(
-        'relative flex shrink-0 flex-col overflow-hidden bg-base-200/90',
+        'library-list relative flex shrink-0 flex-col overflow-hidden bg-base-200/90',
         collapsed ? 'border-r-0' : 'border-r border-base-300',
         !isResizing &&
           'transition-[width,min-width] duration-200 ease-out motion-reduce:transition-none'

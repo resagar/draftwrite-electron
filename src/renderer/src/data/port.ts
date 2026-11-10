@@ -1,3 +1,4 @@
+import type { WindowControlsPort } from '../../../shared/window-controls'
 import type { TagColor, TagImpact, TagMetadata } from '../../../shared/tags'
 import type { Article, Post, Story } from './types'
 import type { EditorialRequest, EditorialReply } from '../../../shared/editorial'
@@ -32,6 +33,7 @@ export type NewPost = {
 }
 
 export type DataPort = {
+  windowControls?: WindowControlsPort
   listTagMetadata(): Promise<TagMetadata[]>
   setTagColor(name: string, color: TagColor): Promise<void>
   tagImpact(name: string): Promise<TagImpact>

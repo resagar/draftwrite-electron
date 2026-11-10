@@ -1,3 +1,5 @@
+import { WindowControls } from './WindowControls'
+import type { WindowChrome } from './use-window-chrome'
 import { Expand, Feather, GitBranch, PanelLeft, Settings, Shrink, Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
 import { useEditorActions, type EditorActionSet } from '../../state/editor-actions-context'
@@ -48,10 +50,12 @@ function EditorControls({ actions }: { actions: EditorActionSet }): JSX.Element 
 
 export function TitleBar({
   onSettings,
-  settingsReady = true
+  settingsReady = true,
+  chrome
 }: {
   onSettings?: () => void
   settingsReady?: boolean
+  chrome?: WindowChrome
 }): JSX.Element {
   const actions = useEditorActions()
   const { sidebarCollapsed, zenMode } = useWorkspace()
@@ -59,12 +63,13 @@ export function TitleBar({
   const dispatch = useWorkspaceDispatch()
   const zenLabel = `Zen mode (${modifier} Shift D)`
   const platform = window.electron?.process.platform
+  const custom = chrome?.state?.translucent === true && chrome.state.backdrop !== 'acrylic'
   const integrated = platform === 'win32' || platform === 'linux'
 
   return (
     <header
       aria-label="Title bar"
-      className={`z-30 flex h-9 min-h-9 items-center gap-3 border-b border-base-300 bg-base-300 px-3 select-none${integrated ? ' title-bar--integrated' : ''}`}
+      className={`z-30 flex h-9 min-h-9 items-center gap-3 bg-base-100 px-3 select-none${custom ? ' title-bar--custom' : integrated ? ' title-bar--integrated' : ''}`}
     >
       <div className="flex w-[220px] min-w-0 items-center gap-1.5">
         <Feather aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -104,6 +109,7 @@ export function TitleBar({
           DW
         </span>
       </div>
+      {custom && chrome ? <WindowControls chrome={chrome} /> : null}
     </header>
   )
 }

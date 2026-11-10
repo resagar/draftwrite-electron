@@ -16,7 +16,6 @@ import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-contex
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { ArticleBand } from '../ArticleBand/ArticleBand'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
-import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
 import { EditorialWorkspace } from '../EditorialWorkspace/EditorialWorkspace'
 
 type ArticleEditorProps = {
@@ -178,7 +177,7 @@ export function ArticleEditor({
   return (
     <section
       aria-label="Article editor"
-      className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
+      className="content-layer flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
     >
       <ArticleBand
         stories={allStories}
@@ -202,7 +201,6 @@ export function ArticleEditor({
       />
 
       <EditorPreviewLayout
-        toolbar={<EditorToolbar view={view} />}
         editor={
           <TextEditor
             value={draft.Text}

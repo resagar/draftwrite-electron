@@ -1,0 +1,59 @@
+/* One translucent layer per workspace; inner editor/preview layers stay clear. */
+html[data-content-translucent='true'] {
+  --content-surface: color-mix(in srgb, var(--color-base-100) 98%, transparent);
+  background: transparent;
+}
+
+html[data-content-translucent='true']
+  :is(body, .app-shell, .content-layer, .editorial-workspace, .workspace-band) {
+  background: transparent;
+}
+
+html[data-content-translucent='true'] .workspace-surface {
+  background: var(--content-surface);
+}
+
+html[data-content-translucent='true']
+  :is(
+    .library-list,
+    .source-surface,
+    .editorial-history,
+    .editorial-workspace-toolbar,
+    .editorial-secondary-toolbar,
+    .editorial-writing-fields,
+    .editorial-note-actions,
+    .editorial-pane > header
+  ) {
+  background: var(--color-base-200);
+}
+
+/* Acrylic supplies the blur; each primary region adds only one theme tint. */
+html[data-window-backdrop='acrylic'] {
+  --content-surface: color-mix(in srgb, var(--color-base-100) 84%, transparent);
+  --window-secondary-surface: color-mix(in srgb, var(--color-base-200) 84%, transparent);
+}
+
+html[data-window-backdrop='acrylic'] :is(aside[aria-label='Library'], .library-list) {
+  background: var(--window-secondary-surface);
+}
+
+html[data-window-backdrop='acrylic'] :is(header[aria-label='Title bar'], .app-shell > footer) {
+  background: var(--content-surface);
+}
+
+html[data-window-backdrop='acrylic']
+  :is(
+    .workspace-band,
+    .source-surface,
+    .source-surface > header,
+    .editorial-history,
+    .editorial-workspace-toolbar,
+    .editorial-secondary-toolbar,
+    .editorial-writing-fields,
+    .editorial-note-actions,
+    .editorial-notes-list,
+    .editorial-pane > header,
+    .library-list > div > div:first-child
+  ) {
+  background: transparent;
+}

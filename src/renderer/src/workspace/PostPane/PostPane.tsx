@@ -10,7 +10,7 @@ export function PostPane({ post }: PostPaneProps): JSX.Element {
   return (
     <section
       aria-label={post ? 'Post' : undefined}
-      className="flex min-w-0 flex-1 flex-col bg-base-100"
+      className="content-layer flex min-w-0 flex-1 flex-col bg-base-100"
     >
       <PostEditor stored={post} />
     </section>

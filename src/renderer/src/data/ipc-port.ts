@@ -78,6 +78,15 @@ function toPostDTO(post: Post): PostDTO {
 
 export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort {
   return {
+    ...(api.windowControls
+      ? {
+          windowControls: {
+            getState: async () => unwrap(await api.windowControls!.getState()),
+            execute: async (action) => unwrap(await api.windowControls!.execute(action)),
+            onChanged: (listener) => api.windowControls!.onChanged(listener)
+          }
+        }
+      : {}),
     listTagMetadata: async () => unwrap(await api.tags.list()),
     setTagColor: async (name, color) => {
       unwrap(await api.tags.setColor(name, color))

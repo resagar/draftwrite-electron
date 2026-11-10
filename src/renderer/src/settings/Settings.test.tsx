@@ -1,3 +1,4 @@
+import { getCM } from '@replit/codemirror-vim'
 import { beforeEach, expect, it, jest } from '@jest/globals'
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { EditorView } from '@codemirror/view'
@@ -243,11 +244,11 @@ it('toggles Vim mode live, persists it and restores the editor default', async (
   expect(document.querySelector('.cm-editor')).toBe(editor)
   expect(view.state.doc.toString()).toBe('A draft')
   expect(view.state.selection.main.head).toBe(3)
-  await screen.findByLabelText('Vim mode: Normal')
+  await waitFor(() => expect(getCM(view)).not.toBeNull())
   expect(JSON.parse(localStorage.getItem('draftwrite.typography')!).editor.vimMode).toBe(true)
   await act(async () =>
     fireEvent.click(screen.getByRole('button', { name: 'Restore editor defaults' }))
   )
   expect(toggle.checked).toBe(false)
-  expect(screen.queryByLabelText('Vim mode: Normal')).toBeNull()
+  expect(getCM(view)).toBeNull()
 })

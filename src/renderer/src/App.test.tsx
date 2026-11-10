@@ -847,10 +847,6 @@ function articleView(): EditorView {
   return view
 }
 
-function selectEditorText(anchor: number, head: number): void {
-  articleView().dispatch({ selection: { anchor, head } })
-}
-
 function replaceEditorText(next: string): void {
   const view = articleView()
 
@@ -916,14 +912,16 @@ describe('editing an article', () => {
     expect(screen.getByRole('contentinfo').textContent).toContain('Words: 2')
   })
 
-  it('shows where the cursor is', async () => {
+  it('keeps the footer focused on save state and writing metrics', async () => {
     await openArticle()
 
     act(() => replaceEditorText('One two'))
 
-    await waitFor(() =>
-      expect(screen.getByRole('contentinfo').textContent).toContain('Ln 1, Col 8')
-    )
+    const footer = screen.getByRole('contentinfo').textContent
+    expect(footer).toContain('Words: 2')
+    expect(footer).toContain('Chars: 7')
+    expect(footer).toContain('Reading: 1 min')
+    expect(footer).not.toMatch(/Markdown|UTF-8|\bLF\b|\bLn\b|\bCol\b/)
   })
 
   it('saves an article whose body was emptied', async () => {
@@ -1444,14 +1442,14 @@ describe('story view modes', () => {
       expect(titleBar.queryByRole('button', { name: 'Toggle source pane' })).toBeNull()
     })
 
-    it('hides the preview and keeps the editor and the tools in edit mode', async () => {
+    it('hides the preview and keeps the editor in edit mode', async () => {
       await openStoredStory()
 
       fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Edit' }))
 
       expect(pressedMode('Edit')).toBe('true')
       expect(screen.queryByRole('region', { name: 'Preview' })).toBeNull()
-      expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
+      expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
       expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
     })
 
@@ -1468,14 +1466,14 @@ describe('story view modes', () => {
       expect(within(preview).getByRole('heading', { level: 1, name: 'Calm' })).toBeTruthy()
     })
 
-    it('brings the editor, the tools and the preview back in split mode', async () => {
+    it('brings the editor and the preview back in split mode', async () => {
       await openStoredStory()
 
       fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Preview' }))
       fireEvent.click(within(storySwitcher()).getByRole('button', { name: 'Split' }))
 
       expect(pressedMode('Split')).toBe('true')
-      expect(screen.getByRole('group', { name: 'Formatting' })).toBeTruthy()
+      expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
       expect(screen.getByRole('textbox', { name: 'Article text' }).textContent).toContain('Calm')
       expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
     })
@@ -1514,77 +1512,28 @@ describe('story view modes', () => {
   })
 })
 
-describe('formatting toolbar', () => {
-  const stories = [makeStory({ ID: 's1', Topic: 'Calm software' })]
-  const articles = [
-    makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm', Text: 'hello world' })
-  ]
+describe('editing Markdown without a formatting toolbar', () => {
+  it.each([
+    ['Stories', 'Calm software', 'Story editor'],
+    ['Articles', 'The architecture of calm', 'Article editor'],
+    ['Posts', 'A short thought', 'Post editor']
+  ])('keeps %s free of formatting controls in every view mode', async (tab, title, editor) => {
+    renderApp(
+      createFakePort({
+        stories: [makeStory({ ID: 's1', Topic: 'Calm software' })],
+        articles: [makeArticle({ ID: 'a1', StoryID: 's1', Title: 'The architecture of calm' })],
+        posts: [makePost({ ID: 'p1', Topic: 'A short thought' })]
+      }).port
+    )
+    fireEvent.click(screen.getByRole('button', { name: tab }))
+    fireEvent.click(await screen.findByRole('option', { name: new RegExp(title) }))
+    await screen.findByRole('region', { name: editor })
 
-  const openArticle = async (): Promise<void> => {
-    renderApp(createFakePort({ stories, articles }).port)
-    fireEvent.click(screen.getByRole('button', { name: 'Articles' }))
-    fireEvent.click(await screen.findByRole('option', { name: /The architecture of calm/ }))
-    await screen.findByRole('textbox', { name: 'Article text' })
-  }
-
-  it('wraps the selection and takes the formatting away again', async () => {
-    await openArticle()
-
-    act(() => selectEditorText(0, 5))
-    fireEvent.click(screen.getByRole('button', { name: 'Bold' }))
-
-    expect(articleView().state.doc.toString()).toBe('**hello** world')
-
-    act(() => selectEditorText(2, 7))
-    fireEvent.click(screen.getByRole('button', { name: 'Bold' }))
-
-    expect(articleView().state.doc.toString()).toBe('hello world')
-  })
-
-  it('inserts a placeholder when nothing is selected', async () => {
-    await openArticle()
-
-    act(() => selectEditorText(11, 11))
-    fireEvent.click(screen.getByRole('button', { name: 'Bold' }))
-
-    expect(articleView().state.doc.toString()).toBe('hello world**bold text**')
-  })
-
-  it('prefixes the selected lines with a heading', async () => {
-    await openArticle()
-
-    act(() => selectEditorText(0, 0))
-    fireEvent.click(screen.getByRole('button', { name: 'Heading' }))
-
-    expect(articleView().state.doc.toString()).toBe('## hello world')
-  })
-
-  it('keeps every tool named for keyboard and screen reader users', async () => {
-    await openArticle()
-
-    const toolbar = screen.getByRole('group', { name: 'Formatting' })
-
-    for (const name of [
-      'Bold',
-      'Italic',
-      'Heading',
-      'Link',
-      'Blockquote',
-      'Inline code',
-      'Code block',
-      'Bulleted list',
-      'Task checkbox'
-    ]) {
-      expect(within(toolbar).getByRole('button', { name })).toBeTruthy()
+    for (const mode of ['Edit', 'Split', 'Preview']) {
+      fireEvent.click(screen.getByRole('button', { name: mode }))
+      expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Bold' })).toBeNull()
     }
-  })
-
-  it('hides the tools when only the preview is shown', async () => {
-    await openArticle()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
-
-    expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
   })
 })
 

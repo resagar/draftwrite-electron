@@ -11,7 +11,7 @@ const base = EditorView.theme(
       lineHeight: 'var(--editor-line-height, 2)'
     },
     '.cm-content': {
-      padding: '16px 20px',
+      padding: '16px 0',
       fontSize: 'var(--editor-size, 16px)',
       lineHeight: 'var(--editor-line-height, 2)',
       caretColor: 'var(--editor-cursor)',
@@ -25,17 +25,16 @@ const base = EditorView.theme(
     '.cm-gutters': {
       backgroundColor: 'transparent',
       border: 'none',
-      color: 'var(--color-gutter)',
+      color: 'color-mix(in srgb, var(--color-gutter) 60%, transparent)',
       fontSize: 'var(--editor-size, 16px)',
       lineHeight: 'var(--editor-line-height, 2)',
-      marginLeft: 'auto',
-      opacity: '0.6'
+      marginLeft: 'auto'
     },
     '.cm-activeLine': {
       backgroundColor: 'var(--editor-active-line)'
     },
     '.cm-activeLineGutter': {
-      backgroundColor: 'transparent',
+      backgroundColor: 'var(--editor-active-line)',
       color: 'var(--color-gutter)',
       opacity: '1'
     },
@@ -45,7 +44,8 @@ const base = EditorView.theme(
       },
     '.cm-cursor': { borderLeftColor: 'var(--editor-cursor)', borderLeftWidth: '2px' },
     '&.cm-focused': { outline: 'none' },
-    '&.cm-editor .cm-line': { paddingLeft: '0' }
+    // Keep the row background continuous with the gutter without moving the text.
+    '&.cm-editor .cm-line': { paddingLeft: '20px', paddingRight: '22px' }
   },
   { dark: true }
 )

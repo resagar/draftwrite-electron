@@ -32,12 +32,7 @@ function Harness(): JSX.Element {
   return (
     <WorkspaceProvider>
       <ModeButtons />
-      <EditorPreviewLayout
-        toolbar={<div>toolbar</div>}
-        editor={<div>editor</div>}
-        markdown={'# Calm'}
-        view={null}
-      />
+      <EditorPreviewLayout editor={<div>editor</div>} markdown={'# Calm'} view={null} />
     </WorkspaceProvider>
   )
 }

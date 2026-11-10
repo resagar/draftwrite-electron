@@ -364,3 +364,45 @@ El catálogo lateral reúne asignaciones de los tres tipos de entidad. Story se 
 La confirmación de borrado consulta el impacto en main. Al ejecutar, main resuelve nuevamente las asignaciones reales; no recibe IDs elegidos por el renderer. La transacción modifica únicamente tags y timestamps de las entidades afectadas, preservando contenido, relaciones, estado y espacios editoriales. Un fallo revierte toda la operación.
 
 El renderer serializa autosave y eliminación global mediante un coordinador por ventana. Tras el éxito, reconcilia cachés, borradores y escrituras pendientes sin descartar texto no guardado; los borradores encolados antes de la eliminación pierden ese tag al ejecutarse. Una asignación deliberada posterior puede recrearlo con color `default`. Quitar una asignación local conserva la configuración de color global.
+
+## Controles de ventana y apariencia
+
+El shell expone `window.draftwrite.windowControls`, accesible mediante `DataPort.windowControls`.
+Estos canales se registran fuera de los servicios de dominio y no acceden a la base de datos.
+
+| Canal            | Entrada                                 | Resultado                         |
+| ---------------- | --------------------------------------- | --------------------------------- |
+| `window:state`   | Sin parámetros                          | `IpcResult<WindowState>`          |
+| `window:execute` | `minimize`, `toggle-maximize` o `close` | El mismo estado, en `IpcResult`   |
+| `window:changed` | Evento de main al renderer              | Estado tras maximizar o restaurar |
+
+`WindowState` contiene `translucent: boolean`, `maximized: boolean` y el campo opcional
+`backdrop: 'acrylic'`. Este último indica material nativo con controles del sistema;
+no se dibujan botones propios en ese modo. Su ausencia conserva el contrato anterior.
+
+Main exige el `webContents` y el frame principal de la ventana de escritura, con su URL exacta.
+Settings, subframes y emisores ajenos reciben `errForbidden`. Las acciones desconocidas y las
+acciones propias fuera del modo alpha con controles propios reciben `errInvalidPayload`.
+Cerrar usa `window.close()`; los listeners y handlers se retiran al cerrar la ventana.
+
+| Entorno                                      | Efecto                    | Controles                   |
+| -------------------------------------------- | ------------------------- | --------------------------- |
+| Windows 11 22H2 o posterior (build >= 22621) | Acrylic nativo            | Window Controls Overlay     |
+| WSLg/Xwayland validado                       | Transparencia alpha tenue | Botones propios             |
+| Otros entornos o `--opaque-window`           | Fondo opaco               | Tratamiento nativo anterior |
+
+Windows usa `backgroundMaterial: 'acrylic'` sin `transparent: true`. Cada región principal
+agrega un único tinte del tema al 84%; las capas internas de contenido y cabeceras quedan
+transparentes. Sidebar y lista usan `base-200`; contenido y barras usan `base-100`.
+El fondo del WCO usa el mismo tinte base. No hay opacidad global sobre texto o controles.
+Settings conserva su ventana opaca y no puede controlar la principal.
+
+En WSLg se requieren `DISPLAY` y `WAYLAND_DISPLAY`; se fija `ozone-platform=x11` antes
+del arranque. Una petición explícita de Wayland conserva el modo opaco. El contenido usa
+`base-100` al 98% y las listas conservan su superficie sólida: es un fallback alpha, no
+una implementación de blur. La segunda instancia vuelve a mapear la ventana porque el
+estado de minimización del host puede no reflejarse en `isMinimized()`.
+
+`--opaque-window` desactiva ambos efectos. No se añade un panel de preferencias ni se
+promete detección universal del compositor. Las rutas posibles para Linux de escritorio
+y los límites de WSLg están documentados en `.scratch/translucent-content/linux-blur-feasibility.md`.

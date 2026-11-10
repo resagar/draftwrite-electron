@@ -14,13 +14,13 @@ const SAVE_LABELS: Record<SaveStatus, string> = {
 }
 
 export function StatusBar(): JSX.Element {
-  const { save, words, characters, readingMinutes, cursor, vimMode } = useEditorStatus()
+  const { save, words, characters, readingMinutes } = useEditorStatus()
   const modifier = usePlatformModifier()
   const label = SAVE_LABELS[save]
   const showingDocument = save !== 'idle'
 
   return (
-    <footer className="z-30 flex h-6 min-h-6 items-center justify-between gap-3 border-t border-base-300 bg-base-300 px-3 font-mono text-xs text-base-content/70 select-none">
+    <footer className="z-30 flex h-6 min-h-6 items-center gap-3 bg-base-100 px-3 font-mono text-xs text-base-content/70 select-none">
       <div className="flex min-w-0 items-center gap-3">
         <span role="status" aria-live="polite" className="flex shrink-0 items-center gap-1.5">
           {label === '' ? null : (
@@ -58,34 +58,6 @@ export function StatusBar(): JSX.Element {
             </span>
           </>
         ) : null}
-      </div>
-
-      <div className="flex shrink-0 items-center gap-3">
-        {vimMode !== null && (
-          <span role="status" aria-label={`Vim mode: ${vimMode}`} className="text-base-content/85">
-            {vimMode}
-          </span>
-        )}
-        {cursor === null ? null : (
-          <>
-            <span className="text-base-content/60">
-              Ln <span className="text-base-content/85">{cursor.line}</span>, Col{' '}
-              <span className="text-base-content/85">{cursor.column}</span>
-            </span>
-            <span aria-hidden="true" className="text-base-content/40">
-              ·
-            </span>
-          </>
-        )}
-        <span>Markdown</span>
-        <span aria-hidden="true" className="text-base-content/60">
-          ·
-        </span>
-        <span>UTF-8</span>
-        <span aria-hidden="true" className="text-base-content/60">
-          ·
-        </span>
-        <span>LF</span>
       </div>
     </footer>
   )

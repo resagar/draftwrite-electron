@@ -26,7 +26,10 @@ export function Workspace(): JSX.Element {
 
   if (creating === 'story') {
     return (
-      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+      <section
+        aria-label="Workspace"
+        className="workspace-surface flex min-w-0 flex-1 overflow-hidden bg-base-100"
+      >
         <StoryEditorPane key={editorSession} story={null} />
       </section>
     )
@@ -34,7 +37,10 @@ export function Workspace(): JSX.Element {
 
   if (creating === 'post') {
     return (
-      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+      <section
+        aria-label="Workspace"
+        className="workspace-surface flex min-w-0 flex-1 overflow-hidden bg-base-100"
+      >
         <PostPane key={editorSession} post={null} />
       </section>
     )
@@ -51,7 +57,10 @@ export function Workspace(): JSX.Element {
 
     return (
       <ArticleTargetProvider>
-        <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+        <section
+          aria-label="Workspace"
+          className="workspace-surface flex min-w-0 flex-1 overflow-hidden bg-base-100"
+        >
           <SourcePane
             source={source}
             subject="article"
@@ -78,7 +87,10 @@ export function Workspace(): JSX.Element {
 
   if (story !== null) {
     return (
-      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+      <section
+        aria-label="Workspace"
+        className="workspace-surface flex min-w-0 flex-1 overflow-hidden bg-base-100"
+      >
         <StoryEditorPane key={editorSession} story={story} />
       </section>
     )
@@ -88,14 +100,20 @@ export function Workspace(): JSX.Element {
 
   if (post !== null) {
     return (
-      <section aria-label="Workspace" className="flex min-w-0 flex-1 overflow-hidden bg-base-100">
+      <section
+        aria-label="Workspace"
+        className="workspace-surface flex min-w-0 flex-1 overflow-hidden bg-base-100"
+      >
         <PostPane key={editorSession} post={post} />
       </section>
     )
   }
 
   return (
-    <section aria-label="Workspace" className="flex min-w-0 flex-1 flex-col bg-base-100">
+    <section
+      aria-label="Workspace"
+      className="workspace-surface flex min-w-0 flex-1 flex-col bg-base-100"
+    >
       <EmptyState
         icon={<BookOpen className="h-8 w-8" />}
         title="Nothing selected"

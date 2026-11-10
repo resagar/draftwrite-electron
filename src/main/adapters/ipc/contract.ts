@@ -1,3 +1,4 @@
+import type { WindowAction, WindowState } from '../../../shared/window-controls'
 import type { TagColor, TagImpact, TagMetadata } from '../../../shared/tags'
 import type { Article } from '../../article/model'
 import type { Post } from '../../post/model'
@@ -91,6 +92,11 @@ export const tagChannels = {
 } as const
 
 export interface DraftwriteApi {
+  windowControls?: {
+    getState(): Promise<IpcResult<WindowState>>
+    execute(action: WindowAction): Promise<IpcResult<WindowState>>
+    onChanged(listener: (state: WindowState) => void): () => void
+  }
   tags: {
     list(): Promise<IpcResult<TagMetadata[]>>
     setColor(name: string, color: TagColor): Promise<IpcResult<void>>

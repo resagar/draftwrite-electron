@@ -118,7 +118,7 @@ export function SourcePane({
         }
       }}
       className={cn(
-        'relative flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-base-300 bg-base-200/50',
+        'source-surface relative flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-base-300 bg-base-200/50',
         expanded ? '' : 'w-10 min-w-10',
         animating &&
           'transition-[width,min-width] duration-200 ease-out motion-reduce:transition-none'

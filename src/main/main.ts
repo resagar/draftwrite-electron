@@ -1,3 +1,6 @@
+import { release } from 'node:os'
+import { shouldEnableAcrylic, shouldEnableTranslucentContent } from './platform/window-appearance'
+import { registerWindowControls } from './adapters/ipc/window-controls'
 import { app, shell, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
 import { join } from 'path'
 import { pathToFileURL } from 'node:url'
@@ -11,6 +14,17 @@ import icon from '../../resources/icon.png?asset'
 let mainWindow: BrowserWindow | null = null
 let database: AppDatabase | null = null
 
+const appearanceEnvironment = {
+  platform: process.platform,
+  kernel: release(),
+  env: process.env,
+  args: process.argv
+}
+const translucent = shouldEnableTranslucentContent(appearanceEnvironment)
+const acrylic = shouldEnableAcrylic(appearanceEnvironment)
+// Use the compositor path validated for the translucent WSLg window.
+if (translucent) app.commandLine.appendSwitch('ozone-platform', 'x11')
+
 function createWindow(): void {
   // Create the browser window.
   const window = new BrowserWindow({
@@ -20,13 +34,17 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    ...(translucent
+      ? { transparent: true, backgroundColor: '#00000000', titleBarStyle: 'hidden' as const }
+      : {}),
+    ...(acrylic ? { backgroundMaterial: 'acrylic' as const, backgroundColor: '#00000000' } : {}),
     ...(process.platform === 'linux' ? { icon } : {}),
-    ...(process.platform === 'win32' || process.platform === 'linux'
+    ...(!translucent && (process.platform === 'win32' || process.platform === 'linux')
       ? {
           titleBarStyle: 'hidden' as const,
           titleBarOverlay: {
-            // Match the renderer's Rosé Pine Moon overlay and text colors.
-            color: '#393552',
+            // Match the renderer's Rosé Pine Moon base and text colors.
+            color: acrylic ? '#232136d6' : '#232136',
             symbolColor: '#e0def4',
             height: 36
           }
@@ -43,6 +61,7 @@ function createWindow(): void {
     is.dev && process.env['ELECTRON_RENDERER_URL']
       ? process.env['ELECTRON_RENDERER_URL']
       : pathToFileURL(join(__dirname, '../renderer/index.html')).href
+  registerWindowControls(ipcMain, window, rendererUrl, translucent, acrylic)
   registerSettingsWindow(window, rendererUrl, join(__dirname, '../preload/index.js'))
   window.once('closed', () => {
     if (mainWindow === window) mainWindow = null
@@ -77,6 +96,10 @@ if (!hasSingleInstanceLock) {
       if (mainWindow.isMinimized()) {
         mainWindow.restore()
       }
+      // WSLg can minimize the host window without updating isMinimized().
+      // Remapping the translucent Xwayland window restores that host window.
+      if (translucent) mainWindow.hide()
+      mainWindow.show()
       mainWindow.focus()
     }
   })

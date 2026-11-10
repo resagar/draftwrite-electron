@@ -7,7 +7,6 @@ import { useSplitResizer } from '../../ui/Resizer/use-resizer'
 import { MarkdownPreview } from '../MarkdownPreview/MarkdownPreview'
 
 type EditorPreviewLayoutProps = {
-  toolbar: ReactNode
   editor: ReactNode
   markdown: string
   /** The CodeMirror view, for the proportional scroll sync with the preview. */
@@ -15,7 +14,6 @@ type EditorPreviewLayoutProps = {
 }
 
 export function EditorPreviewLayout({
-  toolbar,
   editor,
   markdown,
   view
@@ -37,29 +35,23 @@ export function EditorPreviewLayout({
   const resizable = split && canResize
 
   return (
-    <>
-      {showsEditor ? toolbar : null}
-
-      <div ref={containerRef} className="flex min-h-0 flex-1">
-        <div
-          style={
-            resizable ? { flexBasis: `${ratio * 100}%`, flexGrow: 0, flexShrink: 0 } : undefined
-          }
-          className={cn(
-            'min-h-0 min-w-0',
-            showsEditor ? (resizable ? '' : 'flex-1') : 'hidden',
-            split ? 'border-r border-base-300' : ''
-          )}
-        >
-          {editor}
-        </div>
-
-        {resizable ? <Resizer {...resizerProps} /> : null}
-
-        {/* The preview is the flex child and owns its scroll; wrapping it in
-            another scroller would split the viewport the sync measures. */}
-        {showsPreview ? <MarkdownPreview markdown={markdown} editorView={view} /> : null}
+    <div ref={containerRef} className="flex min-h-0 flex-1">
+      <div
+        style={resizable ? { flexBasis: `${ratio * 100}%`, flexGrow: 0, flexShrink: 0 } : undefined}
+        className={cn(
+          'min-h-0 min-w-0',
+          showsEditor ? (resizable ? '' : 'flex-1') : 'hidden',
+          split ? 'border-r border-base-300' : ''
+        )}
+      >
+        {editor}
       </div>
-    </>
+
+      {resizable ? <Resizer {...resizerProps} /> : null}
+
+      {/* The preview is the flex child and owns its scroll; wrapping it in
+            another scroller would split the viewport the sync measures. */}
+      {showsPreview ? <MarkdownPreview markdown={markdown} editorView={view} /> : null}
+    </div>
   )
 }

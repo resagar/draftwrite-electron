@@ -1,3 +1,4 @@
+import { windowChannels, type WindowState } from '../shared/window-controls'
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import {
@@ -27,6 +28,18 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
 
 /** Typed data entry point of the renderer. */
 const draftwrite: DraftwriteApi = {
+  windowControls: {
+    getState: () => invoke(windowChannels.state),
+    execute: (action) => invoke(windowChannels.execute, action),
+    onChanged: (listener) => {
+      const receive = (_event: Electron.IpcRendererEvent, state: WindowState): void =>
+        listener(state)
+      ipcRenderer.on(windowChannels.changed, receive)
+      return () => {
+        ipcRenderer.removeListener(windowChannels.changed, receive)
+      }
+    }
+  },
   tags: {
     list: () => invoke(tagChannels.list),
     setColor: (name, color) => invoke(tagChannels.setColor, name, color),

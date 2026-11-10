@@ -1,5 +1,6 @@
+import { getCM } from '@replit/codemirror-vim'
 import { beforeEach, expect, it } from '@jest/globals'
-import { act, fireEvent, screen } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import { EditorView } from '@codemirror/view'
 import { defaultPreferences } from './preferences'
 import { renderApp } from '../test/render-app'
@@ -45,7 +46,11 @@ async function openStory(
   await act(async () => {
     fireEvent.click(option)
   })
-  await screen.findByLabelText('Vim mode: Normal')
+  await waitFor(() =>
+    expect(
+      getCM(EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!)
+    ).not.toBeNull()
+  )
   const view = EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
   act(() =>
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: 'Changed text' } })
@@ -77,7 +82,11 @@ it.each(['q', 'q!', 'wq'])(
     renderApp(fake.port)
     await screen.findByText('No stories yet')
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'New Story' })))
-    await screen.findByLabelText('Vim mode: Normal')
+    await waitFor(() =>
+      expect(
+        getCM(EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!)
+      ).not.toBeNull()
+    )
     const view = EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
     act(() => view.dispatch({ changes: { from: 0, insert: 'Keep this draft' } }))
     await ex(command)
@@ -106,7 +115,11 @@ it('keeps Saving visible until :w completes and resolves the active document aft
   })
   expect(screen.getByText('Saved')).toBeTruthy()
   await act(async () => fireEvent.click(screen.getByRole('button', { name: /New Story/ })))
-  await screen.findByLabelText('Vim mode: Normal')
+  await waitFor(() =>
+    expect(
+      getCM(EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!)
+    ).not.toBeNull()
+  )
   const view = EditorView.findFromDOM(document.querySelector('.cm-editor') as HTMLElement)!
   act(() => view.dispatch({ changes: { from: 0, insert: 'Incomplete next document' } }))
   await ex('w')

@@ -1,3 +1,4 @@
+import { useWindowChrome } from '../TitleBar/use-window-chrome'
 import { useState, type JSX, type ReactNode } from 'react'
 import { useDataPort } from '../../data/port-context'
 import { useTypography } from '../../settings/typography-context'
@@ -12,20 +13,22 @@ type AppShellProps = {
 
 export function AppShell({ sidebar, list, workspace }: AppShellProps): JSX.Element {
   const port = useDataPort()
+  const chrome = useWindowChrome()
   const { ready, error: sessionError } = useTypography()
   const [error, setError] = useState<string | null>(null)
   return (
     <div className="app-shell flex h-full flex-col bg-base-100 text-sm text-base-content">
       <TitleBar
+        chrome={chrome}
         settingsReady={ready}
         onSettings={() => {
           setError(null)
           void port.openSettings().catch(() => setError('Settings could not be opened. Try again.'))
         }}
       />
-      {(error || sessionError) && (
+      {(error || sessionError || chrome.error) && (
         <p role="alert" className="bg-base-200 px-4 py-2 text-error">
-          {error ?? sessionError}
+          {error ?? sessionError ?? chrome.error}
         </p>
       )}
       <main className="flex min-h-0 flex-1 overflow-hidden">

@@ -14,7 +14,6 @@ import { useEditorStatus } from '../../state/use-editor-status'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
-import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
 import { PostBand } from '../PostBand/PostBand'
 import { SourcePane } from '../SourcePane/SourcePane'
 import { postSource } from '../source-state'
@@ -165,7 +164,10 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
     )
 
   return (
-    <section aria-label="Post editor" className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100">
+    <section
+      aria-label="Post editor"
+      className="content-layer flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
+    >
       <PostBand
         topic={draft.Topic}
         tags={draft.Tags}
@@ -205,7 +207,6 @@ export function PostEditor({ stored }: PostEditorProps): JSX.Element {
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <EditorPreviewLayout
-            toolbar={<EditorToolbar view={view} />}
             editor={
               <TextEditor
                 value={draft.Text}

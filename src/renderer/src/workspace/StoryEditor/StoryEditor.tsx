@@ -14,7 +14,6 @@ import { useEditorStatus } from '../../state/use-editor-status'
 import { useWorkspace, useWorkspaceDispatch } from '../../state/workspace-context'
 import { EditorError } from '../../ui/EditorError/EditorError'
 import { EditorPreviewLayout } from '../EditorPreviewLayout/EditorPreviewLayout'
-import { EditorToolbar } from '../EditorToolbar/EditorToolbar'
 import { StoryBand } from '../StoryBand/StoryBand'
 
 type StoryEditorProps = {
@@ -102,7 +101,10 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
   }
 
   return (
-    <section aria-label="Story editor" className="flex min-h-0 min-w-0 flex-1 flex-col bg-base-100">
+    <section
+      aria-label="Story editor"
+      className="content-layer flex min-h-0 min-w-0 flex-1 flex-col bg-base-100"
+    >
       <StoryBand
         topic={draft.Topic}
         titles={draft.Titles}
@@ -115,7 +117,6 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
       />
 
       <EditorPreviewLayout
-        toolbar={<EditorToolbar view={view} />}
         editor={
           <TextEditor
             value={draft.Text}
