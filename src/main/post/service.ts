@@ -55,7 +55,7 @@ export function newPostService(
 
   return {
     async create(post) {
-      const created = newPost(post.topic, post.text, post.storyID, post.articleID)
+      const created = newPost(post.topic, post.text, post.storyID, post.articleID, post.tags)
       await ensureSourceExists(created)
       return repo.create(created)
     },

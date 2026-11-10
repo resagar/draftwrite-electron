@@ -7,6 +7,7 @@ import { newPostRepository } from './post-repository'
 import { articles, posts, stories } from './schema'
 
 const basePost: Post = {
+  tags: [],
   id: 'post-1',
   topic: 'Launch note',
   text: 'Short body',

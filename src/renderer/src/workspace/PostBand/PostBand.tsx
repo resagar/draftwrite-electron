@@ -1,3 +1,4 @@
+import { TagInput } from '../../forms/TagInput/TagInput'
 import { useState, type JSX } from 'react'
 import { POST_STATE_LABELS } from '../../data/post-state'
 import type { Article, PostState, Story } from '../../data/types'
@@ -5,6 +6,8 @@ import { cn } from '../../lib/cn'
 import { PropertiesToggle } from '../PropertiesToggle/PropertiesToggle'
 
 type PostBandProps = {
+  tags: string[]
+  onTags: (tags: string[]) => void
   topic: string
   state: PostState
   scheduledAt: string | null
@@ -26,6 +29,8 @@ const field =
 const label = 'shrink-0 text-2xs tracking-wider text-base-content/60'
 
 export function PostBand({
+  tags,
+  onTags,
   topic,
   state,
   scheduledAt,
@@ -118,6 +123,7 @@ export function PostBand({
       </div>
 
       <div id="post-properties" hidden={!propertiesOpen}>
+        <TagInput tags={tags} onChange={onTags} />
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="post-source" className={label}>
             Source

@@ -1,3 +1,4 @@
+import type { TagColor, TagImpact, TagMetadata } from '../../../shared/tags'
 import type { Article, Post, Story } from './types'
 import type { EditorialRequest, EditorialReply } from '../../../shared/editorial'
 import type {
@@ -18,10 +19,12 @@ export type NewArticle = {
   title: string
   subtitle: string
   target: string
+  tags?: string[]
   text: string
 }
 
 export type NewPost = {
+  tags?: string[]
   topic: string
   text: string
   storyId: string | null
@@ -29,6 +32,10 @@ export type NewPost = {
 }
 
 export type DataPort = {
+  listTagMetadata(): Promise<TagMetadata[]>
+  setTagColor(name: string, color: TagColor): Promise<void>
+  tagImpact(name: string): Promise<TagImpact>
+  deleteTagEverywhere(name: string): Promise<void>
   editorial?: (request: EditorialRequest) => Promise<EditorialReply>
   openSettings(): Promise<void>
   closeSettings(): Promise<void>

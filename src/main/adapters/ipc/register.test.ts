@@ -173,6 +173,7 @@ describe('registerIpcHandlers', () => {
     expect(result).toEqual({
       ok: true,
       value: {
+        tags: [],
         id: expect.stringMatching(/^[0-9a-f-]{36}$/),
         topic: 'Launch note',
         text: 'Short body',
@@ -231,6 +232,7 @@ describe('registerIpcHandlers', () => {
   it('accepts a scheduled date on update and keeps null as absence', async () => {
     const { ipcMain, postRepo } = newHarness()
     postRepo.get.mockResolvedValue({
+      tags: [],
       id: 'post-1',
       topic: 'Launch',
       text: '',

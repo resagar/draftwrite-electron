@@ -15,6 +15,7 @@ export function makeStory(overrides: Partial<Story> = {}): Story {
 
 export function makeArticle(overrides: Partial<Article> = {}): Article {
   return {
+    Tags: [],
     ID: 'article-1',
     StoryID: 'story-1',
     Title: 'An article',
@@ -33,6 +34,7 @@ export function makePost(overrides: Partial<Post> = {}): Post {
     Topic: 'A post',
     Text: 'The post text.',
     State: 'pending',
+    Tags: [],
     ScheduledAt: null,
     StoryID: null,
     ArticleID: null,

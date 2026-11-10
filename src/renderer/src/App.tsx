@@ -1,3 +1,5 @@
+import { TagsProvider } from './tags/tag-context'
+import { TagMutationProvider } from './state/tag-mutation-context'
 import { useState } from 'react'
 import type { JSX } from 'react'
 import { ArticleList } from './list/ArticleList/ArticleList'
@@ -53,9 +55,11 @@ function AppLayout(): JSX.Element {
   // The palette searches the whole library, not the tag-filtered view. Clear
   // the filter only when it would hide the entry that is about to open.
   const hidesEntry = (entry: SearchEntry): boolean => {
-    if (tagFilter === null || entry.kind === 'post') {
+    if (tagFilter === null) {
       return false
     }
+
+    if (entry.kind === 'post') return !postById(entry.id)?.Tags.includes(tagFilter)
 
     if (entry.kind === 'story') {
       const story = storyById(entry.id)
@@ -68,7 +72,7 @@ function AppLayout(): JSX.Element {
     }
 
     const story = storyById(article.StoryID)
-    return story === null || !story.Tags.includes(tagFilter)
+    return !article.Tags.includes(tagFilter) && (story === null || !story.Tags.includes(tagFilter))
   }
 
   const openEntry = (entry: SearchEntry): void => {
@@ -204,11 +208,15 @@ function AppLayout(): JSX.Element {
 
 const App = (): JSX.Element => (
   <TypographyProvider>
-    <WorkspaceProvider>
-      <LibraryProvider>
-        <AppLayout />
-      </LibraryProvider>
-    </WorkspaceProvider>
+    <TagMutationProvider>
+      <WorkspaceProvider>
+        <LibraryProvider>
+          <TagsProvider>
+            <AppLayout />
+          </TagsProvider>
+        </LibraryProvider>
+      </WorkspaceProvider>
+    </TagMutationProvider>
   </TypographyProvider>
 )
 

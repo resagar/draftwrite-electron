@@ -19,6 +19,7 @@ export type Article = {
   Title: string
   Subtitle: string
   Target: string
+  Tags: string[]
   Text: string
   CreatedAt: string
   UpdatedAt: string
@@ -31,6 +32,7 @@ export type Post = {
   Topic: string
   Text: string
   State: PostState
+  Tags: string[]
   ScheduledAt: string | null
   StoryID: string | null
   ArticleID: string | null

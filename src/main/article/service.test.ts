@@ -14,6 +14,7 @@ import { errNotFound, errTitleTaken } from './repository'
 import { errStoryNotFound, newArticleService, type ArticleService } from './service'
 
 const emptyArticle: Article = {
+  tags: [],
   id: '',
   storyID: '',
   title: '',

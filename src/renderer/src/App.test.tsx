@@ -117,7 +117,13 @@ describe('posts', () => {
     await waitFor(() => expect(fake.calls.createPost).toBe(1), { timeout: 3000 })
 
     expect(fake.createdPosts).toEqual([
-      { topic: 'Launch note', text: '', storyId: null, articleId: null }
+      {
+        tags: [],
+        topic: 'Launch note',
+        text: '',
+        storyId: null,
+        articleId: null
+      }
     ])
     expect(await screen.findByRole('option', { name: /Launch note/ })).toBeTruthy()
     expect(screen.getByRole('region', { name: 'Post' })).toBeTruthy()
@@ -249,7 +255,13 @@ describe('post source', () => {
     await waitFor(() => expect(fake.calls.createPost).toBe(1), { timeout: 3000 })
 
     expect(fake.createdPosts).toEqual([
-      { topic: 'Launch note', text: '', storyId: 's1', articleId: null }
+      {
+        tags: [],
+        topic: 'Launch note',
+        text: '',
+        storyId: 's1',
+        articleId: null
+      }
     ])
   })
 
@@ -1789,7 +1801,14 @@ describe('creating an article', () => {
     await waitFor(
       () =>
         expect(fake.createdArticles).toEqual([
-          { storyId: 's2', title: 'The architecture of calm', subtitle: '', target: '', text: '' }
+          {
+            tags: [],
+            storyId: 's2',
+            title: 'The architecture of calm',
+            subtitle: '',
+            target: '',
+            text: ''
+          }
         ]),
       { timeout: 3000 }
     )
@@ -2725,7 +2744,14 @@ describe('keyboard shortcuts', () => {
     await waitFor(
       () =>
         expect(fake.createdArticles).toEqual([
-          { storyId: 's1', title: 'The architecture of calm', subtitle: '', target: '', text: '' }
+          {
+            tags: [],
+            storyId: 's1',
+            title: 'The architecture of calm',
+            subtitle: '',
+            target: '',
+            text: ''
+          }
         ]),
       { timeout: 3000 }
     )

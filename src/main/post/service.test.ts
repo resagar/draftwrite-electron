@@ -11,6 +11,7 @@ import { errNotFound } from './repository'
 import { errSourceNotFound, newPostService, type PostService } from './service'
 
 const emptyPost: Post = {
+  tags: [],
   id: '',
   topic: '',
   text: '',
@@ -33,6 +34,7 @@ const emptyStory: Story = {
 }
 
 const emptyArticle: Article = {
+  tags: [],
   id: '',
   storyID: '',
   title: '',

@@ -62,6 +62,7 @@ it.each(['story', 'article'] as const)(
         makePost({
           ID: 'p1',
           Topic: 'Linked post',
+          Tags: ['tech'],
           StoryID: sourceKind === 'story' ? 's1' : null,
           ArticleID: sourceKind === 'article' ? 'a1' : null
         })

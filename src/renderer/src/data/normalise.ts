@@ -24,6 +24,7 @@ export function toArticle(wire: ArticleDTO): Article {
     Title: wire.title,
     Subtitle: wire.subtitle,
     Target: wire.target,
+    Tags: wire.tags ?? [],
     Text: wire.text,
     CreatedAt: wire.createdAt,
     UpdatedAt: wire.updatedAt
@@ -40,6 +41,7 @@ export function toPost(wire: PostDTO): Post {
     Topic: wire.topic,
     Text: wire.text,
     State: wire.state,
+    Tags: wire.tags ?? [],
     ScheduledAt: wire.scheduledAt ?? null,
     StoryID: wire.storyID ?? null,
     ArticleID: wire.articleID ?? null,

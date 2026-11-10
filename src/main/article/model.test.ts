@@ -11,6 +11,7 @@ import {
 } from './model'
 
 const emptyArticle: Article = {
+  tags: [],
   id: '',
   storyID: '',
   title: '',

@@ -11,6 +11,7 @@ export function emptyArticle(storyId: string): Article {
     Title: '',
     Subtitle: '',
     Target: '',
+    Tags: [],
     Text: '',
     CreatedAt: '',
     UpdatedAt: ''
@@ -23,6 +24,7 @@ export function emptyPost(): Post {
     Topic: '',
     Text: '',
     State: 'pending',
+    Tags: [],
     ScheduledAt: null,
     StoryID: null,
     ArticleID: null,

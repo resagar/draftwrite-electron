@@ -33,6 +33,7 @@ export const articles = sqliteTable(
     title: text('title').notNull(),
     subtitle: text('subtitle').notNull(),
     target: text('target').notNull(),
+    tags: text('tags').notNull().default(''),
     editorial: text('editorial'),
     text: text('text').notNull(),
     createdAt: text('created_at')
@@ -52,6 +53,7 @@ export const posts = sqliteTable(
     topic: text('topic').notNull(),
     text: text('text').notNull(),
     state: text('state').notNull().default('pending'),
+    tags: text('tags').notNull().default(''),
     editorial: text('editorial'),
     scheduledAt: text('scheduled_at'),
     storyID: text('story_id').references(() => stories.id, { onDelete: 'set null' }),
@@ -68,3 +70,8 @@ export const posts = sqliteTable(
     check('posts_source_check', sql`${table.storyID} is null or ${table.articleID} is null`)
   ]
 )
+
+export const tagMetadata = sqliteTable('tag_metadata', {
+  name: text('name').primaryKey(),
+  color: text('color').notNull().default('default')
+})

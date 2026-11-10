@@ -273,6 +273,7 @@ describe('editorial workflow through IPC and real SQLite', () => {
       updatedAt: ''
     })
     const article = await app.services.article.create({
+      tags: [],
       id: '',
       storyID: story.id,
       title: 'Original article',
@@ -396,6 +397,7 @@ describe('editorial workflow through IPC and real SQLite', () => {
   }> {
     const { app, call } = fixture()
     const post = await app.services.post.create({
+      tags: [],
       id: '',
       state: 'pending',
       scheduledAt: null,
@@ -432,6 +434,7 @@ describe('editorial workflow through IPC and real SQLite', () => {
   it('starts an existing Post at 0.0.0 without inventing saved versions', async () => {
     const { app, call } = fixture()
     const post = await app.services.post.create({
+      tags: [],
       id: '',
       state: 'pending',
       scheduledAt: null,
@@ -464,6 +467,7 @@ describe('editorial workflow through IPC and real SQLite', () => {
   it('saves explicit versions without changing Post publication data', async () => {
     const { app, call } = fixture()
     const post = await app.services.post.create({
+      tags: [],
       id: '',
       state: 'pending',
       scheduledAt: null,

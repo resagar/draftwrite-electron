@@ -1,3 +1,4 @@
+import { useTagMutations } from '../../state/tag-mutation-context'
 import type { EditorView } from '@codemirror/view'
 import { useEffect, useState, type JSX } from 'react'
 import { emptyStory } from '../../data/drafts'
@@ -30,12 +31,20 @@ function hasContent(story: Story): boolean {
 
 export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
   const port = useDataPort()
+  const mutations = useTagMutations()
   const { upsertStory } = useLibrary()
   const dispatch = useWorkspaceDispatch()
   const { editorSession } = useWorkspace()
   const creating = stored === null
   const [draft, setDraft] = useState<Story>(stored ?? emptyStory())
   const [view, setView] = useState<EditorView | null>(null)
+  useEffect(
+    () =>
+      mutations.subscribe((name) => {
+        setDraft((current) => ({ ...current, Tags: current.Tags.filter((tag) => tag !== name) }))
+      }),
+    [mutations]
+  )
 
   const canPersist = (value: Story): boolean => value.Topic.trim() !== ''
 

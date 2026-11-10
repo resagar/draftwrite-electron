@@ -112,6 +112,7 @@ export function ArticleList(): JSX.Element {
             title={article.Title}
             updatedAt={article.UpdatedAt}
             text={article.Text}
+            tags={article.Tags}
             selected={selected}
           />
         )}

@@ -1,9 +1,12 @@
+import { TagInput } from '../../forms/TagInput/TagInput'
 import { cn } from '../../lib/cn'
 import type { Story } from '../../data/types'
 import { useState, type JSX } from 'react'
 import { PropertiesToggle } from '../PropertiesToggle/PropertiesToggle'
 
 type ArticleBandProps = {
+  tags: string[]
+  onTags: (tags: string[]) => void
   stories: Story[]
   storyId: string
   title: string
@@ -17,6 +20,8 @@ type ArticleBandProps = {
 }
 
 export function ArticleBand({
+  tags,
+  onTags,
   stories,
   storyId,
   title,
@@ -113,6 +118,7 @@ export function ArticleBand({
       ) : null}
 
       <div id="article-properties" hidden={!propertiesOpen} className="space-y-1">
+        <TagInput tags={tags} onChange={onTags} />
         <label htmlFor="article-subtitle" className="text-2xs tracking-wider text-base-content/60">
           Subtitle
         </label>

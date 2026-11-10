@@ -19,6 +19,7 @@ const storyDTO: StoryDTO = {
 }
 
 const articleDTO: ArticleDTO = {
+  tags: [],
   id: 'a1',
   storyID: 's1',
   title: 'The architecture of calm',
@@ -30,6 +31,7 @@ const articleDTO: ArticleDTO = {
 }
 
 const postDTO: PostDTO = {
+  tags: [],
   id: 'p1',
   topic: 'Launch note',
   text: 'Short body',
@@ -72,6 +74,12 @@ function createFakeApi(overrides: ApiOverrides = {}): DraftwriteApi {
   }
 
   return {
+    tags: {
+      list: async () => ({ ok: true, value: [] }),
+      setColor: async () => ({ ok: true, value: undefined }),
+      impact: async () => ({ ok: true, value: { stories: 0, articles: 0, posts: 0 } }),
+      deleteEverywhere: async () => ({ ok: true, value: undefined })
+    },
     settings: {
       open: async () => ({ ok: true, value: undefined }),
       close: async () => ({ ok: true, value: undefined }),
@@ -137,6 +145,7 @@ describe('createIpcPort', () => {
 
     await expect(port.listArticles()).resolves.toEqual([
       {
+        Tags: [],
         ID: 'a1',
         StoryID: 's1',
         Title: 'The architecture of calm',
@@ -202,6 +211,7 @@ describe('createIpcPort', () => {
     const port = createIpcPort(api)
 
     const created = await port.createArticle({
+      tags: [],
       storyId: 's1',
       title: 'The architecture of calm',
       subtitle: '',
@@ -260,6 +270,7 @@ describe('createIpcPort', () => {
 
     await expect(port.listPosts()).resolves.toEqual([
       {
+        Tags: [],
         ID: 'p1',
         Topic: 'Launch note',
         Text: 'Short body',
@@ -279,6 +290,7 @@ describe('createIpcPort', () => {
     const port = createIpcPort(api)
 
     const created = await port.createPost({
+      tags: [],
       topic: 'Launch note',
       text: 'Short body',
       storyId: null,
@@ -308,6 +320,7 @@ describe('createIpcPort', () => {
     const port = createIpcPort(api)
 
     const updated = await port.updatePost({
+      Tags: [],
       ID: 'p1',
       Topic: 'Launch note',
       Text: 'New body',
@@ -322,6 +335,7 @@ describe('createIpcPort', () => {
     const [dto] = update.mock.calls[0]
 
     expect(dto).toEqual({
+      tags: [],
       id: 'p1',
       topic: 'Launch note',
       text: 'New body',

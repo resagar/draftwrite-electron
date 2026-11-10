@@ -1,3 +1,5 @@
+import { newTagService, type TagService } from './tag/service'
+import { newTagRepository } from './adapters/persistence/sqlite/tag-repository'
 import { mkdirSync } from 'node:fs'
 import { newEditorialRepository } from './adapters/persistence/sqlite/editorial-repository'
 import { newEditorialService, type EditorialService } from './editorial/service'
@@ -13,6 +15,7 @@ import { newStoryService, type StoryService } from './story/service'
 /** Wired application: the services the IPC boundary exposes and the database. */
 export interface Bootstrap {
   services: {
+    tags: TagService
     story: StoryService
     article: ArticleService
     post: PostService
@@ -38,6 +41,7 @@ export function bootstrap(options: DataDirOptions = {}): Bootstrap {
 
   return {
     services: {
+      tags: newTagService(newTagRepository(db)),
       story: newStoryService(storyRepo),
       article: newArticleService(articleRepo, storyRepo),
       post: newPostService(postRepo, storyRepo, articleRepo),

@@ -4,7 +4,7 @@ import { newEditorialWorkspace, getVariant, errEditorialNotFound } from '../../.
 import type { EditorialRepository } from '../../../editorial/repository'
 import type { EditorialWorkspace, Writing } from '../../../../shared/editorial'
 import { articles, posts } from './schema'
-import { parseDatabaseTime, isUniqueConstraintError } from './mapping'
+import { parseDatabaseTime, isUniqueConstraintError, joinCsv, splitCsv } from './mapping'
 import { errTitleTaken } from '../../../article/repository'
 
 export function newEditorialRepository(db: AppDatabase): EditorialRepository {
@@ -60,6 +60,7 @@ export function newEditorialRepository(db: AppDatabase): EditorialRepository {
           const initialRevision = workspace.revision
           const piece = {
             ...row,
+            tags: splitCsv(row.tags),
             createdAt: parseDatabaseTime(row.createdAt),
             updatedAt: parseDatabaseTime(row.updatedAt)
           }
@@ -82,11 +83,21 @@ export function newEditorialRepository(db: AppDatabase): EditorialRepository {
             }
             if ('title' in created)
               tx.insert(articles)
-                .values({ ...created, ...values, editorial: JSON.stringify(reply.newWorkspace) })
+                .values({
+                  ...created,
+                  ...values,
+                  tags: joinCsv(created.tags),
+                  editorial: JSON.stringify(reply.newWorkspace)
+                })
                 .run()
             else
               tx.insert(posts)
-                .values({ ...created, ...values, editorial: JSON.stringify(reply.newWorkspace) })
+                .values({
+                  ...created,
+                  ...values,
+                  tags: joinCsv(created.tags),
+                  editorial: JSON.stringify(reply.newWorkspace)
+                })
                 .run()
           }
           if (next.kind === 'article')

@@ -1,5 +1,7 @@
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
+import { useTags } from '../../tags/tag-context'
+import { tagStyle } from '../../tags/tag-style'
 
 type TagChipProps = {
   tag: string
@@ -7,14 +9,39 @@ type TagChipProps = {
 }
 
 export function TagChip({ tag, className }: TagChipProps): JSX.Element {
+  const { colors, openMenu } = useTags()
   return (
     <span
-      className={cn(
-        'max-w-full truncate rounded bg-base-300 px-1.5 py-0.5 font-mono text-2xs text-base-content/70',
-        className
-      )}
+      role="button"
+      tabIndex={0}
+      aria-haspopup="menu"
+      aria-label={`Tag ${tag}`}
+      title={tag}
+      style={tagStyle(colors[tag])}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        openMenu({ name: tag, x: event.clientX, y: event.clientY, anchor: event.currentTarget })
+      }}
+      onKeyDown={(event) => {
+        if (
+          ['ContextMenu', 'Enter', ' '].includes(event.key) ||
+          (event.shiftKey && event.key === 'F10')
+        ) {
+          event.preventDefault()
+          event.stopPropagation()
+          const rect = event.currentTarget.getBoundingClientRect()
+          openMenu({ name: tag, x: rect.left, y: rect.bottom, anchor: event.currentTarget })
+        }
+      }}
+      onClick={(event) => {
+        event.stopPropagation()
+        const rect = event.currentTarget.getBoundingClientRect()
+        openMenu({ name: tag, x: rect.left, y: rect.bottom, anchor: event.currentTarget })
+      }}
+      className={cn('tag-chip max-w-full cursor-pointer truncate text-2xs', className)}
     >
-      #{tag}
+      {tag}
     </span>
   )
 }

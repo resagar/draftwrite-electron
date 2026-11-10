@@ -7,6 +7,7 @@ export type ListResult<T> = {
   items: T[]
   reload: () => void
   upsert: (item: T) => void
+  mapItems: (transform: (item: T) => T) => void
 }
 
 export function useList<T extends { ID: string }>(load: () => Promise<T[]>): ListResult<T> {
@@ -54,5 +55,9 @@ export function useList<T extends { ID: string }>(load: () => Promise<T[]>): Lis
     })
   }, [])
 
-  return { status, items, reload, upsert }
+  const mapItems = useCallback((transform: (item: T) => T) => {
+    setItems((current) => current.map(transform))
+  }, [])
+
+  return { status, items, reload, upsert, mapItems }
 }

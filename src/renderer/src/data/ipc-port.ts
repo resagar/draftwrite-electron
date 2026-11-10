@@ -54,6 +54,7 @@ function toArticleDTO(article: Article): ArticleDTO {
     title: article.Title,
     subtitle: article.Subtitle,
     target: article.Target,
+    tags: article.Tags,
     text: article.Text,
     createdAt: article.CreatedAt,
     updatedAt: article.UpdatedAt
@@ -66,6 +67,7 @@ function toPostDTO(post: Post): PostDTO {
     topic: post.Topic,
     text: post.Text,
     state: post.State,
+    tags: post.Tags,
     scheduledAt: post.ScheduledAt,
     storyID: post.StoryID,
     articleID: post.ArticleID,
@@ -76,6 +78,14 @@ function toPostDTO(post: Post): PostDTO {
 
 export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort {
   return {
+    listTagMetadata: async () => unwrap(await api.tags.list()),
+    setTagColor: async (name, color) => {
+      unwrap(await api.tags.setColor(name, color))
+    },
+    tagImpact: async (name) => unwrap(await api.tags.impact(name)),
+    deleteTagEverywhere: async (name) => {
+      unwrap(await api.tags.deleteEverywhere(name))
+    },
     ...(api.editorial
       ? { editorial: async (request) => unwrap(await api.editorial!.execute(request)) }
       : {}),
@@ -123,6 +133,7 @@ export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort 
             title: input.title,
             subtitle: input.subtitle,
             target: input.target,
+            tags: input.tags ?? [],
             text: input.text
           })
         )
@@ -137,6 +148,7 @@ export function createIpcPort(api: DraftwriteApi = window.draftwrite): DataPort 
             topic: input.topic,
             text: input.text,
             state: 'pending',
+            tags: input.tags ?? [],
             scheduledAt: null,
             storyID: input.storyId,
             articleID: input.articleId

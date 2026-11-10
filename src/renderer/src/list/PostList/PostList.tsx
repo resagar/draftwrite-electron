@@ -18,7 +18,7 @@ import { SortToggle } from '../SortToggle/SortToggle'
 
 export function PostList(): JSX.Element {
   const { posts, postsStatus, reloadPosts } = useLibrary()
-  const { selectedPostId, zenMode } = useWorkspace()
+  const { selectedPostId, zenMode, tagFilter } = useWorkspace()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
 
@@ -46,11 +46,15 @@ export function PostList(): JSX.Element {
     return (
       <ListColumn title="Posts" count={0} collapsed={zenMode}>
         <ListEmpty
-          filtered={false}
+          filtered={tagFilter !== null}
           icon={<Send className="h-7 w-7" />}
-          title="No posts yet"
-          description="Short posts you write will show up here."
-          onClearFilter={() => undefined}
+          title={tagFilter ? 'No posts with this tag' : 'No posts yet'}
+          description={
+            tagFilter
+              ? 'Clear the filter to see all of your posts.'
+              : 'Short posts you write will show up here.'
+          }
+          onClearFilter={() => dispatch({ type: 'filter/tag', tag: null })}
           action={
             <button
               type="button"
@@ -84,6 +88,7 @@ export function PostList(): JSX.Element {
               title={post.Topic}
               updatedAt={post.UpdatedAt}
               text={post.Text}
+              tags={post.Tags}
               selected={selected}
             />
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">

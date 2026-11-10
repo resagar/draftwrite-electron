@@ -1,3 +1,4 @@
+import { useTagMutations } from '../../state/tag-mutation-context'
 import { GitBranch } from 'lucide-react'
 import type { EditorView } from '@codemirror/view'
 import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react'
@@ -26,11 +27,12 @@ type PostEditorProps = {
 }
 
 function hasContent(post: Post): boolean {
-  return post.Topic.trim() !== '' || post.Text.trim() !== ''
+  return post.Topic.trim() !== '' || post.Text.trim() !== '' || post.Tags.length > 0
 }
 
 export function PostEditor({ stored, renderHeader }: PostEditorProps): JSX.Element {
   const port = useDataPort()
+  const mutations = useTagMutations()
   const {
     stories,
     articles,
@@ -47,7 +49,17 @@ export function PostEditor({ stored, renderHeader }: PostEditorProps): JSX.Eleme
   const creating = stored === null
   const [draft, setDraft] = useState<Post>(stored ?? emptyPost())
   const latestDraft = useRef(draft)
+  useEffect(() => {
+    latestDraft.current = draft
+  }, [draft])
   const [view, setView] = useState<EditorView | null>(null)
+  useEffect(
+    () =>
+      mutations.subscribe((name) => {
+        setDraft((current) => ({ ...current, Tags: current.Tags.filter((tag) => tag !== name) }))
+      }),
+    [mutations]
+  )
   const [editorialOpen, setEditorialOpen] = useState(false)
 
   const canPersist = (value: Post): boolean => value.Topic.trim() !== ''
@@ -58,6 +70,7 @@ export function PostEditor({ stored, renderHeader }: PostEditorProps): JSX.Eleme
     create: (value) =>
       port.createPost({
         topic: value.Topic,
+        tags: value.Tags,
         text: value.Text,
         storyId: value.StoryID,
         articleId: value.ArticleID
@@ -164,6 +177,8 @@ export function PostEditor({ stored, renderHeader }: PostEditorProps): JSX.Eleme
       >
         <PostBand
           topic={draft.Topic}
+          tags={draft.Tags}
+          onTags={(tags) => change({ ...draft, Tags: tags })}
           state={draft.State}
           scheduledAt={draft.ScheduledAt}
           storyId={draft.StoryID}

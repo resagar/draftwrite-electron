@@ -11,6 +11,7 @@ export interface Post {
   id: string
   topic: string
   text: string
+  tags: string[]
   state: PostState
   /** ISO 8601 date the post is meant to go out; only with `scheduled`. */
   scheduledAt: string | null
@@ -58,10 +59,12 @@ export function newPost(
   topic: string,
   text: string,
   storyID: string | null,
-  articleID: string | null
+  articleID: string | null,
+  tags: string[] = []
 ): Post {
   const post = normalisePost({
     id: '',
+    tags,
     topic,
     text,
     state: 'pending',
@@ -79,6 +82,7 @@ export function newPost(
 export function normalisePost(post: Post): Post {
   return {
     ...post,
+    tags: (post.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
     topic: post.topic.trim(),
     text: post.text.trim(),
     scheduledAt: post.state === 'scheduled' ? blankToNull(post.scheduledAt) : null,

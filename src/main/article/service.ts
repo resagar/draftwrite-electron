@@ -40,7 +40,8 @@ export function newArticleService(
         article.title,
         article.subtitle,
         article.target,
-        article.text
+        article.text,
+        article.tags
       )
       try {
         await storyRepo.get(created.storyID)

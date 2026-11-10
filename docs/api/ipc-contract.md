@@ -29,19 +29,19 @@ El flujo editorial agrega `editorial:execute`, descrito a continuación, sin cam
 
 La petición identifica `kind` (`article` o `post`), `pieceId`, `action` y, salvo para `read`, la `revision` observada del espacio editorial. Los tipos de escritura, variantes, versiones, notas y publicaciones viven en el contrato compartido editorial. Las identidades son estables; un número de versión solo es único dentro de su variante.
 
-| Acción | Comportamiento |
-| --- | --- |
-| `read` | Lee variantes, versiones, notas, publicaciones y procedencia. |
-| `draft` | Autoguarda los campos de escritura de una variante sin numerar una versión. |
-| `version` | Conserva escritura y fotografía de revisión con incremento manual y descripción. |
-| `note`, `resolveNote` | Crea o edita una observación, o cambia su resolución. Las notas ancladas conservan la cita seleccionada, incluso si el documento cambió mientras se redactaba la nota. |
-| `branch` | Crea una variante desde una versión persistida, heredando notas pendientes con procedencia. |
-| `primary`, `archive` | Designa la principal o archiva/reactiva una variante. Nunca se archiva la principal. |
-| `restore` | Recupera campos de escritura, conservando notas actuales e historial. Rechaza cambios pendientes sin versionar. |
-| `plan` | Calcula cambios y conflictos respecto de una base común identificable. |
-| `integrate` | Incorpora solo los cambios y notas elegidos, con resolución explícita de conflictos; conserva la versión fuente como procedencia, sin tratar cambios no seleccionados como integrados. |
-| `convert` | Crea una pieza independiente y archiva la variante de origen en una única transacción. Respeta la unicidad del título de Article; el Post nuevo nace pendiente, sin programación ni publicaciones propias. |
-| `publish` | Registra versión guardada exacta, fecha y enlace HTTP(S) opcional. No publica por red ni modifica el estado o la programación del Post. |
+| Acción                | Comportamiento                                                                                                                                                                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `read`                | Lee variantes, versiones, notas, publicaciones y procedencia.                                                                                                                                              |
+| `draft`               | Autoguarda los campos de escritura de una variante sin numerar una versión.                                                                                                                                |
+| `version`             | Conserva escritura y fotografía de revisión con incremento manual y descripción.                                                                                                                           |
+| `note`, `resolveNote` | Crea o edita una observación, o cambia su resolución. Las notas ancladas conservan la cita seleccionada, incluso si el documento cambió mientras se redactaba la nota.                                     |
+| `branch`              | Crea una variante desde una versión persistida, heredando notas pendientes con procedencia.                                                                                                                |
+| `primary`, `archive`  | Designa la principal o archiva/reactiva una variante. Nunca se archiva la principal.                                                                                                                       |
+| `restore`             | Recupera campos de escritura, conservando notas actuales e historial. Rechaza cambios pendientes sin versionar.                                                                                            |
+| `plan`                | Calcula cambios y conflictos respecto de una base común identificable.                                                                                                                                     |
+| `integrate`           | Incorpora solo los cambios y notas elegidos, con resolución explícita de conflictos; conserva la versión fuente como procedencia, sin tratar cambios no seleccionados como integrados.                     |
+| `convert`             | Crea una pieza independiente y archiva la variante de origen en una única transacción. Respeta la unicidad del título de Article; el Post nuevo nace pendiente, sin programación ni publicaciones propias. |
+| `publish`             | Registra versión guardada exacta, fecha y enlace HTTP(S) opcional. No publica por red ni modifica el estado o la programación del Post.                                                                    |
 
 Cada mutación verifica la revisión dentro de una transacción SQLite. Una respuesta antigua no puede sobrescribir otra revisión. Los campos editoriales de la variante principal se proyectan sobre el CRUD anterior; una escritura por ese CRUD se reconcilia con el borrador principal antes de ejecutar operaciones editoriales. Los metadatos de pieza no forman parte de una versión.
 
@@ -126,13 +126,13 @@ id: string · topic: string · titles: string[] · tags: string[] · text: strin
 `ArticleDTO` (entidad, depende de una Story):
 
 ```
-id: string · storyID: string · title: string · subtitle: string · target: string · text: string · createdAt: string · updatedAt: string
+id: string · storyID: string · title: string · subtitle: string · target: string · tags: string[] · text: string · createdAt: string · updatedAt: string
 ```
 
 `PostDTO` (entidad independiente, con fuente opcional):
 
 ```
-id: string · topic: string · text: string · state: 'pending' | 'scheduled' | 'published' · scheduledAt: string | null · storyID: string | null · articleID: string | null · createdAt: string · updatedAt: string
+id: string · topic: string · tags: string[] · text: string · state: 'pending' | 'scheduled' | 'published' · scheduledAt: string | null · storyID: string | null · articleID: string | null · createdAt: string · updatedAt: string
 ```
 
 Los timestamps viajan como string ISO 8601 y los asigna el backend. Los errores de dominio llegan
@@ -343,3 +343,24 @@ delete(id: string): Promise<void>
   un fake de `ipcMain`).
 - El data layer del renderer debe emitir y leer camelCase; `normalise.ts` se adaptará en la fase de
   frontend.
+
+## Tags compartidos
+
+Story, Article y Post transportan sus tags propios como `string[]`, siempre `[]` en ausencia de asignaciones. Article y Post aceptan omitir el campo de entrada por compatibilidad; si está presente, la frontera exige una lista de strings. La normalización recorta espacios y descarta valores vacíos. No se copian tags desde la entidad de origen. Los tags son metadatos de pieza y no forman parte de las versiones editoriales.
+
+Los cuatro canales de tags se exponen por `window.draftwrite.tags` y devuelven `IpcResult`:
+
+| Canal                  | Entrada         | Resultado                                                             |
+| ---------------------- | --------------- | --------------------------------------------------------------------- |
+| `tag:list`             | Sin parámetros  | `{ name, color }[]` de colores configurados                           |
+| `tag:setColor`         | `name`, `color` | Guarda un color global por nombre exacto                              |
+| `tag:impact`           | `name`          | `{ stories, articles, posts }` con el número de entidades que lo usan |
+| `tag:deleteEverywhere` | `name`          | Elimina asignaciones y color en una única transacción SQLite          |
+
+La paleta cerrada usa los identificadores de `src/shared/tags.ts`. El servicio rechaza nombres vacíos, espacios exteriores y comas con `errTagNameInvalid`; un color inválido produce `errTagColorInvalid` en dominio o un error de payload en la frontera. Los tags sin configuración se muestran con `default`.
+
+El catálogo lateral reúne asignaciones de los tres tipos de entidad. Story se filtra por tags propios; Article, por tags propios o los de su Story; Post, únicamente por tags propios. Comparar nombres distingue mayúsculas.
+
+La confirmación de borrado consulta el impacto en main. Al ejecutar, main resuelve nuevamente las asignaciones reales; no recibe IDs elegidos por el renderer. La transacción modifica únicamente tags y timestamps de las entidades afectadas, preservando contenido, relaciones, estado y espacios editoriales. Un fallo revierte toda la operación.
+
+El renderer serializa autosave y eliminación global mediante un coordinador por ventana. Tras el éxito, reconcilia cachés, borradores y escrituras pendientes sin descartar texto no guardado; los borradores encolados antes de la eliminación pierden ese tag al ejecutarse. Una asignación deliberada posterior puede recrearlo con color `default`. Quitar una asignación local conserva la configuración de color global.

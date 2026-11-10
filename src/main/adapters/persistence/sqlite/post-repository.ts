@@ -2,7 +2,7 @@ import { desc, eq, sql } from 'drizzle-orm'
 import type { Post, PostState } from '../../../post/model'
 import { errNotFound, type PostRepository } from '../../../post/repository'
 import type { AppDatabase } from '../../../db'
-import { parseDatabaseTime } from './mapping'
+import { joinCsv, splitCsv, parseDatabaseTime } from './mapping'
 import { posts } from './schema'
 import { newEditorialWorkspace, writingOf } from '../../../editorial/model'
 
@@ -20,6 +20,7 @@ export function newPostRepository(db: AppDatabase): PostRepository {
             newEditorialWorkspace(post.id, writingOf(post), { kind: 'post', topic: '', text: '' })
           ),
           topic: post.topic,
+          tags: joinCsv(post.tags ?? []),
           text: post.text,
           state: post.state,
           scheduledAt: post.scheduledAt,
@@ -46,6 +47,7 @@ export function newPostRepository(db: AppDatabase): PostRepository {
         .update(posts)
         .set({
           topic: post.topic,
+          tags: joinCsv(post.tags ?? []),
           text: post.text,
           state: post.state,
           scheduledAt: post.scheduledAt,
@@ -78,6 +80,7 @@ function toPost(row: PostRow | undefined): Post {
   return {
     id: row.id,
     topic: row.topic,
+    tags: splitCsv(row.tags),
     text: row.text,
     state: row.state as PostState,
     scheduledAt: row.scheduledAt ?? null,

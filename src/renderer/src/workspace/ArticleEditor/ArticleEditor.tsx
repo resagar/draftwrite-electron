@@ -1,3 +1,4 @@
+import { useTagMutations } from '../../state/tag-mutation-context'
 import { GitBranch } from 'lucide-react'
 import type { EditorView } from '@codemirror/view'
 import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react'
@@ -33,7 +34,8 @@ function hasContent(article: Article): boolean {
     article.Title.trim() !== '' ||
     article.Subtitle.trim() !== '' ||
     article.Target.trim() !== '' ||
-    article.Text.trim() !== ''
+    article.Text.trim() !== '' ||
+    article.Tags.length > 0
   )
 }
 
@@ -44,12 +46,20 @@ export function ArticleEditor({
   onStoryChange
 }: ArticleEditorProps): JSX.Element {
   const port = useDataPort()
+  const mutations = useTagMutations()
   const { allStories, upsertArticle } = useLibrary()
   const dispatch = useWorkspaceDispatch()
   const { editorSession } = useWorkspace()
   const creating = stored === null
   const [draft, setDraft] = useState<Article>(stored ?? emptyArticle(initialStoryId))
   const [view, setView] = useState<EditorView | null>(null)
+  useEffect(
+    () =>
+      mutations.subscribe((name) => {
+        setDraft((current) => ({ ...current, Tags: current.Tags.filter((tag) => tag !== name) }))
+      }),
+    [mutations]
+  )
   const [storyLocked, setStoryLocked] = useState(false)
   const [editorialOpen, setEditorialOpen] = useState(false)
 
@@ -67,6 +77,7 @@ export function ArticleEditor({
           title: value.Title,
           subtitle: value.Subtitle,
           target: value.Target,
+          tags: value.Tags,
           text: value.Text
         })
       } catch (caught) {
@@ -181,6 +192,8 @@ export function ArticleEditor({
           storyId={draft.StoryID}
           title={draft.Title}
           subtitle={draft.Subtitle}
+          tags={draft.Tags}
+          onTags={(tags) => change({ ...draft, Tags: tags })}
           creating={creating}
           storyLocked={storyLocked}
           onStory={(storyId) => {

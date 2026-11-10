@@ -2,7 +2,7 @@ import { desc, eq, sql } from 'drizzle-orm'
 import type { Article } from '../../../article/model'
 import { errNotFound, errTitleTaken, type ArticleRepository } from '../../../article/repository'
 import type { AppDatabase } from '../../../db'
-import { isUniqueConstraintError, parseDatabaseTime } from './mapping'
+import { joinCsv, splitCsv, isUniqueConstraintError, parseDatabaseTime } from './mapping'
 import { articles } from './schema'
 import { newEditorialWorkspace, writingOf } from '../../../editorial/model'
 
@@ -30,6 +30,7 @@ export function newArticleRepository(db: AppDatabase): ArticleRepository {
             title: article.title,
             subtitle: article.subtitle,
             target: article.target,
+            tags: joinCsv(article.tags ?? []),
             text: article.text
           })
           .returning()
@@ -69,6 +70,7 @@ export function newArticleRepository(db: AppDatabase): ArticleRepository {
             title: article.title,
             subtitle: article.subtitle,
             target: article.target,
+            tags: joinCsv(article.tags ?? []),
             text: article.text,
             updatedAt: sql`datetime('now')`
           })
@@ -103,6 +105,7 @@ function toArticle(row: ArticleRow | undefined): Article {
     title: row.title,
     subtitle: row.subtitle,
     target: row.target,
+    tags: splitCsv(row.tags),
     text: row.text,
     createdAt: parseDatabaseTime(row.createdAt),
     updatedAt: parseDatabaseTime(row.updatedAt)

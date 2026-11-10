@@ -13,6 +13,7 @@ const wireStory: StoryDTO = {
 }
 
 const wireArticle: ArticleDTO = {
+  tags: [],
   id: 'a1',
   storyID: 's1',
   title: 'The architecture of calm',
@@ -57,6 +58,7 @@ describe('toStories', () => {
 describe('toArticle', () => {
   it('translates the camelCase wire into the interface shape', () => {
     expect(toArticle(wireArticle)).toEqual({
+      Tags: [],
       ID: 'a1',
       StoryID: 's1',
       Title: 'The architecture of calm',

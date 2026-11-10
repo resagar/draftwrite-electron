@@ -77,6 +77,7 @@ export function parseArticleCreatePayload(payload: unknown): Article {
   const record = expectRecord(payload)
   return {
     id: '',
+    tags: record.tags === undefined ? [] : expectStringArray(record.tags, 'tags'),
     storyID: expectString(record.storyID, 'storyID'),
     title: expectString(record.title, 'title'),
     subtitle: expectString(record.subtitle, 'subtitle'),
@@ -106,6 +107,7 @@ export function parsePostCreatePayload(payload: unknown): Post {
   const record = expectRecord(payload)
   return {
     id: '',
+    tags: record.tags === undefined ? [] : expectStringArray(record.tags, 'tags'),
     topic: expectString(record.topic, 'topic'),
     text: expectString(record.text, 'text'),
     state: 'pending',

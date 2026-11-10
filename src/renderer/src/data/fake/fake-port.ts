@@ -1,3 +1,4 @@
+import type { TagMetadata } from '../../../../shared/tags'
 import { makeArticle, makePost, makeStory } from './factories'
 import type { DataPort, NewArticle, NewPost, NewStory } from '../port'
 import type { Article, Post, Story } from '../types'
@@ -102,6 +103,7 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     deletePost: 0
   }
 
+  const tagMetadata: TagMetadata[] = []
   const stories = [...(options.stories ?? [])]
   let typography: TypographySnapshot | null = null
   const typographyListeners = new Set<(snapshot: TypographySnapshot) => void>()
@@ -147,6 +149,27 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
     deletedArticleIds,
     deletedPostIds,
     port: {
+      async listTagMetadata() {
+        return [...tagMetadata]
+      },
+      async setTagColor(name, color) {
+        const index = tagMetadata.findIndex((tag) => tag.name === name)
+        if (index < 0) tagMetadata.push({ name, color })
+        else tagMetadata[index] = { name, color }
+      },
+      async tagImpact(name) {
+        return {
+          stories: stories.filter((v) => v.Tags.includes(name)).length,
+          articles: articles.filter((v) => v.Tags.includes(name)).length,
+          posts: posts.filter((v) => v.Tags.includes(name)).length
+        }
+      },
+      async deleteTagEverywhere(name) {
+        for (const list of [stories, articles, posts])
+          for (const value of list) value.Tags = value.Tags.filter((tag) => tag !== name)
+        const index = tagMetadata.findIndex((tag) => tag.name === name)
+        if (index >= 0) tagMetadata.splice(index, 1)
+      },
       ...(options.editorial ? { editorial: options.editorial } : {}),
       async openSettings() {
         calls.openSettings += 1
@@ -226,6 +249,7 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
             Title: input.title,
             Subtitle: input.subtitle,
             Target: input.target,
+            Tags: input.tags ?? [],
             Text: input.text
           })
           articles.unshift(created)
@@ -269,6 +293,7 @@ export function createFakePort(options: FakePortOptions = {}): FakePort {
             Topic: input.topic,
             Text: input.text,
             State: 'pending',
+            Tags: input.tags ?? [],
             StoryID: input.storyId,
             ArticleID: input.articleId
           })

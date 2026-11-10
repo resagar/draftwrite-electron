@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
 import { useState, type JSX, type KeyboardEvent } from 'react'
+import { TagChip } from '../../ui/TagChip/TagChip'
 
 type TagInputProps = {
   tags: string[]
@@ -32,11 +33,8 @@ export function TagInput({ tags, onChange }: TagInputProps): JSX.Element {
       {tags.length > 0 ? (
         <ul className="flex flex-wrap items-center gap-1">
           {tags.map((tag) => (
-            <li
-              key={tag}
-              className="flex items-center gap-1 rounded bg-base-300 px-1.5 py-0.5 font-mono text-2xs text-base-content/80"
-            >
-              #{tag}
+            <li key={tag} className="flex min-w-0 max-w-full items-center gap-1">
+              <TagChip tag={tag} />
               <button
                 type="button"
                 aria-label={`Remove tag ${tag}`}

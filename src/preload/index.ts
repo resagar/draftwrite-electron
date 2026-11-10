@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import {
+  tagChannels,
   articleChannels,
   postChannels,
   storyChannels,
@@ -26,6 +27,12 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
 
 /** Typed data entry point of the renderer. */
 const draftwrite: DraftwriteApi = {
+  tags: {
+    list: () => invoke(tagChannels.list),
+    setColor: (name, color) => invoke(tagChannels.setColor, name, color),
+    impact: (name) => invoke(tagChannels.impact, name),
+    deleteEverywhere: (name) => invoke(tagChannels.deleteEverywhere, name)
+  },
   editorial: { execute: (request) => invoke('editorial:execute', request) },
   settings: {
     open: () => invoke(settingsChannels.open),

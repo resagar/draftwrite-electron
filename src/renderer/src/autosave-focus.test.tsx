@@ -99,7 +99,14 @@ it('unlocks the Article Story after a failed creation and retries with the chose
   fireEvent.keyDown(document.body, { key: 's', ctrlKey: true })
   await screen.findByRole('region', { name: 'Article' }, { timeout: 3000 })
   expect(fake.createdArticles).toEqual([
-    { storyId: 's2', title: 'Recoverable article', subtitle: '', target: '', text: '' }
+    {
+      tags: [],
+      storyId: 's2',
+      title: 'Recoverable article',
+      subtitle: '',
+      target: '',
+      text: ''
+    }
   ])
   expect(document.activeElement === title).toBe(true)
   await screen.findByText('Saved')

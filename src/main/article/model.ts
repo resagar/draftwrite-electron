@@ -8,6 +8,7 @@ export interface Article {
   subtitle: string
   target: string
   text: string
+  tags: string[]
   /** ISO 8601 timestamp; empty until the article is persisted. */
   createdAt: string
   /** ISO 8601 timestamp; empty until the article is persisted. */
@@ -53,10 +54,12 @@ export function newArticle(
   title: string,
   subtitle: string,
   target: string,
-  text: string
+  text: string,
+  tags: string[] = []
 ): Article {
   const article = normaliseArticle({
     id: '',
+    tags,
     storyID,
     title,
     subtitle,
@@ -73,6 +76,7 @@ export function newArticle(
 export function normaliseArticle(article: Article): Article {
   return {
     ...article,
+    tags: (article.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
     storyID: article.storyID.trim(),
     title: article.title.trim(),
     subtitle: article.subtitle.trim(),

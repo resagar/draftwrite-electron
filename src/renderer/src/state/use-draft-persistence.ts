@@ -1,10 +1,11 @@
+import { useTagMutations } from './tag-mutation-context'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { describeError } from '../data/errors'
 import type { SaveStatus } from './status-store'
 
 const DELAY_MS = 700
 
-type DraftPersistenceArgs<T extends { ID: string }> = {
+type DraftPersistenceArgs<T extends { ID: string; Tags?: string[] }> = {
   create: (draft: T) => Promise<T>
   update: (draft: T) => Promise<T>
   onStored: (stored: T, created: boolean) => void
@@ -22,17 +23,19 @@ export type DraftPersistence<T> = {
 // Keeps a draft in step with the backend: nothing is written until the draft
 // can be persisted at all, the first write creates and the rest update, and
 // writes never overlap.
-export function useDraftPersistence<T extends { ID: string }>({
+export function useDraftPersistence<T extends { ID: string; Tags?: string[] }>({
   create,
   update,
   onStored,
   canPersist,
   initialStatus
 }: DraftPersistenceArgs<T>): DraftPersistence<T> {
+  const mutations = useTagMutations()
   const [status, setStatus] = useState<SaveStatus>(initialStatus)
   const [error, setError] = useState<string | null>(null)
   const timer = useRef<number | null>(null)
   const pending = useRef<T | null>(null)
+  const pendingVersion = useRef(0)
   const queue = useRef<Promise<void>>(Promise.resolve())
   const createdID = useRef<string | null>(null)
 
@@ -44,17 +47,20 @@ export function useDraftPersistence<T extends { ID: string }>({
   }, [])
 
   const persist = useCallback(
-    async (draft: T) => {
+    async (draft: T, revision: number, version: number) => {
+      const reconciled = mutations.reconcile(draft, revision)
       // Queued edits may still carry the empty ID from an in-flight creation.
       const value =
-        draft.ID === '' && createdID.current !== null ? { ...draft, ID: createdID.current } : draft
+        reconciled.ID === '' && createdID.current !== null
+          ? { ...reconciled, ID: createdID.current }
+          : reconciled
       const creating = value.ID === ''
       setStatus('saving')
       setError(null)
 
       // The draft is consumed before it is written: leaving while the write
       // is in flight must not send the same thing a second time.
-      if (pending.current === draft) {
+      if (pendingVersion.current === version) {
         pending.current = null
       }
 
@@ -78,25 +84,28 @@ export function useDraftPersistence<T extends { ID: string }>({
         // The write failed, so this draft is still pending: retrying and
         // leaving must both be able to send it again.
         if (pending.current === null) {
-          pending.current = draft
+          pending.current = mutations.reconcile(draft, revision)
         }
       }
     },
-    [create, update, onStored, canPersist]
+    [create, update, onStored, canPersist, mutations]
   )
 
   const write = useCallback(
     (draft: T) => {
-      queue.current = queue.current.then(() => persist(draft))
+      const revision = mutations.revision
+      const version = pendingVersion.current
+      queue.current = mutations.run(() => persist(draft, revision, version))
 
       return queue.current
     },
-    [persist]
+    [persist, mutations]
   )
 
   const schedule = useCallback(
     (draft: T) => {
       pending.current = draft
+      pendingVersion.current += 1
       clearTimer()
 
       if (!canPersist(draft)) {
@@ -115,12 +124,26 @@ export function useDraftPersistence<T extends { ID: string }>({
     [canPersist, clearTimer, write]
   )
 
+  useEffect(
+    () =>
+      mutations.subscribe((name) => {
+        if (pending.current?.Tags) {
+          pending.current = {
+            ...pending.current,
+            Tags: pending.current.Tags.filter((tag) => tag !== name)
+          }
+        }
+      }),
+    [mutations]
+  )
+
   const saveNow = useCallback(async () => {
     clearTimer()
 
     if (pending.current !== null && canPersist(pending.current)) {
       await write(pending.current)
     }
+    await queue.current
   }, [canPersist, clearTimer, write])
 
   // Leaving the editor must not drop what was typed a moment ago, so the

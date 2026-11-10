@@ -26,6 +26,7 @@ const emptyStory: Story = {
 }
 
 const emptyArticle: Article = {
+  tags: [],
   id: '',
   storyID: '',
   title: '',

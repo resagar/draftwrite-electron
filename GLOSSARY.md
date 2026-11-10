@@ -33,7 +33,7 @@ Los títulos candidatos o alternativos de una Story, opcionales.
 _Avoid_: título (singular — ambiguo con `article.title`)
 
 **Tags**:
-Etiquetas opcionales para clasificar una Story.
+Etiquetas opcionales para clasificar una Story, un Article o un Post. Cada entidad administra sus asignaciones de forma independiente, sin copia automática desde su origen. Un mismo nombre exacto comparte su color en toda la aplicación; eliminar el tag globalmente retira todas sus asignaciones.
 _Avoid_: categorías, labels
 
 **Text**:

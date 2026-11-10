@@ -1,3 +1,4 @@
+import type { TagColor, TagImpact, TagMetadata } from '../../../shared/tags'
 import type { Article } from '../../article/model'
 import type { Post } from '../../post/model'
 import type { Story } from '../../story/model'
@@ -82,7 +83,20 @@ export interface IpcHandlerRegistry {
 }
 
 /** API the preload exposes as `window.draftwrite`. */
+export const tagChannels = {
+  list: 'tag:list',
+  setColor: 'tag:setColor',
+  impact: 'tag:impact',
+  deleteEverywhere: 'tag:deleteEverywhere'
+} as const
+
 export interface DraftwriteApi {
+  tags: {
+    list(): Promise<IpcResult<TagMetadata[]>>
+    setColor(name: string, color: TagColor): Promise<IpcResult<void>>
+    impact(name: string): Promise<IpcResult<TagImpact>>
+    deleteEverywhere(name: string): Promise<IpcResult<void>>
+  }
   editorial?: { execute(request: EditorialRequest): Promise<IpcResult<EditorialReply>> }
   settings: {
     open(): Promise<IpcResult<void>>

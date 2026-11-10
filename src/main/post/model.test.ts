@@ -10,6 +10,7 @@ import {
 } from './model'
 
 const emptyPost: Post = {
+  tags: [],
   id: '',
   topic: '',
   text: '',

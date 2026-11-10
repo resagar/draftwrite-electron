@@ -1,8 +1,8 @@
-import type { Article, Story } from './types'
+import type { Article, Post, Story } from './types'
 
 export type SortDirection = 'desc' | 'asc'
 
-export function collectTags(stories: Story[]): string[] {
+export function collectTags(stories: { Tags: string[] }[]): string[] {
   const tags = new Set<string>()
 
   for (const story of stories) {
@@ -36,7 +36,9 @@ export function filterArticlesByTag(
 
   const taggedStoryIds = new Set(filterStoriesByTag(stories, tag).map((story) => story.ID))
 
-  return articles.filter((article) => taggedStoryIds.has(article.StoryID))
+  return articles.filter(
+    (article) => article.Tags.includes(tag) || taggedStoryIds.has(article.StoryID)
+  )
 }
 
 export function sortByUpdatedAt<T extends { UpdatedAt: string }>(
@@ -48,4 +50,8 @@ export function sortByUpdatedAt<T extends { UpdatedAt: string }>(
   return [...items].sort(
     (left, right) => sign * (Date.parse(left.UpdatedAt) - Date.parse(right.UpdatedAt))
   )
+}
+
+export function filterPostsByTag(posts: Post[], tag: string | null): Post[] {
+  return tag === null ? posts : posts.filter((post) => post.Tags.includes(tag))
 }
