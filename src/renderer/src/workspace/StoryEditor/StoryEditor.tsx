@@ -1,10 +1,11 @@
 import { useTagMutations } from '../../state/tag-mutation-context'
 import type { EditorView } from '@codemirror/view'
-import { useEffect, useState, type JSX } from 'react'
+import { useEffect, useMemo, useState, type JSX } from 'react'
 import { emptyStory } from '../../data/drafts'
 import { useDataPort } from '../../data/port-context'
 import type { Story } from '../../data/types'
 import { TextEditor } from '../../editor/TextEditor/TextEditor'
+import { usePublishEditorActions, type EditorActionSet } from '../../state/editor-actions-context'
 import { useLibrary } from '../../state/library-context'
 import { registerSave } from '../../state/save-registry'
 import { publishUnsavedDraft } from '../../state/status-store'
@@ -76,6 +77,16 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
 
   const { publishCursor } = useEditorStatus({ text: draft.Text, status })
 
+  const editorActions = useMemo<EditorActionSet>(
+    () => ({
+      deleteRequest: stored === null ? null : { kind: 'delete-story', storyId: stored.ID },
+      versions: null
+    }),
+    [stored]
+  )
+
+  usePublishEditorActions(editorActions)
+
   useEffect(() => {
     registerSave(saveNow)
 
@@ -101,9 +112,6 @@ export function StoryEditor({ stored }: StoryEditorProps): JSX.Element {
         onTitles={(titles) => change({ ...draft, Titles: titles })}
         onTags={(tags) => change({ ...draft, Tags: tags })}
         onDiscard={() => dispatch({ type: 'create/cancel' })}
-        onDelete={() =>
-          dispatch({ type: 'dialog/open', request: { kind: 'delete-story', storyId: draft.ID } })
-        }
       />
 
       <EditorPreviewLayout

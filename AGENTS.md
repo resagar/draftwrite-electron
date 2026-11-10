@@ -32,6 +32,8 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - `src/main/adapters/persistence/sqlite/` - adapter de salida: `schema.ts` Drizzle, `migrations/` de drizzle-kit y los repositorios
 - `src/preload/index.ts` - `contextBridge`: expone la API tipada al renderer
 - `src/renderer/` - app React; su único punto de acceso a datos es `src/renderer/src/data/ipc-port.ts`
+- `src/renderer/src/state/` - estado de UI del renderer (contextos y hooks): `workspace-context.tsx` es la fuente única de `viewMode`, `library`, selección, diálogos y `creating`; `editor-actions-context.tsx` publica las acciones del editor abierto; `library-context.tsx`, `save-registry.ts` y `status-store.ts` cubren el resto
+- `src/renderer/src/shell/` - chrome de la app: `TitleBar/` (barra superior con el switcher de modo y las acciones del editor abierto), `AppShell/` y `StatusBar/`
 - `GLOSSARY.md` - glosario del dominio (vocabulario canónico), en el root del repo
 - `docs/` - `adr/` (ADRs del proyecto), `agents/` (issue tracker, triage labels y domain docs) y `api/` (contratos)
 - `docs/api/ipc-contract.md` - contrato IPC: renderer → preload → handlers
@@ -50,6 +52,9 @@ Esta es una aplicación de escritorio para escritores. Su propósito principal e
 - `update` lee antes de escribir solo cuando una regla de negocio necesita el valor almacenado (`article` lo hace para `storyID`; `story` no lee — ver `docs/adr/0003-update-read-before-write.md`)
 - Las listas nunca son `null`/`undefined`: en el wire viajan siempre como `[]` (mapeo explícito en `src/main/adapters/ipc/contract.ts`)
 - Los errores de dominio son centinelas exportados por cada `model` (`errTopicTaken`, `errNotFound`, …): cruzan el IPC como `{ code }` y se re-hidratan en `ipc-port.ts`
+- El estado de la UI vive en `src/renderer/src/state/`, sin store global (ni zustand): `viewMode` pertenece a `workspace-context.tsx` y los editores no lo duplican
+- Los editores no renderizan cabecera propia: publican sus acciones con `usePublishEditorActions` (`editor-actions-context.tsx`) y `TitleBar` renderiza lo publicado. `deleteRequest` solo existe con documento guardado; `versions` solo con `port.editorial`, documento guardado y el workspace editorial cerrado
+- La barra superior es la única entrada visible al buscador: `Ctrl/Cmd+K` abre el quick switcher (las tres librerías)
 
 ## Testing
 

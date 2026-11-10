@@ -10,7 +10,7 @@ describe('App shell', () => {
   it('renders the four zones of the shell', () => {
     renderApp(createFakePort().port)
 
-    expect(screen.getByRole('banner')).toBeTruthy()
+    expect(screen.getByRole('banner', { name: 'Title bar' })).toBeTruthy()
     expect(screen.getByRole('main')).toBeTruthy()
     expect(screen.getByRole('complementary', { name: 'Library' })).toBeTruthy()
     expect(screen.getByRole('contentinfo')).toBeTruthy()
@@ -652,14 +652,11 @@ describe('source story pane', () => {
     expect(within(pane).getByText('Raw thoughts.')).toBeTruthy()
     expect(within(pane).getByText('#s1')).toBeTruthy()
     expect(within(pane).getByText('Read-only')).toBeTruthy()
-    expect(screen.getByText('derived from')).toBeTruthy()
 
     const articlePane = screen.getByRole('region', { name: 'Article' })
 
-    expect(within(articlePane).getByText('#s1')).toBeTruthy()
-    // The topic shows both in the header's provenance line and in the band's selector.
-    expect(within(articlePane).getAllByText('Calm software').length).toBeGreaterThan(0)
     expect(within(articlePane).getByLabelText<HTMLSelectElement>('Story').value).toBe('s1')
+    expect(within(articlePane).getByText('Calm software')).toBeTruthy()
   })
 
   it('says the source story is gone instead of breaking', async () => {
@@ -1315,7 +1312,7 @@ describe('story view modes', () => {
 
     expect(screen.getByRole('textbox', { name: 'Article text' })).toBeTruthy()
     expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
-    expect(screen.queryByRole('group', { name: 'View mode' })).toBeNull()
+    expect(screen.getByRole('group', { name: 'View mode' })).toBeTruthy()
 
     act(() => replaceEditorText('# Calm\n\n**sturdy** and ~~old~~'))
 
@@ -1425,32 +1422,26 @@ describe('story view modes', () => {
     expect(screen.queryByRole('group', { name: 'Formatting' })).toBeNull()
   })
 
-  describe('the story header', () => {
+  describe('the story title bar', () => {
     const storySwitcher = (): HTMLElement =>
-      within(screen.getByRole('region', { name: 'Story' })).getByRole('group', {
+      within(screen.getByRole('banner', { name: 'Title bar' })).getByRole('group', {
         name: 'View mode'
       })
 
     const pressedMode = (label: 'Edit' | 'Split' | 'Preview'): string | null =>
       within(storySwitcher()).getByRole('button', { name: label }).getAttribute('aria-pressed')
 
-    it('shows the topic and the view mode switcher of the stored story', async () => {
+    it('shows the topic in the band and the view mode switcher in the title bar', async () => {
       await openStoredStory()
 
-      const pane = screen.getByRole('region', { name: 'Story' })
+      const titleBar = within(screen.getByRole('banner', { name: 'Title bar' }))
 
-      expect(within(pane).getByRole('heading', { level: 2, name: 'Calm software' })).toBeTruthy()
+      expect(screen.getByLabelText<HTMLInputElement>('Topic').value).toBe('Calm software')
       expect(within(storySwitcher()).getAllByRole('button')).toHaveLength(3)
 
-      const header = within(pane)
-        .getByRole('heading', { level: 2, name: 'Calm software' })
-        .closest('header')
-      expect(header).not.toBeNull()
-      const headerScope = within(header as HTMLElement)
-
-      expect(headerScope.queryByRole('button', { name: 'Delete story' })).toBeNull()
-      expect(headerScope.queryByRole('button', { name: 'Duplicate story' })).toBeNull()
-      expect(headerScope.queryByRole('button', { name: 'Toggle source pane' })).toBeNull()
+      expect(titleBar.getByRole('button', { name: 'Delete story' })).toBeTruthy()
+      expect(titleBar.queryByRole('button', { name: 'Duplicate story' })).toBeNull()
+      expect(titleBar.queryByRole('button', { name: 'Toggle source pane' })).toBeNull()
     })
 
     it('hides the preview and keeps the editor and the tools in edit mode', async () => {
@@ -1489,12 +1480,13 @@ describe('story view modes', () => {
       expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
     })
 
-    it('mounts no header while creating a story', async () => {
+    it('shows the view mode switcher but no delete action while creating a story', async () => {
       renderApp(createFakePort({ stories: [] }).port)
       await startNewStory()
 
       expect(screen.queryByRole('region', { name: 'Story' })).toBeNull()
-      expect(screen.queryByRole('group', { name: 'View mode' })).toBeNull()
+      expect(within(storySwitcher()).getAllByRole('button')).toHaveLength(3)
+      expect(screen.queryByRole('button', { name: 'Delete story' })).toBeNull()
       expect(screen.getByRole('region', { name: 'Preview' })).toBeTruthy()
     })
 
@@ -2076,8 +2068,7 @@ describe('deleting', () => {
 
     await openArticle(fake)
 
-    const articlePane = screen.getByRole('region', { name: 'Article' })
-    fireEvent.click(within(articlePane).getByRole('button', { name: 'Delete article' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete article' }))
 
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText(/cannot be undone/)).toBeTruthy()
@@ -2093,8 +2084,7 @@ describe('deleting', () => {
 
     await openArticle(fake)
 
-    const articlePane = screen.getByRole('region', { name: 'Article' })
-    fireEvent.click(within(articlePane).getByRole('button', { name: 'Delete article' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete article' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -2108,8 +2098,7 @@ describe('deleting', () => {
 
     await openArticle(fake)
 
-    const articlePane = screen.getByRole('region', { name: 'Article' })
-    fireEvent.click(within(articlePane).getByRole('button', { name: 'Delete article' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete article' }))
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
 
@@ -2122,8 +2111,7 @@ describe('deleting', () => {
 
     await openArticle(fake)
 
-    const articlePane = screen.getByRole('region', { name: 'Article' })
-    fireEvent.click(within(articlePane).getByRole('button', { name: 'Delete article' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete article' }))
     fireEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete article' })
     )
@@ -2158,9 +2146,8 @@ describe('deleting', () => {
 
     renderApp(fake.port)
     fireEvent.click(await screen.findByRole('option', { name: /Calm software/ }))
-    const editor = await screen.findByRole('region', { name: 'Story editor' })
 
-    fireEvent.click(within(editor).getByRole('button', { name: 'Delete story' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete story' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -2174,9 +2161,8 @@ describe('deleting', () => {
 
     renderApp(fake.port)
     fireEvent.click(await screen.findByRole('option', { name: /Calm software/ }))
-    const editor = await screen.findByRole('region', { name: 'Story editor' })
 
-    fireEvent.click(within(editor).getByRole('button', { name: 'Delete story' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete story' }))
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -2188,9 +2174,8 @@ describe('deleting', () => {
 
     renderApp(fake.port)
     fireEvent.click(await screen.findByRole('option', { name: /Calm software/ }))
-    const editor = await screen.findByRole('region', { name: 'Story editor' })
 
-    fireEvent.click(within(editor).getByRole('button', { name: 'Delete story' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete story' }))
     fireEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete story' })
     )
@@ -2205,9 +2190,8 @@ describe('deleting', () => {
 
     renderApp(fake.port)
     fireEvent.click(await screen.findByRole('option', { name: /Calm software/ }))
-    const editor = await screen.findByRole('region', { name: 'Story editor' })
 
-    fireEvent.click(within(editor).getByRole('button', { name: 'Delete story' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete story' }))
 
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText(/Calm software/)).toBeTruthy()

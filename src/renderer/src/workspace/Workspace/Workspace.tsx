@@ -64,7 +64,6 @@ export function Workspace(): JSX.Element {
           <ArticlePane
             key={editorSession}
             article={article}
-            story={story}
             initialStoryId={storyId}
             onStoryChange={(nextStoryId) =>
               dispatch({ type: 'create/story', storyId: nextStoryId })

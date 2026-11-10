@@ -1,11 +1,12 @@
+import { Columns2, Eye, PenLine, type LucideIcon } from 'lucide-react'
 import type { JSX } from 'react'
 import { cn } from '../../lib/cn'
 import { useWorkspace, useWorkspaceDispatch, type ViewMode } from '../../state/workspace-context'
 
-const MODES: Array<{ mode: ViewMode; label: string }> = [
-  { mode: 'edit', label: 'Edit' },
-  { mode: 'split', label: 'Split' },
-  { mode: 'preview', label: 'Preview' }
+const MODES: Array<{ mode: ViewMode; label: string; icon: LucideIcon }> = [
+  { mode: 'edit', label: 'Edit', icon: PenLine },
+  { mode: 'split', label: 'Split', icon: Columns2 },
+  { mode: 'preview', label: 'Preview', icon: Eye }
 ]
 
 export function ViewModeSwitcher(): JSX.Element {
@@ -16,25 +17,27 @@ export function ViewModeSwitcher(): JSX.Element {
     <div
       role="group"
       aria-label="View mode"
-      className="flex shrink-0 items-center rounded bg-base-300 p-0.5"
+      className="flex shrink-0 items-center gap-0.5 rounded-lg border border-line bg-base-200 p-0.5"
     >
-      {MODES.map(({ mode, label }) => {
+      {MODES.map(({ mode, label, icon: Icon }) => {
         const active = viewMode === mode
 
         return (
           <button
             key={mode}
             type="button"
+            aria-label={label}
+            title={label}
             aria-pressed={active}
             onClick={() => dispatch({ type: 'viewMode/select', viewMode: mode })}
             className={cn(
-              'rounded px-2 py-0.5 text-xs transition',
+              'flex h-7 w-8 items-center justify-center rounded-md transition',
               active
-                ? 'bg-neutral font-medium text-base-content'
-                : 'text-base-content/60 hover:text-base-content'
+                ? 'bg-neutral text-base-content'
+                : 'text-base-content/60 hover:bg-neutral/40 hover:text-base-content'
             )}
           >
-            {label}
+            <Icon aria-hidden="true" className="h-4.5 w-4.5" />
           </button>
         )
       })}

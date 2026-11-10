@@ -63,11 +63,13 @@ async function openPiece(kind: PieceKind): Promise<HTMLElement> {
 }
 
 it.each(['article', 'post'] as const)(
-  'opens %s versions from the header without an informational row',
+  'opens %s versions from the title bar without an informational row',
   async (kind) => {
     renderApp(fixture(kind).port)
-    const region = await openPiece(kind)
-    const mode = within(region).getByRole('group', { name: 'View mode' })
+    await openPiece(kind)
+    const mode = within(screen.getByRole('banner', { name: 'Title bar' })).getByRole('group', {
+      name: 'View mode'
+    })
     const actions = mode.parentElement!
     const button = within(actions).getByRole('button', { name: 'Versions and review' })
     expect(button.textContent).toBe('')
@@ -80,13 +82,17 @@ it.each(['article', 'post'] as const)(
     expect(screen.queryByText('Autosaved draft · manual versions')).toBeNull()
     fireEvent.click(button)
     expect(await screen.findByRole('button', { name: 'Save version' })).toBeTruthy()
-    expect(within(region).getByRole('group', { name: 'View mode' })).toBeTruthy()
+    expect(
+      within(screen.getByRole('banner', { name: 'Title bar' })).getByRole('group', {
+        name: 'View mode'
+      })
+    ).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Versions and review' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Back to writing' }))
     await waitFor(() =>
       expect(screen.queryByRole('region', { name: 'Editorial workspace' })).toBeNull()
     )
-    expect(within(region).getByRole('button', { name: 'Versions and review' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Versions and review' })).toBeTruthy()
   }
 )
 
@@ -104,7 +110,7 @@ it.each(['article', 'post'] as const)(
   async (kind) => {
     renderApp(fixture(kind).port)
     const region = await openPiece(kind)
-    const button = within(region).getByRole('button', {
+    const button = screen.getByRole('button', {
       name: 'Versions and review'
     }) as HTMLButtonElement
     const title = within(region).getByRole('textbox', {

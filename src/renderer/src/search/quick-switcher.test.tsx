@@ -70,15 +70,14 @@ describe('quick switcher', () => {
     ])
   })
 
-  it('opens from the title bar trigger and restores focus when closed', async () => {
+  it('opens with the keyboard and restores focus when closed', async () => {
     renderApp(fixture().port)
     await screen.findByRole('option', { name: /Calm software/ })
 
-    const trigger = screen.getByRole('button', { name: /Search stories, articles and posts/ })
+    const trigger = screen.getByRole('button', { name: 'Stories' })
     trigger.focus()
-    fireEvent.click(trigger)
 
-    const combobox = screen.getByRole('combobox', { name: 'Search stories, articles and posts' })
+    const combobox = await openWithKeyboard()
     expect(document.activeElement).toBe(combobox)
 
     fireEvent.keyDown(combobox, { key: 'Escape' })

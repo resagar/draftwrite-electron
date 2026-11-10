@@ -11,6 +11,7 @@ import { Sidebar } from './sidebar/Sidebar/Sidebar'
 import { AppShell } from './shell/AppShell/AppShell'
 import { describeError } from './data/errors'
 import { useDataPort } from './data/port-context'
+import { EditorActionsProvider } from './state/editor-actions-context'
 import { LibraryProvider, useLibrary } from './state/library-context'
 import { requestSave } from './state/save-registry'
 import { useContextualCreate } from './state/use-contextual-create'
@@ -105,20 +106,21 @@ function AppLayout(): JSX.Element {
 
   return (
     <>
-      <AppShell
-        onSearch={openSwitcher}
-        sidebar={<Sidebar />}
-        list={
-          library === 'stories' ? (
-            <StoryList />
-          ) : library === 'articles' ? (
-            <ArticleList />
-          ) : (
-            <PostList />
-          )
-        }
-        workspace={<Workspace />}
-      />
+      <EditorActionsProvider>
+        <AppShell
+          sidebar={<Sidebar />}
+          list={
+            library === 'stories' ? (
+              <StoryList />
+            ) : library === 'articles' ? (
+              <ArticleList />
+            ) : (
+              <PostList />
+            )
+          }
+          workspace={<Workspace />}
+        />
+      </EditorActionsProvider>
 
       {switcherOpen ? (
         <QuickSwitcher onClose={() => setSwitcherOpen(false)} onOpen={openEntry} />
