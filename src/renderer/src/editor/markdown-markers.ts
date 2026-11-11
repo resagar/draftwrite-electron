@@ -13,6 +13,12 @@ export const markdownMarkerStyles = {
   props: [
     styleTags({
       HeaderMark: markdownMarkerTags.heading,
+      'ATXHeading1/HeaderMark SetextHeading1/HeaderMark': tags.heading1,
+      'ATXHeading2/HeaderMark SetextHeading2/HeaderMark': tags.heading2,
+      'ATXHeading3/HeaderMark': tags.heading3,
+      'ATXHeading4/HeaderMark': tags.heading4,
+      'ATXHeading5/HeaderMark': tags.heading5,
+      'ATXHeading6/HeaderMark': tags.heading6,
       ListMark: markdownMarkerTags.list,
       TaskMarker: markdownMarkerTags.list,
       EmphasisMark: markdownMarkerTags.emphasis,

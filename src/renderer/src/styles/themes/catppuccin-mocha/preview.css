@@ -1,0 +1,67 @@
+@layer components {
+  .markdown-preview article > p {
+    color: var(--md-text);
+  }
+
+  .markdown-preview h1 {
+    color: var(--md-heading-1);
+  }
+
+  .markdown-preview h2 {
+    color: var(--md-heading-2);
+  }
+
+  .markdown-preview h3 {
+    color: var(--md-heading-3);
+  }
+
+  .markdown-preview h4 {
+    color: var(--md-heading-4);
+  }
+
+  .markdown-preview h5 {
+    color: var(--md-heading-5);
+  }
+
+  .markdown-preview h6 {
+    color: var(--md-heading-6);
+  }
+
+  .markdown-preview a {
+    color: var(--md-link);
+  }
+
+  .markdown-preview a:hover {
+    color: color-mix(in oklab, var(--md-link) 80%, transparent);
+  }
+
+  .markdown-preview strong {
+    color: var(--md-strong);
+  }
+
+  .markdown-preview em {
+    color: var(--md-emphasis);
+  }
+
+  .markdown-preview blockquote {
+    color: var(--md-quote);
+    border-color: var(--md-quote);
+  }
+
+  .markdown-preview blockquote p {
+    color: inherit;
+  }
+
+  .markdown-preview :is(ul, ol) {
+    color: var(--md-list);
+  }
+
+  .markdown-preview li::marker {
+    color: var(--md-list);
+  }
+
+  .markdown-preview :is(code, pre) {
+    color: var(--md-code);
+    background-color: var(--ctp-surface0);
+  }
+}

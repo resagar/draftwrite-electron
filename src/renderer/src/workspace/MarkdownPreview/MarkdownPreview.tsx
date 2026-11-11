@@ -51,7 +51,7 @@ const COMPONENTS: Components = {
   h1: ({ children, node }) => (
     <h1
       {...blockAnchors(node)}
-      className="mb-4 border-b border-base-300 pb-2 font-sans text-[24px] leading-loose font-bold tracking-tight"
+      className="mb-4 border-b border-base-300 pb-2 font-sans leading-loose font-bold tracking-tight"
     >
       {children}
     </h1>
@@ -59,33 +59,28 @@ const COMPONENTS: Components = {
   h2: ({ children, node }) => (
     <h2
       {...blockAnchors(node)}
-      className="mt-6 mb-2.5 font-sans text-[18px] leading-loose font-semibold tracking-tight"
+      className="mt-6 mb-2.5 font-sans leading-loose font-semibold tracking-tight"
     >
       {children}
     </h2>
   ),
   h3: ({ children, node }) => (
-    <h3
-      {...blockAnchors(node)}
-      className="mt-4 mb-2 font-sans text-[16px] leading-loose font-semibold"
-    >
+    <h3 {...blockAnchors(node)} className="mt-4 mb-2 font-sans leading-loose font-semibold">
       {children}
     </h3>
   ),
-  // h4-h6 were rendered by react-markdown's defaults before: no class, so the
-  // markup stays identical apart from the anchors.
   h4: ({ children, node }) => (
-    <h4 {...blockAnchors(node)} className="text-[16px] leading-loose">
+    <h4 {...blockAnchors(node)} className="leading-loose">
       {children}
     </h4>
   ),
   h5: ({ children, node }) => (
-    <h5 {...blockAnchors(node)} className="text-[16px] leading-loose">
+    <h5 {...blockAnchors(node)} className="leading-loose">
       {children}
     </h5>
   ),
   h6: ({ children, node }) => (
-    <h6 {...blockAnchors(node)} className="text-[16px] leading-loose">
+    <h6 {...blockAnchors(node)} className="leading-loose">
       {children}
     </h6>
   ),

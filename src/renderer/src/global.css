@@ -1,8 +1,8 @@
 @import 'tailwindcss';
-@import './styles/themes/rose-pine-moon/palette.css';
-@import './styles/themes/rose-pine-moon/ui.css';
-@import './styles/themes/rose-pine-moon/syntax.css';
-@import './styles/themes/rose-pine-moon/preview.css';
+@import './styles/themes/catppuccin-mocha/palette.css';
+@import './styles/themes/catppuccin-mocha/ui.css';
+@import './styles/themes/catppuccin-mocha/syntax.css';
+@import './styles/themes/catppuccin-mocha/preview.css';
 
 @plugin "daisyui" {
   themes: false;
@@ -18,11 +18,11 @@
   --font-mono: 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
   --font-serif: 'Newsreader', Georgia, serif;
 
-  --color-line: var(--rp-overlay);
-  --color-line-strong: var(--rp-highlight-high);
-  --color-gutter: var(--rp-text);
-  --color-surface-raised: var(--rp-surface);
-  --color-editor-bg: var(--rp-base);
+  --color-line: var(--ctp-surface0);
+  --color-line-strong: var(--ctp-surface2);
+  --color-gutter: var(--ctp-text);
+  --color-surface-raised: var(--ctp-surface0);
+  --color-editor-bg: var(--ctp-base);
 }
 
 @import './styles/base.css';

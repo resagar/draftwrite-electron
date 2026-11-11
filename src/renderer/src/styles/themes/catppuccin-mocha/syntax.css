@@ -1,0 +1,29 @@
+:root {
+  --md-text: var(--ctp-text);
+  --editor-foreground: var(--md-text);
+  --editor-cursor: var(--ctp-mauve);
+  --editor-active-line: color-mix(in srgb, var(--ctp-surface0) 50%, transparent);
+  --editor-selection: var(--ctp-surface1);
+
+  /* Shared Markdown roles keep editor/preview colors independent of UI states. */
+  --md-heading-1: var(--ctp-mauve);
+  --md-heading-2: var(--ctp-blue);
+  --md-heading-3: var(--ctp-teal);
+  --md-heading-4: var(--ctp-yellow);
+  --md-heading-5: var(--ctp-peach);
+  --md-heading-6: var(--ctp-pink);
+  --md-heading: var(--md-heading-1);
+  --md-link: var(--ctp-blue);
+  --md-code: var(--ctp-green);
+  --md-strong: var(--ctp-peach);
+  --md-emphasis: var(--ctp-yellow);
+  --md-quote: var(--ctp-subtext0);
+  --md-list: var(--ctp-text);
+  --md-mark: var(--ctp-overlay2);
+  --md-heading-mark: var(--ctp-mauve);
+  --md-list-mark: var(--ctp-teal);
+  --md-emphasis-mark: var(--ctp-lavender);
+  --md-code-mark: var(--ctp-green);
+  --md-link-mark: var(--ctp-blue);
+  --md-quote-mark: var(--ctp-teal);
+}

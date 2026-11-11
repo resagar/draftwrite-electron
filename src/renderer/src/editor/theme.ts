@@ -55,6 +55,42 @@ const highlight = HighlightStyle.define([
   { tag: tags.quote, color: 'var(--md-quote)' },
   { tag: tags.list, color: 'var(--md-list)' },
   { tag: tags.heading, color: 'var(--md-heading)', fontWeight: '600' },
+  {
+    tag: tags.heading1,
+    color: 'var(--md-heading-1)',
+    fontWeight: '600',
+    fontSize: 'calc(var(--editor-size, 16px) * var(--heading-scale-1))'
+  },
+  {
+    tag: tags.heading2,
+    color: 'var(--md-heading-2)',
+    fontWeight: '600',
+    fontSize: 'calc(var(--editor-size, 16px) * var(--heading-scale-2))'
+  },
+  {
+    tag: tags.heading3,
+    color: 'var(--md-heading-3)',
+    fontWeight: '600',
+    fontSize: 'calc(var(--editor-size, 16px) * var(--heading-scale-3))'
+  },
+  {
+    tag: tags.heading4,
+    color: 'var(--md-heading-4)',
+    fontWeight: '600',
+    fontSize: 'calc(var(--editor-size, 16px) * var(--heading-scale-4))'
+  },
+  {
+    tag: tags.heading5,
+    color: 'var(--md-heading-5)',
+    fontWeight: '600',
+    fontSize: 'calc(var(--editor-size, 16px) * var(--heading-scale-5))'
+  },
+  {
+    tag: tags.heading6,
+    color: 'var(--md-heading-6)',
+    fontWeight: '600',
+    fontSize: 'calc(var(--editor-size, 16px) * var(--heading-scale-6))'
+  },
   { tag: tags.strong, color: 'var(--md-strong)', fontWeight: '600' },
   { tag: tags.emphasis, color: 'var(--md-emphasis)', fontStyle: 'italic' },
   { tag: tags.link, color: 'var(--md-link)', textDecoration: 'underline' },

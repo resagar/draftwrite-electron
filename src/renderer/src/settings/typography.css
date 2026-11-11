@@ -4,6 +4,12 @@
   --text-xs: calc(11.5px * var(--ui-scale, 1));
   --text-sm: calc(13px * var(--ui-scale, 1));
   --text-base: calc(14px * var(--ui-scale, 1));
+  --heading-scale-1: 2;
+  --heading-scale-2: 1.65;
+  --heading-scale-3: 1.4;
+  --heading-scale-4: 1.15;
+  --heading-scale-5: 1;
+  --heading-scale-6: 0.875;
 }
 
 [aria-label='Preview'] article {
@@ -16,19 +22,31 @@
   line-height: var(--preview-line-height, 2);
 }
 
-[aria-label='Preview'] article :is(p, blockquote, ul, ol, table, h1, h2, h3) {
+[aria-label='Preview'] article :is(p, blockquote, ul, ol, table, h1, h2, h3, h4, h5, h6) {
   font-family: inherit;
 }
 
-[aria-label='Preview'] article :is(p, blockquote, ul, ol, table, h3, h4, h5, h6, pre, code) {
+[aria-label='Preview'] article :is(p, blockquote, ul, ol, table, pre, code) {
   font-size: inherit;
 }
 
 [aria-label='Preview'] article h1 {
-  font-size: 1.5em;
+  font-size: calc(var(--preview-size, 16px) * var(--heading-scale-1));
 }
 [aria-label='Preview'] article h2 {
-  font-size: 1.125em;
+  font-size: calc(var(--preview-size, 16px) * var(--heading-scale-2));
+}
+[aria-label='Preview'] article h3 {
+  font-size: calc(var(--preview-size, 16px) * var(--heading-scale-3));
+}
+[aria-label='Preview'] article h4 {
+  font-size: calc(var(--preview-size, 16px) * var(--heading-scale-4));
+}
+[aria-label='Preview'] article h5 {
+  font-size: calc(var(--preview-size, 16px) * var(--heading-scale-5));
+}
+[aria-label='Preview'] article h6 {
+  font-size: calc(var(--preview-size, 16px) * var(--heading-scale-6));
 }
 [aria-label='Preview'] article em {
   font-family: var(--preview-emphasis-font, var(--font-serif));

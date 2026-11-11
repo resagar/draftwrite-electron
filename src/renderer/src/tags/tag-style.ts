@@ -3,19 +3,19 @@ import type { TagColor } from '../../../shared/tags'
 
 const colors: Record<TagColor, string> = {
   default: 'var(--color-base-content)',
-  red: 'var(--rp-love)',
-  orange: 'var(--rp-rose)',
-  yellow: 'var(--rp-gold)',
-  olive: 'color-mix(in srgb, var(--rp-gold), var(--rp-pine))',
-  green: 'color-mix(in srgb, var(--rp-foam), var(--rp-gold))',
-  teal: 'var(--rp-foam)',
-  blue: 'var(--rp-pine)',
-  violet: 'var(--rp-iris)',
-  purple: 'color-mix(in srgb, var(--rp-iris), var(--rp-love))',
-  pink: 'color-mix(in srgb, var(--rp-love), var(--rp-rose))',
-  brown: 'color-mix(in srgb, var(--rp-rose), var(--rp-gold))',
-  grey: 'var(--color-base-content)',
-  black: 'var(--color-neutral)'
+  red: 'var(--ctp-red)',
+  orange: 'var(--ctp-peach)',
+  yellow: 'var(--ctp-yellow)',
+  olive: 'color-mix(in srgb, var(--ctp-yellow), var(--ctp-green))',
+  green: 'var(--ctp-green)',
+  teal: 'var(--ctp-teal)',
+  blue: 'var(--ctp-blue)',
+  violet: 'var(--ctp-lavender)',
+  purple: 'var(--ctp-mauve)',
+  pink: 'var(--ctp-pink)',
+  brown: 'color-mix(in srgb, var(--ctp-peach), var(--ctp-overlay1))',
+  grey: 'var(--ctp-subtext0)',
+  black: 'var(--ctp-overlay0)'
 }
 export function tagStyle(color: TagColor = 'default'): CSSProperties {
   return { '--tag-color': colors[color] ?? colors.default } as CSSProperties

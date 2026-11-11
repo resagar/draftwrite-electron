@@ -186,7 +186,7 @@ async function verifyTypography(page) {
     'Preview line height is wrong'
   )
   check(
-    near(measured.headingSize, 30) && measured.codeFont.includes('Fira Code'),
+    near(measured.headingSize, 40) && measured.codeFont.includes('Fira Code'),
     'Heading proportions or monospaced code changed'
   )
   check(
@@ -203,7 +203,7 @@ async function verifyTypography(page) {
   await settle()
   const sync = await main.evaluate(() => {
     const editor = document.querySelector('.cm-scroller'),
-      preview = document.querySelector('[aria-label="Preview"]')
+      preview = document.querySelector('.markdown-preview')
     const top = editor.getBoundingClientRect().top
     const line = Array.from(document.querySelectorAll('.cm-lineNumbers .cm-gutterElement')).find(
       (element) =>

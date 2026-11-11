@@ -51,9 +51,9 @@ describe('tag interactions', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(await fake.port.listTagMetadata()).toEqual([{ name: 'shared', color: 'teal' }])
     const dot = screen.getByRole('button', { name: 'shared' }).querySelector('.tag-dot')!
-    expect(dot.getAttribute('style')).toContain('--rp-foam')
+    expect(dot.getAttribute('style')).toContain('--ctp-teal')
     expect(screen.getByRole('button', { name: 'Tag shared' }).getAttribute('style')).toContain(
-      '--rp-foam'
+      '--ctp-teal'
     )
     mounted.unmount()
     await start(fake)
@@ -63,7 +63,7 @@ describe('tag interactions', () => {
           .getByRole('button', { name: 'shared' })
           .querySelector('.tag-dot')!
           .getAttribute('style')
-      ).toContain('--rp-foam')
+      ).toContain('--ctp-teal')
     )
   })
 

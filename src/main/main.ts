@@ -43,9 +43,9 @@ function createWindow(): void {
       ? {
           titleBarStyle: 'hidden' as const,
           titleBarOverlay: {
-            // Match the renderer's Rosé Pine Moon base and text colors.
-            color: acrylic ? '#232136d6' : '#232136',
-            symbolColor: '#e0def4',
+            // Match the renderer's Catppuccin Mocha title bar and text colors.
+            color: acrylic ? '#1e1e2ed6' : '#11111b',
+            symbolColor: '#cdd6f4',
             height: 36
           }
         }
