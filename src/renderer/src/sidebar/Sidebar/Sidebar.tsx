@@ -9,9 +9,11 @@ import { Kbd } from '../../ui/Kbd/Kbd'
 import { Resizer } from '../../ui/Resizer/Resizer'
 import { usePanelResizer } from '../../ui/Resizer/use-resizer'
 import { LibraryNav } from '../LibraryNav/LibraryNav'
+import { SidebarHeader } from '../SidebarHeader/SidebarHeader'
 import { TagList } from '../TagList/TagList'
+import type { WindowChrome } from '../../shell/TitleBar/use-window-chrome'
 
-export function Sidebar(): JSX.Element {
+export function Sidebar({ chrome }: { chrome?: WindowChrome }): JSX.Element {
   const { sidebarCollapsed, zenMode } = useWorkspace()
   const modifier = usePlatformModifier()
   const create = useContextualCreate()
@@ -51,6 +53,8 @@ export function Sidebar(): JSX.Element {
           sidebarCollapsed ? '' : 'lg:w-[var(--sidebar-width)]'
         )}
       >
+        <SidebarHeader chrome={chrome} collapsed={sidebarCollapsed} />
+
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
           <div>
             <h2

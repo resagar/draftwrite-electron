@@ -1,7 +1,8 @@
 import { WindowControls } from './WindowControls'
 import type { WindowChrome } from './use-window-chrome'
-import { Expand, Feather, GitBranch, PanelLeft, Settings, Shrink, Trash2 } from 'lucide-react'
+import { Expand, GitBranch, PanelLeft, Settings, Shrink, Trash2 } from 'lucide-react'
 import type { JSX } from 'react'
+import { usesCustomWindowControls, usesIntegratedTitleBar } from '../chrome-mode'
 import { useEditorActions, type EditorActionSet } from '../../state/editor-actions-context'
 import { usePlatformModifier } from '../../state/use-platform'
 import {
@@ -62,25 +63,19 @@ export function TitleBar({
   const modifier = usePlatformModifier()
   const dispatch = useWorkspaceDispatch()
   const zenLabel = `Zen mode (${modifier} Shift D)`
-  const platform = window.electron?.process.platform
-  const custom = chrome?.state?.translucent === true && chrome.state.backdrop !== 'acrylic'
-  const integrated = platform === 'win32' || platform === 'linux'
+  const custom = usesCustomWindowControls(chrome)
+  const integrated = usesIntegratedTitleBar()
 
   return (
     <header
       aria-label="Title bar"
       className={`z-30 flex h-9 min-h-9 items-center gap-3 bg-base-100 px-3 select-none${custom ? ' title-bar--custom' : integrated ? ' title-bar--integrated' : ''}`}
     >
-      <div className="flex w-[220px] min-w-0 items-center gap-1.5">
-        <Feather aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary" />
-        <span className="truncate text-xs font-semibold tracking-wide">DraftWrite</span>
-      </div>
+      <span aria-hidden="true" className="min-w-0 flex-1" />
 
-      <div className="flex min-w-0 flex-1 items-center justify-center">
-        {actions === null ? null : <EditorControls actions={actions} />}
-      </div>
+      {actions === null ? null : <EditorControls actions={actions} />}
 
-      <div className="flex w-[220px] items-center justify-end gap-2">
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
         <IconButton label="Settings" disabled={!settingsReady} onClick={onSettings}>
           <Settings aria-hidden="true" className="h-3.5 w-3.5" />
         </IconButton>

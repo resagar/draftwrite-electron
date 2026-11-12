@@ -44,7 +44,7 @@ export function Resizer({
     >
       <span
         aria-hidden="true"
-        className="h-8 w-px rounded bg-base-content/20 group-hover:bg-primary/60 group-focus-visible:bg-primary/70"
+        className="h-8 w-px rounded bg-base-content/20 opacity-0 group-hover:bg-primary/60 group-hover:opacity-100 group-focus-visible:bg-primary/70 group-focus-visible:opacity-100"
       />
     </div>
   )

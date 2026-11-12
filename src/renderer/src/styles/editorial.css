@@ -322,7 +322,7 @@
 }
 
 /* Give the editorial workspace the reading width currently occupied by the piece list and source. */
-.app-shell > main:has(.editorial-workspace) > :is([aria-label='Articles'], [aria-label='Posts']),
+.app-shell:has(.editorial-workspace) > :is([aria-label='Articles'], [aria-label='Posts']),
 section[aria-label='Workspace']:has(.editorial-workspace)
   > :is([aria-label='Source story'], [aria-label='Source article']),
 section:is([aria-label='Article'], [aria-label='Post']):has(.editorial-workspace) > header {

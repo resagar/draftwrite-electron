@@ -37,7 +37,7 @@ html[data-window-backdrop='acrylic'] :is(aside[aria-label='Library'], .library-l
   background: var(--window-secondary-surface);
 }
 
-html[data-window-backdrop='acrylic'] :is(header[aria-label='Title bar'], .app-shell > footer) {
+html[data-window-backdrop='acrylic'] :is(header[aria-label='Title bar'], .app-shell footer) {
   background: var(--content-surface);
 }
 

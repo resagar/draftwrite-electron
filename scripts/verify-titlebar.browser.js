@@ -18,8 +18,9 @@ async function verifyTitlebar(page) {
     for (const enabled of [false, true]) {
       if (((await zen.getAttribute('aria-pressed')) === 'true') !== enabled) await zen.click()
       const geometry = await main.evaluate(() => {
-        const header = document.querySelector('header')
+        const header = document.querySelector('header[aria-label="Title bar"]')
         const bounds = header.getBoundingClientRect()
+        const paddingRight = parseFloat(getComputedStyle(header).paddingRight)
         const overlay = navigator.windowControlsOverlay
         const safe = overlay?.getTitlebarAreaRect()
         return {
@@ -27,6 +28,7 @@ async function verifyTitlebar(page) {
           visible: overlay?.visible === true,
           left: bounds.left,
           right: bounds.right,
+          paddingRight,
           safeLeft: safe?.x,
           safeRight: safe ? safe.x + safe.width : undefined,
           draggable: getComputedStyle(header).getPropertyValue('-webkit-app-region') === 'drag',
@@ -34,7 +36,7 @@ async function verifyTitlebar(page) {
             const rect = button.getBoundingClientRect()
             return {
               label: button.getAttribute('aria-label'),
-              inside: rect.left >= bounds.left && rect.right <= bounds.right,
+              inside: rect.left >= bounds.left && rect.right <= bounds.right - paddingRight + 0.5,
               clickable:
                 getComputedStyle(button).getPropertyValue('-webkit-app-region') === 'no-drag'
             }
@@ -44,12 +46,15 @@ async function verifyTitlebar(page) {
       check(geometry.visible, 'Native Window Controls Overlay is not active')
       check(geometry.draggable, 'Header has no drag region')
       check(geometry.left >= geometry.safeLeft, 'Header overlaps left window controls')
-      check(geometry.right <= geometry.safeRight + 1, 'Header overlaps right window controls')
+      check(
+        geometry.paddingRight >= geometry.width - geometry.safeRight - 1,
+        'Header content is not clear of the right window controls'
+      )
       for (const button of geometry.buttons) {
         check(button.inside, `${button.label} overflows the header`)
         check(button.clickable, `${button.label} is inside a drag region`)
       }
-      await main.getByRole('button', { name: /^Search stories/ }).click()
+      await main.keyboard.press('Control+k')
       await main.getByRole('dialog').waitFor()
       await main.keyboard.press('Escape')
       await main.getByRole('dialog').waitFor({ state: 'hidden' })

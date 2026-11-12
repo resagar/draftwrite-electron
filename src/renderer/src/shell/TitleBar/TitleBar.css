@@ -1,9 +1,20 @@
 .title-bar--integrated {
-  margin-left: env(titlebar-area-x, 0px);
-  width: env(titlebar-area-width, 100%);
   height: max(2.25rem, env(titlebar-area-height, 0px));
   min-height: max(2.25rem, env(titlebar-area-height, 0px));
+  /* Keep the app controls clear of the native overlay buttons. */
+  padding-right: calc(
+    100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + 0.75rem
+  );
   -webkit-app-region: drag;
+}
+
+/* Header that drags the window when there is no native title bar to drag. */
+.shell-drag {
+  -webkit-app-region: drag;
+}
+
+.shell-drag :is(button, input, select, textarea, a) {
+  -webkit-app-region: no-drag;
 }
 
 .title-bar--integrated button {

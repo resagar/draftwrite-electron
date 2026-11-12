@@ -21,6 +21,24 @@ describe('App shell', () => {
 
     expect(screen.getByRole('region', { name: 'Workspace' })).toBeTruthy()
   })
+
+  it('keeps the sidebar outside the main area so both columns span the full height', () => {
+    renderApp(createFakePort().port)
+
+    const sidebar = screen.getByRole('complementary', { name: 'Library' })
+    const titleBar = screen.getByRole('banner', { name: 'Title bar' })
+    const statusBar = screen.getByRole('contentinfo')
+    const contentColumn = titleBar.parentElement
+    const list = screen.getByRole('region', { name: 'Stories' })
+
+    expect(contentColumn).not.toBeNull()
+    expect(contentColumn?.contains(sidebar)).toBe(false)
+    expect(contentColumn?.contains(list)).toBe(false)
+    expect(list.parentElement).toBe(sidebar.parentElement)
+    expect(statusBar.parentElement).toBe(contentColumn)
+    expect(screen.getByRole('main').parentElement).toBe(contentColumn)
+    expect(sidebar.parentElement).toBe(contentColumn?.parentElement)
+  })
 })
 
 describe('zen mode', () => {

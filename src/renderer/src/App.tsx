@@ -9,6 +9,7 @@ import { QuickSwitcher } from './search/QuickSwitcher'
 import type { SearchEntry } from './search/search'
 import { Sidebar } from './sidebar/Sidebar/Sidebar'
 import { AppShell } from './shell/AppShell/AppShell'
+import { useWindowChrome } from './shell/TitleBar/use-window-chrome'
 import { describeError } from './data/errors'
 import { useDataPort } from './data/port-context'
 import { EditorActionsProvider } from './state/editor-actions-context'
@@ -30,6 +31,7 @@ function AppLayout(): JSX.Element {
     useLibrary()
   const dispatch = useWorkspaceDispatch()
   const navigate = useWorkspaceNavigation()
+  const chrome = useWindowChrome()
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [switcherOpen, setSwitcherOpen] = useState(false)
 
@@ -108,7 +110,8 @@ function AppLayout(): JSX.Element {
     <>
       <EditorActionsProvider>
         <AppShell
-          sidebar={<Sidebar />}
+          chrome={chrome}
+          sidebar={<Sidebar chrome={chrome} />}
           list={
             library === 'stories' ? (
               <StoryList />
